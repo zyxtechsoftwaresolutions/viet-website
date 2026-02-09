@@ -3,9 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
+import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 
-// Use same pattern as HeroSection/Events: backend origin for uploads (avoids 404 when proxy differs)
-const UPLOADS_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
+// Helper function to resolve image URLs - supports Supabase Storage URLs, Google Drive links, and legacy paths
+const imageSrc = (path: string) => {
+  if (!path) return '/placeholder.svg';
+  
+  // Convert Google Drive links to direct view links
+  if (isGoogleDriveLink(path)) {
+    return convertGoogleDriveLink(path);
+  }
+  
+  // If it's already a full URL (Supabase Storage or external), use it directly
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Legacy local path - should not happen with Supabase-only storage, but handle gracefully
+  if (path.startsWith('/uploads/')) {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    return `${API_BASE_URL.replace(/\/api\/?$/, '')}${path}`;
+  }
+  
+  // Relative path starting with / - use as-is (for static assets like /placeholder.svg)
+  if (path.startsWith('/')) {
+    return path;
+  }
+  
+  // Fallback
+  return path;
+};
 
 const VibeAtViet = () => {
   const navigate = useNavigate();
@@ -30,10 +57,28 @@ const VibeAtViet = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const imageSrc = (path: string) =>
-    path.startsWith('/uploads') ? `${UPLOADS_ORIGIN}${path}` : path;
-  const videoSrc = (path: string) =>
-    path.startsWith('/uploads') ? `${UPLOADS_ORIGIN}${path}` : path;
+  // Video source helper - supports Supabase Storage URLs and Google Drive links
+  const videoSrc = (path: string) => {
+    if (!path) return '';
+    
+    // Convert Google Drive links to direct download links for videos
+    if (isGoogleDriveLink(path)) {
+      return convertGoogleDriveToDownload(path);
+    }
+    
+    // If it's already a full URL (Supabase Storage or external), use it directly
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    // Legacy local path - should not happen with Supabase-only storage
+    if (path.startsWith('/uploads/')) {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      return `${API_BASE_URL.replace(/\/api\/?$/, '')}${path}`;
+    }
+    
+    return path;
+  };
 
   // Grid layout pattern - Based on provided HTML/CSS structure
   // 5 columns × 5 rows grid
@@ -172,7 +217,11 @@ const VibeAtViet = () => {
                             src={imageSrc(item.image)}
                             alt={item.caption}
                             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                            loading="eager"
+                            width={400}
+                            height={400}
+                            loading={slotIndex < 4 ? "eager" : "lazy"}
+                            fetchPriority={slotIndex < 4 ? "high" : "auto"}
+                            decoding="async"
                             style={{ zIndex: -1, opacity: 1 }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
@@ -182,7 +231,7 @@ const VibeAtViet = () => {
                       );
                     })()
                   ) : (
-                    // Render video element for uploaded files
+                    // Render video element for uploaded files or Google Drive videos
                     <video
                       ref={(el) => { videoRefs.current[slotIndex] = el; }}
                       className="w-full h-full object-cover"
@@ -206,7 +255,9 @@ const VibeAtViet = () => {
                         target.parentElement?.appendChild(img);
                       }}
                     >
+                      {/* Support both MP4 and Google Drive direct links */}
                       <source src={videoSrc(item.video!)} type="video/mp4" />
+                      <source src={videoSrc(item.video!)} type="video/webm" />
                       <img src={imageSrc(item.image)} alt={item.caption} className="w-full h-full object-cover" loading="eager" />
                     </video>
                   )

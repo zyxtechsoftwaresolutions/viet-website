@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { ImagePlus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { convertGoogleDriveLink, isGoogleDriveLink } from '@/lib/googleDriveUtils';
 
 const UPLOADS_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 
@@ -44,6 +45,8 @@ const VibeAtVietAdmin = () => {
   const [caption, setCaption] = useState('');
   const [gridPosition, setGridPosition] = useState(1);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageLink, setImageLink] = useState<string>('');
+  const [imageInputType, setImageInputType] = useState<'file' | 'link'>('file');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoLink, setVideoLink] = useState<string>('');
   const [videoInputType, setVideoInputType] = useState<'file' | 'link'>('file');
@@ -52,8 +55,12 @@ const VibeAtVietAdmin = () => {
   const [itemToDelete, setItemToDelete] = useState<VibeAtVietItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const imageUrl = (path: string) =>
-    path.startsWith('/uploads') ? `${UPLOADS_ORIGIN}${path}` : path;
+  const imageUrl = (path: string) => {
+    if (isGoogleDriveLink(path)) {
+      return convertGoogleDriveLink(path);
+    }
+    return path.startsWith('/uploads') ? `${UPLOADS_ORIGIN}${path}` : path;
+  };
 
   const fetchItems = async () => {
     try {
@@ -77,6 +84,8 @@ const VibeAtVietAdmin = () => {
     setCaption('');
     setGridPosition(1);
     setImageFile(null);
+    setImageLink('');
+    setImageInputType('file');
     setVideoFile(null);
     setVideoLink('');
     setVideoInputType('file');
@@ -91,7 +100,17 @@ const VibeAtVietAdmin = () => {
     setGridPosition((item.order ?? 0) + 1);
     setImageFile(null);
     setVideoFile(null);
-    setImagePreview(imageUrl(item.image));
+    
+    // Determine if existing image is a link (Google Drive) or file
+    if (isGoogleDriveLink(item.image) || (item.image.startsWith('http://') || item.image.startsWith('https://'))) {
+      setImageInputType('link');
+      setImageLink(item.image);
+      setImagePreview(imageUrl(item.image));
+    } else {
+      setImageInputType('file');
+      setImageLink('');
+      setImagePreview(imageUrl(item.image));
+    }
     
     // Determine if existing video is a link or file
     if (item.video) {
@@ -117,9 +136,29 @@ const VibeAtVietAdmin = () => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
+      setImageLink('');
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
+    } else {
+      setImageFile(null);
+      if (editingItem?.image && (isGoogleDriveLink(editingItem.image) || editingItem.image.startsWith('http'))) {
+        setImagePreview(imageUrl(editingItem.image));
+      } else {
+        setImagePreview('');
+      }
+    }
+  };
+
+  const handleImageLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const link = e.target.value;
+    setImageLink(link);
+    setImageFile(null);
+    if (link.trim()) {
+      const convertedLink = isGoogleDriveLink(link) ? convertGoogleDriveLink(link) : link;
+      setImagePreview(convertedLink);
+    } else {
+      setImagePreview('');
     }
   };
 
@@ -162,6 +201,7 @@ const VibeAtVietAdmin = () => {
           caption: caption.trim(),
           order: gridPosition - 1,
           ...(imageFile && { imageFile }),
+          ...(imageInputType === 'link' && imageLink.trim() && { imageLink: imageLink.trim() }),
           ...(videoFile && { videoFile }),
           ...(videoInputType === 'link' && videoLink.trim() && { videoLink: videoLink.trim() }),
           ...(videoInputType === 'file' && !videoFile && { videoLink: null }), // Clear video if switching to file but no file selected
@@ -176,8 +216,8 @@ const VibeAtVietAdmin = () => {
         setSubmitting(false);
       }
     } else {
-      if (!imageFile) {
-        toast.error('Image is required');
+      if (!imageFile && !imageLink.trim()) {
+        toast.error('Image is required (upload file or paste Google Drive link)');
         return;
       }
       if (!caption.trim()) {
@@ -187,11 +227,12 @@ const VibeAtVietAdmin = () => {
       setSubmitting(true);
       try {
         await vibeAtVietAPI.create(
-          imageFile,
+          imageInputType === 'file' ? imageFile : null,
           videoInputType === 'file' ? videoFile : null,
           caption.trim(),
           gridPosition,
-          videoInputType === 'link' ? videoLink.trim() : undefined
+          videoInputType === 'link' ? videoLink.trim() : undefined,
+          imageInputType === 'link' ? imageLink.trim() : undefined
         );
         toast.success('Photo added');
         setDialogOpen(false);
@@ -326,8 +367,8 @@ const VibeAtVietAdmin = () => {
             <DialogTitle>{editingItem ? 'Edit Vibe@Viet Item' : 'Add Photo to Vibe@Viet'}</DialogTitle>
             <DialogDescription>
               {editingItem
-                ? 'Update the image, optional video, and caption. Leave image/video empty to keep current.'
-                : 'Upload an image (required), optional video, and caption.'}
+                ? 'Update the image (upload file or paste Google Drive link), optional video, and caption. Leave image/video empty to keep current.'
+                : 'Upload an image file or paste a Google Drive link (required), optional video, and caption.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -363,12 +404,54 @@ const VibeAtVietAdmin = () => {
             </div>
             <div className="space-y-2">
               <Label>{editingItem ? 'New Image (optional)' : 'Image (required)'}</Label>
-              <Input type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
-              {(imagePreview || imageFile) && (
-                <div className="mt-2 border rounded-lg p-2 bg-muted/50">
-                  <p className="text-sm font-medium mb-1">Preview:</p>
-                  <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-contain rounded" />
+              <RadioGroup value={imageInputType} onValueChange={(value) => {
+                setImageInputType(value as 'file' | 'link');
+                setImageFile(null);
+                setImageLink('');
+                setImagePreview('');
+              }} className="flex gap-6 mb-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="file" id="image-file" />
+                  <Label htmlFor="image-file" className="cursor-pointer">Upload Image File</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="link" id="image-link" />
+                  <Label htmlFor="image-link" className="cursor-pointer">Paste Google Drive Link</Label>
+                </div>
+              </RadioGroup>
+              
+              {imageInputType === 'file' ? (
+                <>
+                  <Input type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
+                  {(imagePreview || imageFile) && (
+                    <div className="mt-2 border rounded-lg p-2 bg-muted/50">
+                      <p className="text-sm font-medium mb-1">Preview:</p>
+                      <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-contain rounded" />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Input
+                    type="url"
+                    value={imageLink ?? ''}
+                    onChange={handleImageLinkChange}
+                    placeholder="https://drive.google.com/file/d/... or https://drive.google.com/open?id=..."
+                    className="cursor-text"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Paste a Google Drive public folder link or direct file link. Make sure the file/folder is set to "Anyone with the link can view".
+                  </p>
+                  {imagePreview && (
+                    <div className="mt-2 border rounded-lg p-2 bg-muted/50">
+                      <p className="text-sm font-medium mb-1">Preview:</p>
+                      <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-contain rounded" onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.svg';
+                      }} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div className="space-y-2">
@@ -405,11 +488,11 @@ const VibeAtVietAdmin = () => {
                     type="url"
                     value={videoLink ?? ''}
                     onChange={handleVideoLinkChange}
-                    placeholder="https://www.youtube.com/watch?v=... or https://www.instagram.com/p/..."
+                    placeholder="https://www.youtube.com/watch?v=... or https://drive.google.com/file/d/..."
                     className="cursor-text"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supported platforms: YouTube, Instagram, Vimeo. Paste the full URL of the video.
+                    Supported platforms: YouTube, Instagram, Vimeo, or Google Drive. Paste the full URL of the video.
                   </p>
                   {videoPreview && isVideoUrl(videoPreview) && (
                     <div className="mt-2 border rounded-lg p-2 bg-muted/50">
@@ -440,7 +523,7 @@ const VibeAtVietAdmin = () => {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={submitting || (!editingItem && !imageFile)}>
+            <Button onClick={handleSubmit} disabled={submitting || (!editingItem && !imageFile && !imageLink.trim())}>
               {submitting ? 'Saving...' : editingItem ? 'Update' : 'Add'}
             </Button>
           </DialogFooter>

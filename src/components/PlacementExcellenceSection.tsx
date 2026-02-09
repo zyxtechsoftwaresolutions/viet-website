@@ -295,7 +295,15 @@ const PlacementExcellenceSection = () => {
                       }
                     }}
                   >
-                    <img src={slide.src} alt={slide.title || 'Placement'} />
+                    <img 
+                      src={slide.src} 
+                      alt={slide.title || 'Placement'}
+                      width={300}
+                      height={300}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="auto"
+                    />
                   </div>
                 ))}
               </div>

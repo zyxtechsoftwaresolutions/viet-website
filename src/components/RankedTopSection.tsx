@@ -131,7 +131,16 @@ const RankedTopSection = () => {
                   <div className="flex flex-col items-center text-center">
                     <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform border border-white/10 overflow-hidden p-1.5">
                       {logoSrc ? (
-                        <img src={logoSrc} alt={item.title} className="w-full h-full object-contain" />
+                        <img 
+                          src={logoSrc} 
+                          alt={item.title} 
+                          className="w-full h-full object-contain"
+                          width={64}
+                          height={64}
+                          loading="lazy"
+                          decoding="async"
+                          fetchPriority="auto"
+                        />
                       ) : (
                         <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-white" />
                       )}

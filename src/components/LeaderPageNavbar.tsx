@@ -131,28 +131,66 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     }
   }, [activeNavItem]);
 
-  // On home: trigger when entering ticker (passed video section). On other pages: trigger on any scroll.
+  // Optimized scroll detection with requestAnimationFrame and proper cleanup
   useEffect(() => {
-    if (location.pathname !== '/') {
-      const handleScroll = () => setIsScrolled(window.scrollY > 50);
-      window.addEventListener('scroll', handleScroll);
-      handleScroll();
-      return () => window.removeEventListener('scroll', handleScroll);
+    let rafId: number | null = null;
+    let ticking = false;
+    
+    const updateScrollState = () => {
+      if (location.pathname !== '/') {
+        // For non-home pages: simple scroll threshold
+        setIsScrolled(window.scrollY > 50);
+      } else {
+        // For home page: check ticker section intersection or fallback to scroll position
+        const tickerEl = document.getElementById('ticker-section');
+        if (tickerEl) {
+          const rect = tickerEl.getBoundingClientRect();
+          setIsScrolled(rect.top <= 10);
+        } else {
+          // Fallback: trigger when scroll passes video height (100vh)
+          setIsScrolled(window.scrollY >= window.innerHeight - 80);
+        }
+      }
+      ticking = false;
+    };
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        rafId = requestAnimationFrame(updateScrollState);
+        ticking = true;
+      }
+    };
+    
+    // Initial check
+    updateScrollState();
+    
+    // Use passive scroll listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // For home page, also use IntersectionObserver if ticker exists
+    let observer: IntersectionObserver | null = null;
+    if (location.pathname === '/') {
+      const tickerEl = document.getElementById('ticker-section');
+      if (tickerEl) {
+        observer = new IntersectionObserver(
+          ([e]) => {
+            setIsScrolled(e.isIntersecting);
+          },
+          { threshold: 0, rootMargin: '-10px 0px 0px 0px' }
+        );
+        observer.observe(tickerEl);
+      }
     }
-    const el = document.getElementById('ticker-section');
-    if (el) {
-      const ob = new IntersectionObserver(
-        ([e]) => setIsScrolled(e.isIntersecting),
-        { threshold: 0, rootMargin: '-10px 0px 0px 0px' }
-      );
-      ob.observe(el);
-      return () => ob.disconnect();
-    }
-    // Fallback: trigger when scroll passes video height (100vh)
-    const handleScroll = () => setIsScrolled(window.scrollY >= window.innerHeight - 80);
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      if (observer) {
+        observer.disconnect();
+      }
+    };
   }, [location.pathname]);
 
   // Close menu when route changes
@@ -397,6 +435,11 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   src="/viet-logo-new.png"
                   alt="VIET Logo"
                   className="h-12 md:h-14 w-auto object-contain"
+                  width={120}
+                  height={48}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </motion.div>
               
@@ -422,6 +465,11 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   src="/logo-viet.png"
                   alt="VIET Logo"
                   className="h-11 md:h-12 w-auto object-contain"
+                  width={100}
+                  height={40}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </motion.div>
             </motion.div>
@@ -572,6 +620,11 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                         <img
                           src="/viet-logo-new.png"
                           alt="VIET Logo"
+                          width={120}
+                          height={48}
+                          loading="lazy"
+                          fetchPriority="auto"
+                          decoding="async"
                           className="h-10 md:h-12 w-auto object-contain"
                         />
                       </motion.div>

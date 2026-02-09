@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font optimization: Use font-display swap for all fonts */
+@font-face {
+  font-family: 'Firlest';
+  font-display: swap;
+}
+
 /* Section title font - Firlest loaded via CDN in index.html */
 .font-firlest {
   font-family: 'Firlest', sans-serif !important;
@@ -10,6 +16,7 @@
 /* Poppins for leader page message and body text */
 .font-poppins {
   font-family: 'Poppins', sans-serif !important;
+  font-display: swap;
 }
 
 /* Modern College Website Design System - Premium Colors & Effects */

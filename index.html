@@ -19,12 +19,21 @@
     <meta name="twitter:site" content="" />
     <meta name="twitter:image" content="" />
     
+    <!-- Performance: Preload critical resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    
     <!-- Video preload with as="video" is not well supported; video loads when used -->
 
-    <!-- Google Fonts - Anton for About title, Cinzel for other section titles -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@400;500;600;700;800;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Pirata+One&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Optimized for performance: Only critical fonts loaded immediately -->
+    <!-- Load only Poppins (most used) immediately, defer Anton and others -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Defer Anton font (used for hero titles) -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet"></noscript>
+    <!-- Defer all decorative fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Pirata+One&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Pirata+One&display=swap" rel="stylesheet"></noscript>
     <!-- firlest font: URL failed (ERR_NAME_NOT_RESOLVED). Use font-firlest only if you host the font or use a working CDN. -->
   </head>
 

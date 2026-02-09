@@ -301,9 +301,22 @@ const HomeGallerySection: React.FC = () => {
                     }}
                   >
                     <img
-                      src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image}
+                      src={
+                        item.image?.startsWith('http://') || item.image?.startsWith('https://')
+                          ? item.image // Supabase Storage URL - use directly
+                          : item.image?.startsWith('/uploads/')
+                            ? `${API_BASE_URL}${item.image}` // Legacy local path
+                            : item.image?.startsWith('/')
+                              ? item.image // Static asset
+                              : item.image || '/placeholder.svg'
+                      }
                       alt={`Gallery image ${item.id}`}
                       data-rotation={-rotation}
+                      width={400}
+                      height={400}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="auto"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder.svg';

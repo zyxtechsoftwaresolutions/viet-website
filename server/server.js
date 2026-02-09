@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs/promises';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
 import * as db from './lib/db.js';
 import { resolveFileUrl } from './lib/upload-helper.js';
 import { deleteFromStorage } from './lib/storage.js';
@@ -20,12 +20,57 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Middleware
-app.use(cors());
+// CORS configuration - allows requests from frontend domains
+const allowedOrigins = [
+  'http://localhost:5173', // Vite dev server
+  'http://localhost:3000', // Alternative dev port
+  process.env.FRONTEND_URL, // Your Vercel URL (set in Render env vars)
+  // Add your Vercel domain here after deployment, e.g.:
+  // 'https://your-project.vercel.app',
+].filter(Boolean); // Remove undefined values
+
+// Log allowed origins for debugging
+console.log('Allowed CORS origins:', allowedOrigins);
+console.log('FRONTEND_URL from env:', process.env.FRONTEND_URL);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      console.log('CORS: Request with no origin - allowing');
+      return callback(null, true);
+    }
+    
+    // Normalize origin (remove trailing slash)
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    
+    // Check if origin matches exactly
+    const exactMatch = allowedOrigins.some(allowed => {
+      const normalizedAllowed = allowed.replace(/\/$/, '');
+      return normalizedOrigin === normalizedAllowed;
+    });
+    
+    // Check if origin ends with .vercel.app
+    const vercelMatch = normalizedOrigin.endsWith('.vercel.app');
+    
+    if (exactMatch || vercelMatch) {
+      console.log(`CORS: Allowing origin: ${origin}`);
+      callback(null, true);
+    } else {
+      console.log(`CORS: Blocking origin: ${origin}`);
+      console.log('CORS: Allowed origins are:', allowedOrigins);
+      callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
-// Serve static files from public directory
+// Serve static files from public directory with optimized caching
 app.use(express.static(join(__dirname, '../public'), {
-  maxAge: '1d',
+  maxAge: '365d', // Cache for 1 year (images don't change often)
   etag: true,
   lastModified: true,
   setHeaders: (res, path) => {
@@ -33,20 +78,25 @@ app.use(express.static(join(__dirname, '../public'), {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // Optimize caching for images
+    if (path.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i)) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (path.match(/\.(css|js)$/i)) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
   }
 }));
 
-// Data directory
+// Data directory (for JSON files only - all media files stored in Supabase Storage)
 const DATA_DIR = join(__dirname, 'data');
-const UPLOADS_DIR = join(__dirname, '../public/uploads');
 
-// Ensure directories exist
+// Ensure data directory exists (for JSON files)
 async function ensureDirectories() {
-  const dirs = [DATA_DIR, UPLOADS_DIR, join(UPLOADS_DIR, 'carousel'), join(UPLOADS_DIR, 'departments'), join(UPLOADS_DIR, 'department-hero'), join(UPLOADS_DIR, 'department-assets'), join(UPLOADS_DIR, 'events'), join(UPLOADS_DIR, 'gallery'), join(UPLOADS_DIR, 'home-gallery'), join(UPLOADS_DIR, 'vibe-at-viet'), join(UPLOADS_DIR, 'recruiters'), join(UPLOADS_DIR, 'faculty'), join(UPLOADS_DIR, 'hods'), join(UPLOADS_DIR, 'pages'), join(UPLOADS_DIR, 'transport-routes'), join(UPLOADS_DIR, 'syllabus'), join(UPLOADS_DIR, 'hero-videos'), join(UPLOADS_DIR, 'placement-carousel')];
-  for (const dir of dirs) {
-    if (!existsSync(dir)) {
-      await fs.mkdir(dir, { recursive: true });
-    }
+  if (!existsSync(DATA_DIR)) {
+    await fs.mkdir(DATA_DIR, { recursive: true });
   }
 }
 
@@ -145,114 +195,9 @@ async function initializeData() {
   } catch (e) { /* db may not be ready */ }
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    try {
-      // For FormData, req.body might not be parsed yet, so check both req.body and use fieldname as fallback
-      let uploadType = req.body?.uploadType;
-      
-      // If uploadType is not in body yet (FormData parsing issue), try to infer from the endpoint
-      if (!uploadType) {
-        // Check the request URL to determine upload type
-        const url = req.url || req.originalUrl || '';
-      if (url.includes('/hods')) uploadType = 'hods';
-      else if (url.includes('/home-gallery')) uploadType = 'home-gallery';
-      else if (url.includes('/vibe-at-viet')) uploadType = 'vibe-at-viet';
-      else if (url.includes('/gallery') && !url.includes('/home-gallery')) uploadType = 'gallery';
-      else if (url.includes('/carousel')) uploadType = 'carousel';
-      else if (url.includes('/placement-carousel')) uploadType = 'placement-carousel';
-      else if (url.includes('/departments')) uploadType = 'department';
-      else if (url.includes('/recruiters')) uploadType = 'recruiter';
-      else if (url.includes('/faculty')) uploadType = 'faculty';
-      else if (url.includes('/pages')) uploadType = 'page';
-      else if (url.includes('/events')) uploadType = 'event';
-      else if (url.includes('/transport-routes')) uploadType = 'transport-routes';
-      else if (url.includes('/department-pages') && (url.includes('icon') || url.includes('asset'))) uploadType = 'department-assets';
-      else if (url.includes('/department-pages') && url.includes('hero-image')) uploadType = 'department-hero';
-      else if (url.includes('/department-pages') && url.includes('curriculum')) uploadType = 'syllabus';
-      else if (url.includes('/hero-videos')) uploadType = 'hero-videos';
-      else uploadType = 'general';
-      }
-      
-      let uploadPath = UPLOADS_DIR;
-      
-      switch (uploadType) {
-        case 'carousel':
-          uploadPath = join(UPLOADS_DIR, 'carousel');
-          break;
-        case 'placement-carousel':
-          uploadPath = join(UPLOADS_DIR, 'placement-carousel');
-          break;
-        case 'department':
-          uploadPath = join(UPLOADS_DIR, 'departments');
-          break;
-        case 'gallery':
-          uploadPath = join(UPLOADS_DIR, 'gallery');
-          break;
-        case 'home-gallery':
-          uploadPath = join(UPLOADS_DIR, 'home-gallery');
-          break;
-        case 'vibe-at-viet':
-          uploadPath = join(UPLOADS_DIR, 'vibe-at-viet');
-          break;
-        case 'recruiter':
-          uploadPath = join(UPLOADS_DIR, 'recruiters');
-          break;
-        case 'faculty':
-          uploadPath = join(UPLOADS_DIR, 'faculty');
-          break;
-        case 'hods':
-          uploadPath = join(UPLOADS_DIR, 'hods');
-          break;
-        case 'page':
-          uploadPath = join(UPLOADS_DIR, 'pages');
-          break;
-        case 'event':
-          uploadPath = join(UPLOADS_DIR, 'events');
-          break;
-        case 'transport-routes':
-          uploadPath = join(UPLOADS_DIR, 'transport-routes');
-          break;
-        case 'syllabus':
-          uploadPath = join(UPLOADS_DIR, 'syllabus');
-          break;
-        case 'department-hero':
-          uploadPath = join(UPLOADS_DIR, 'department-hero');
-          break;
-        case 'department-assets':
-          uploadPath = join(UPLOADS_DIR, 'department-assets');
-          break;
-        case 'hero-videos':
-          uploadPath = join(UPLOADS_DIR, 'hero-videos');
-          break;
-        default:
-          uploadPath = join(UPLOADS_DIR, 'gallery'); // Default to gallery for safety
-      }
-      
-      // Ensure directory exists (synchronously)
-      if (!existsSync(uploadPath)) {
-        mkdirSync(uploadPath, { recursive: true });
-        console.log('Created directory:', uploadPath);
-      }
-      
-      // Verify directory was created
-      if (!existsSync(uploadPath)) {
-        throw new Error(`Failed to create upload directory: ${uploadPath}`);
-      }
-      
-      console.log('Multer destination - uploadType:', uploadType, 'fieldname:', file.fieldname, 'path:', uploadPath);
-      cb(null, uploadPath);
-    } catch (error) {
-      console.error('Error in multer destination:', error);
-      cb(error, '');
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-  }
-});
+// Configure multer for file uploads - using memory storage (no local disk writes)
+// All files are uploaded directly to Supabase Storage
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage,
@@ -720,6 +665,8 @@ app.delete('/api/transport-routes/:id', authenticateToken, async (req, res) => {
 app.get('/api/carousel', async (req, res) => {
   try {
     const images = await db.getCarousel();
+    // Set caching headers for API responses
+    res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
     res.json(images);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -811,6 +758,8 @@ app.delete('/api/placement-carousel/:id', authenticateToken, async (req, res) =>
 app.get('/api/hero-videos', async (req, res) => {
   try {
     const videos = await db.getHeroVideos();
+    // Cache hero videos for 5 minutes (critical for LCP)
+    res.set('Cache-Control', 'public, max-age=300');
     res.json(videos || []);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1181,8 +1130,11 @@ app.put('/api/home-gallery/:id', authenticateToken, upload.single('image'), asyn
 app.get('/api/vibe-at-viet', async (req, res) => {
   try {
     const items = await db.getVibeAtViet();
+    // Cache for 5 minutes
+    res.set('Cache-Control', 'public, max-age=300');
     res.json((items || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
   } catch (error) {
+    res.set('Cache-Control', 'public, max-age=300');
     res.json([]);
   }
 });
@@ -1192,15 +1144,26 @@ app.post('/api/vibe-at-viet', authenticateToken, upload.fields([{ name: 'image',
     const caption = req.body?.caption ?? '';
     const position = req.body?.position !== undefined ? Math.max(1, Math.min(12, parseInt(req.body.position, 10) || 1)) : 1;
     const imageFile = req.files?.image?.[0];
+    const imageLink = req.body?.imageLink?.trim() || null;
     const videoFile = req.files?.video?.[0];
     const videoLink = req.body?.videoLink?.trim() || null;
-    if (!imageFile) return res.status(400).json({ error: 'Image file is required' });
+    
+    // Require either image file or image link (Google Drive)
+    if (!imageFile && !imageLink) {
+      return res.status(400).json({ error: 'Image file or Google Drive link is required' });
+    }
 
-    const image = await resolveFileUrl(imageFile, 'vibe-at-viet');
+    // Use image link (Google Drive) if provided, otherwise upload file to Supabase
+    const image = imageLink || (imageFile ? await resolveFileUrl(imageFile, 'vibe-at-viet') : null);
+    
     let video = null;
     let videoLinkVal = null;
-    if (videoFile) video = await resolveFileUrl(videoFile, 'vibe-at-viet');
-    else if (videoLink) videoLinkVal = videoLink;
+    if (videoFile) {
+      video = await resolveFileUrl(videoFile, 'vibe-at-viet');
+    } else if (videoLink) {
+      videoLinkVal = videoLink;
+    }
+    
     const targetOrder = position - 1;
     const item = await db.createVibeAtVietItem({ image, video, videoLink: videoLinkVal, caption, order: targetOrder });
     res.status(201).json(item);
@@ -1213,11 +1176,25 @@ app.post('/api/vibe-at-viet', authenticateToken, upload.fields([{ name: 'image',
 app.put('/api/vibe-at-viet/:id', authenticateToken, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
   try {
     const updateData = {};
-    if (req.files?.image?.[0]) updateData.image = await resolveFileUrl(req.files.image[0], 'vibe-at-viet');
-    if (req.files?.video?.[0]) updateData.video = await resolveFileUrl(req.files.video[0], 'vibe-at-viet');
-    else if (req.body?.videoLink !== undefined) updateData.videoLink = req.body.videoLink?.trim() || null;
+    
+    // Handle image update: file upload or Google Drive link
+    if (req.files?.image?.[0]) {
+      updateData.image = await resolveFileUrl(req.files.image[0], 'vibe-at-viet');
+    } else if (req.body?.imageLink !== undefined) {
+      // If imageLink is empty string, clear the image; otherwise use the link
+      updateData.image = req.body.imageLink?.trim() || null;
+    }
+    
+    // Handle video update: file upload or link
+    if (req.files?.video?.[0]) {
+      updateData.video = await resolveFileUrl(req.files.video[0], 'vibe-at-viet');
+    } else if (req.body?.videoLink !== undefined) {
+      updateData.videoLink = req.body.videoLink?.trim() || null;
+    }
+    
     if (req.body?.caption !== undefined) updateData.caption = req.body.caption;
     if (req.body?.order !== undefined) updateData.order = Math.max(0, Math.min(11, parseInt(req.body.order, 10) || 0));
+    
     const updated = await db.updateVibeAtVietItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Item not found' });
     res.json(updated);
@@ -1432,18 +1409,23 @@ app.delete('/api/pages/:id', authenticateToken, async (req, res) => {
     const page = await db.getPageById(pageId);
     if (!page) return res.status(404).json({ error: 'Page not found' });
 
-    // Delete associated images from storage/content
+    // Delete associated images from Supabase Storage
     if (page.content && typeof page.content === 'object') {
       const imageKeys = ['heroImage', 'profileImage', 'image1', 'image2', 'image3'];
       for (const key of imageKeys) {
         const url = page.content[key];
         if (url) {
+          // Only delete from Supabase Storage (all images should be in Supabase now)
           if (url.includes('supabase') || url.startsWith('http')) {
             await deleteFromStorage(url).catch(err => console.error('Error deleting from storage:', err));
           } else if (url.startsWith('/uploads/')) {
-            const imagePath = join(__dirname, '..', 'public', url);
-            if (existsSync(imagePath)) {
-              fs.unlink(imagePath).catch(err => console.error('Error deleting image:', err));
+            // Legacy path - try to delete from Supabase Storage if it exists
+            // Extract folder and filename from path
+            const pathParts = url.replace(/^\/uploads\//, '').split('/');
+            if (pathParts.length >= 2) {
+              const folder = pathParts[0];
+              const filename = pathParts.slice(1).join('/');
+              await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
             }
           }
         }
@@ -1508,11 +1490,17 @@ app.post('/api/department-pages/:slug/hero-image', authenticateToken, upload.sin
     const hero = sections.hero || {};
     const oldImage = hero.image;
     if (oldImage) {
+      // Delete from Supabase Storage only
       if (oldImage.includes('supabase') || oldImage.startsWith('http')) {
         await deleteFromStorage(oldImage).catch(() => {});
       } else if (oldImage.startsWith('/uploads/')) {
-        const oldPath = join(__dirname, '..', 'public', oldImage);
-        if (existsSync(oldPath)) await fs.unlink(oldPath).catch(() => {});
+        // Legacy path - try to delete from Supabase Storage
+        const pathParts = oldImage.replace(/^\/uploads\//, '').split('/');
+        if (pathParts.length >= 2) {
+          const folder = pathParts[0];
+          const filename = pathParts.slice(1).join('/');
+          await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
+        }
       }
     }
     const imageUrl = await resolveFileUrl(req.file, 'department-hero');
@@ -1571,13 +1559,18 @@ app.post('/api/department-pages/:slug/curriculum', authenticateToken, (req, res,
 
     const existingReg = programEntry.regulations.find(r => r.name === regulationName);
     if (existingReg) {
-      // Update file for existing regulation (delete old file from storage)
+      // Update file for existing regulation (delete old file from Supabase Storage)
       if (existingReg.fileUrl) {
         if (existingReg.fileUrl.includes('supabase') || existingReg.fileUrl.startsWith('http')) {
           await deleteFromStorage(existingReg.fileUrl).catch(() => {});
         } else if (existingReg.fileUrl.startsWith('/uploads/')) {
-          const oldPath = join(__dirname, '..', 'public', existingReg.fileUrl);
-          if (existsSync(oldPath)) fs.unlink(oldPath).catch(() => {});
+          // Legacy path - try to delete from Supabase Storage
+          const pathParts = existingReg.fileUrl.replace(/^\/uploads\//, '').split('/');
+          if (pathParts.length >= 2) {
+            const folder = pathParts[0];
+            const filename = pathParts.slice(1).join('/');
+            await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
+          }
         }
       }
       existingReg.fileUrl = fileUrl;
@@ -1624,14 +1617,17 @@ app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authen
 
     const regulation = programEntry.regulations[regulationIndex];
     
-    // Delete the file if it exists
+    // Delete the file from Supabase Storage
     if (regulation.fileUrl) {
       if (regulation.fileUrl.includes('supabase') || regulation.fileUrl.startsWith('http')) {
         await deleteFromStorage(regulation.fileUrl).catch(() => {});
       } else if (regulation.fileUrl.startsWith('/uploads/')) {
-        const filePath = join(__dirname, '..', 'public', regulation.fileUrl);
-        if (existsSync(filePath)) {
-          await fs.unlink(filePath).catch(() => {});
+        // Legacy path - try to delete from Supabase Storage
+        const pathParts = regulation.fileUrl.replace(/^\/uploads\//, '').split('/');
+        if (pathParts.length >= 2) {
+          const folder = pathParts[0];
+          const filename = pathParts.slice(1).join('/');
+          await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
         }
       }
     }

@@ -106,10 +106,26 @@ const HeroSection = () => {
 
   // Auto-advance slides
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || heroSlides.length === 0) return;
     
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => {
+        const next = (prev + 1) % heroSlides.length;
+        // Preload next video when slide changes (deferred)
+        setTimeout(() => {
+          const nextVideo = videoRefs.current[next];
+          if (nextVideo) {
+            const deferredSource = nextVideo.querySelector('source[data-src]');
+            if (deferredSource) {
+              deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+              deferredSource.removeAttribute('data-src');
+              nextVideo.preload = 'metadata';
+              nextVideo.load();
+            }
+          }
+        }, 1000); // Delay preload to avoid blocking
+        return next;
+      });
     }, 8000); // 8 seconds per slide
     
     return () => clearInterval(interval);
@@ -123,14 +139,63 @@ const HeroSection = () => {
   };
 
   // Play current hero video immediately when intro ends (avoids black gap)
+  // Load deferred video sources when slide becomes active
   useEffect(() => {
     const onIntroComplete = () => {
       const video = videoRefs.current[currentSlide];
-      if (video) video.play().catch(() => {});
+      if (video) {
+        // Load deferred video source if present
+        const deferredSource = video.querySelector('source[data-src]');
+        if (deferredSource) {
+          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+          deferredSource.removeAttribute('data-src');
+          video.load();
+        }
+        video.play().catch(() => {});
+      }
     };
+    
+    // Load deferred video source when slide becomes active
+    const loadCurrentVideo = () => {
+      const video = videoRefs.current[currentSlide];
+      if (video) {
+        const deferredSource = video.querySelector('source[data-src]');
+        if (deferredSource) {
+          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+          deferredSource.removeAttribute('data-src');
+          video.load();
+        }
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      }
+    };
+    
+    // Preload next video (one ahead) for smoother transitions
+    const preloadNextVideo = () => {
+      const nextIndex = (currentSlide + 1) % heroSlides.length;
+      const nextVideo = videoRefs.current[nextIndex];
+      if (nextVideo && nextIndex !== currentSlide) {
+        const deferredSource = nextVideo.querySelector('source[data-src]');
+        if (deferredSource) {
+          // Only preload metadata, not full video
+          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+          deferredSource.removeAttribute('data-src');
+          nextVideo.preload = 'metadata';
+          nextVideo.load();
+        }
+      }
+    };
+    
     window.addEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
-    return () => window.removeEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
-  }, [currentSlide]);
+    loadCurrentVideo();
+    // Delay preload to avoid blocking initial load
+    setTimeout(preloadNextVideo, 2000);
+    
+    return () => {
+      window.removeEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
+    };
+  }, [currentSlide, heroSlides.length]);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -212,29 +277,54 @@ const HeroSection = () => {
                 index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
             >
-              {/* Video or GIF Background */}
+              {/* Video or GIF Background - Optimized for LCP */}
               {slide.type === 'video' ? (
                 unsupportedVideoSlides.has(index) ? (
                   <img
                     src={slide.poster}
                     alt={slide.title}
                     className="w-full h-full object-cover"
+                    width={1920}
+                    height={1080}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    decoding="async"
                   />
                 ) : (
                   <video
-                    ref={(el) => { videoRefs.current[index] = el; }}
+                    ref={(el) => { 
+                      videoRefs.current[index] = el;
+                      // Load deferred video sources when video element is ready
+                      if (el && index > 0) {
+                        const deferredSource = el.querySelector('source[data-src]');
+                        if (deferredSource && index === currentSlide) {
+                          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+                          deferredSource.removeAttribute('data-src');
+                          el.load();
+                        }
+                      }
+                    }}
                     className="w-full h-full object-cover bg-black"
-                    autoPlay
+                    autoPlay={index === currentSlide}
                     muted
                     loop
                     playsInline
-                    preload="auto"
+                    preload={index === 0 ? "metadata" : "none"}
+                    width={1920}
+                    height={1080}
                     onError={() =>
                       setUnsupportedVideoSlides((prev) => new Set(prev).add(index))
                     }
                   >
-                    <source src={slide.src} type="video/mp4" />
-                    <source src={slide.src.replace('.mp4', '.webm')} type="video/webm" />
+                    {/* Only load first video source eagerly, defer others until slide becomes active */}
+                    {index === 0 ? (
+                      <>
+                        <source src={slide.src} type="video/mp4" />
+                        <source src={slide.src.replace('.mp4', '.webm')} type="video/webm" />
+                      </>
+                    ) : (
+                      <source data-src={slide.src} type="video/mp4" data-deferred="true" />
+                    )}
                   </video>
                 )
               ) : (
@@ -242,6 +332,11 @@ const HeroSection = () => {
                   src={slide.src}
                   alt={slide.title}
                   className="w-full h-full object-cover"
+                  width={1920}
+                  height={1080}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
                   onError={(e) => {
                     // Fallback to poster if GIF fails to load
                     const target = e.target as HTMLImageElement;
@@ -355,7 +450,16 @@ const HeroSection = () => {
               >
                 EXPLORE YOUR PATH
               </h2>
-              <img src="/footprints-direction-sketch.png" alt="" className="h-10 md:h-12 lg:h-14 w-auto object-contain hidden sm:block" />
+              <img 
+                src="/footprints-direction-sketch.png" 
+                alt="" 
+                className="h-10 md:h-12 lg:h-14 w-auto object-contain hidden sm:block"
+                width={56}
+                height={56}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="auto"
+              />
             </div>
             <div className="flex flex-wrap gap-3">
               <button

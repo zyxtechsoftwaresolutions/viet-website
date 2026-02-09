@@ -530,9 +530,13 @@ export interface VibeAtVietItem {
 
 export const vibeAtVietAPI = {
   getAll: (): Promise<VibeAtVietItem[]> => apiCall('/vibe-at-viet'),
-  create: async (imageFile: File, videoFile: File | null, caption: string, position: number = 1, videoLink?: string) => {
+  create: async (imageFile: File | null, videoFile: File | null, caption: string, position: number = 1, videoLink?: string, imageLink?: string) => {
     const formData = new FormData();
-    formData.append('image', imageFile);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    } else if (imageLink && imageLink.trim()) {
+      formData.append('imageLink', imageLink.trim());
+    }
     formData.append('uploadType', 'vibe-at-viet');
     formData.append('caption', caption);
     formData.append('position', String(Math.max(1, Math.min(12, position))));
@@ -553,12 +557,20 @@ export const vibeAtVietAPI = {
     }
     return response.json();
   },
-  update: async (id: number, payload: { imageFile?: File; videoFile?: File; videoLink?: string | null; caption?: string; order?: number }) => {
+  update: async (id: number, payload: { imageFile?: File; imageLink?: string | null; videoFile?: File; videoLink?: string | null; caption?: string; order?: number }) => {
     const formData = new FormData();
     formData.append('uploadType', 'vibe-at-viet');
     if (payload.caption !== undefined) formData.append('caption', payload.caption);
     if (payload.order !== undefined) formData.append('order', String(payload.order));
-    if (payload.imageFile) formData.append('image', payload.imageFile);
+    if (payload.imageFile) {
+      formData.append('image', payload.imageFile);
+    } else if (payload.imageLink !== undefined) {
+      if (payload.imageLink === null) {
+        formData.append('imageLink', ''); // Clear image
+      } else if (payload.imageLink.trim()) {
+        formData.append('imageLink', payload.imageLink.trim());
+      }
+    }
     if (payload.videoFile) {
       formData.append('video', payload.videoFile);
     } else if (payload.videoLink !== undefined) {

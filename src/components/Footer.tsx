@@ -43,7 +43,16 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-6">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <img src="/logo-viet.png" alt="VIET Logo" className="w-6 h-6 object-contain" />
+                <img 
+                  src="/logo-viet.png" 
+                  alt="VIET Logo" 
+                  className="w-6 h-6 object-contain"
+                  width={24}
+                  height={24}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="auto"
+                />
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">VIET</div>

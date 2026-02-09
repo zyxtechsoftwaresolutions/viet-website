@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Megaphone } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import { eventsAPI } from '@/lib/api';
 
 interface Event {
@@ -31,19 +31,34 @@ const AnnouncementsNewsEventsSection = () => {
     Record<number, { days: number; hours: number; minutes: number; seconds: number }>
   >({});
 
+  // Defer API call until component is in viewport (intersection observer)
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const eventsData = await eventsAPI.getAll().catch(() => []);
-        setEvents(eventsData);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    if (!ref.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const fetchData = async () => {
+            try {
+              const eventsData = await eventsAPI.getAll().catch(() => []);
+              setEvents(eventsData);
+            } catch (error) {
+              console.error('Error fetching events:', error);
+              setEvents([]);
+            } finally {
+              setLoading(false);
+            }
+          };
+          fetchData();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' } // Start loading 200px before section enters viewport
+    );
+    
+    observer.observe(ref.current);
+    
+    return () => observer.disconnect();
   }, []);
 
   const calculateCountdown = (eventDate: string, eventTime: string) => {
@@ -209,6 +224,11 @@ const AnnouncementsNewsEventsSection = () => {
                     src={latestEventImageUrl}
                     alt={latestEvent?.title ?? 'Latest event'}
                     className="h-full w-full object-cover"
+                    width={800}
+                    height={450}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="high"
                   />
                 </div>
               )}
@@ -318,6 +338,11 @@ const AnnouncementsNewsEventsSection = () => {
                                   src={card.image}
                                   alt={card.title}
                                   className="h-full w-full object-cover"
+                                  width={400}
+                                  height={300}
+                                  loading="lazy"
+                                  decoding="async"
+                                  fetchPriority="auto"
                                 />
                               ) : (
                                 <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-muted-foreground">
@@ -354,47 +379,6 @@ const AnnouncementsNewsEventsSection = () => {
           </div>
         </div>
       </div>
-
-      {/* Floating button - scroll to Happenings */}
-      <motion.div
-        className="fixed bottom-24 right-6 z-50"
-        initial={{ opacity: 0, scale: 0, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut', delay: 0.2 }}
-      >
-        <motion.button
-          onClick={() => {
-            const el = document.getElementById('happenings');
-            if (el) {
-              const headerHeight = 32 + (window.scrollY > 50 ? 80 : 96);
-              const offset = el.offsetTop - headerHeight - 40;
-              window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
-            }
-          }}
-          className="relative w-14 h-14 rounded-full glass backdrop-blur-xl border border-white/20 hover-glow group cursor-pointer overflow-hidden"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-        >
-          <div className="absolute inset-0 bg-gradient-primary opacity-90 rounded-full" />
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Megaphone className="w-5 h-5 text-white drop-shadow-lg" />
-          </motion.div>
-          <div className="absolute inset-0 rounded-full bg-gradient-primary opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
-        </motion.button>
-        <motion.div
-          className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-foreground/90 text-background text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-          initial={{ opacity: 0, y: 5 }}
-          whileHover={{ opacity: 1, y: -2 }}
-        >
-          Happenings
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-foreground/90" />
-        </motion.div>
-      </motion.div>
       </section>
     </>
   );

@@ -167,7 +167,16 @@ const LeaderPageBar = ({ backHref = '/about' }: LeaderPageBarProps) => {
                 onClick={() => { handleNav('/'); setIsMenuOpen(false); }}
                 className="focus:outline-none focus:ring-2 focus:ring-white/30 rounded"
               >
-                <img src="/viet-logo-new.png" alt="VIET" className="h-10 w-auto" />
+                <img 
+                  src="/viet-logo-new.png" 
+                  alt="VIET" 
+                  className="h-10 w-auto"
+                  width={120}
+                  height={40}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                />
               </button>
               <motion.button
                 onClick={() => setIsMenuOpen(false)}
