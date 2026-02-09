@@ -1,0 +1,44 @@
+{
+  "hods": [
+    {
+      "id": 1764665937401,
+      "name": "Dr. Kannam Naidu Cheepurupalli",
+      "designation": "HOD & Professor",
+      "qualification": "MTech., PhD",
+      "email": "kannamarp@gmail.com",
+      "phone": "",
+      "experience": "23 years",
+      "department": "ENGINEERING UG - Civil Engineering (CIV)",
+      "image": "/uploads/hods/image-1764668508795-657117304.jpg",
+      "createdAt": "2025-12-02T08:58:57.401Z",
+      "updatedAt": "2025-12-02T09:41:48.806Z"
+    },
+    {
+      "id": 1764668739717,
+      "name": "Dr. A S C Tejaswini Kone",
+      "designation": "HOD & Professor",
+      "qualification": "MTech., PhD",
+      "email": "t@gmail.com",
+      "phone": "8309935755",
+      "experience": "12 years",
+      "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
+      "image": "/uploads/hods/image-1770105983777-21588323.jpg",
+      "resume": null,
+      "createdAt": "2025-12-02T09:45:39.717Z",
+      "updatedAt": "2026-02-03T13:43:16.636Z"
+    },
+    {
+      "id": 1770134307189,
+      "name": "Dr. G. SITARATNAM ",
+      "designation": "HOD & Professor",
+      "qualification": "MTech., PhD",
+      "email": "xyz@gmail.com",
+      "phone": "9999999999",
+      "experience": "06 years",
+      "department": "ENGINEERING UG - CSE DataScience (CSD)",
+      "image": null,
+      "resume": null,
+      "createdAt": "2026-02-03T15:58:27.189Z"
+    }
+  ]
+}

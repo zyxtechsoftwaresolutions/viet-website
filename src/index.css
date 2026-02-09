@@ -1,0 +1,711 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Section title font - Firlest loaded via CDN in index.html */
+.font-firlest {
+  font-family: 'Firlest', sans-serif !important;
+}
+
+/* Poppins for leader page message and body text */
+.font-poppins {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Modern College Website Design System - Premium Colors & Effects */
+
+@layer base {
+  :root {
+    /* Core Background & Text */
+    --background: 0 0% 100%;
+    --foreground: 220 30% 8%;
+
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 8%;
+
+    /* Popover System */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 8%;
+
+    /* Primary Brand - #E1731A */
+    --primary: 27 79% 49%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 27 79% 58%;
+
+    /* Secondary - Elegant Gray */
+    --secondary: 210 15% 95%;
+    --secondary-foreground: 220 30% 8%;
+
+    /* Muted Tones */
+    --muted: 210 15% 95%;
+    --muted-foreground: 220 15% 45%;
+
+    /* Accent - Innovation Purple */
+    --accent: 260 75% 35%;
+    --accent-foreground: 0 0% 98%;
+    --accent-glow: 260 75% 55%;
+
+    /* Status Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* UI Elements */
+    --border: 210 15% 90%;
+    --input: 210 15% 95%;
+    --ring: 27 79% 49%;
+
+    /* Design Tokens */
+    --radius: 12px;
+
+    /* Premium Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(27 79% 49%), hsl(260 75% 35%));
+    --gradient-secondary: linear-gradient(180deg, hsl(210 15% 98%), hsl(210 15% 95%));
+    --gradient-hero: linear-gradient(135deg, hsl(27 79% 49%) 0%, hsl(260 75% 35%) 50%, hsl(280 70% 45%) 100%);
+    --gradient-accent: linear-gradient(45deg, hsl(260 75% 35%), hsl(280 70% 45%));
+
+    /* Shadow System */
+    --shadow-sm: 0 2px 4px hsl(220 30% 8% / 0.04);
+    --shadow-md: 0 4px 12px hsl(220 30% 8% / 0.08);
+    --shadow-lg: 0 8px 24px hsl(220 30% 8% / 0.12);
+    --shadow-xl: 0 16px 48px hsl(220 30% 8% / 0.16);
+    --shadow-glow: 0 0 32px hsl(27 79% 58% / 0.3);
+    --shadow-accent-glow: 0 0 32px hsl(260 75% 55% / 0.25);
+
+    /* Animation Durations */
+    --transition-fast: 0.15s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
+    --transition-cinematic: 0.8s;
+
+    /* Spacing Scale */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --spacing-2xl: 4rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    scroll-behavior: smooth;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Themed Minimal Scrollbars (WebKit + Firefox) */
+/* Applies globally and inherits design tokens for light/dark */
+html {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: hsl(var(--ring)) hsl(var(--muted)); /* thumb track */
+}
+
+/* WebKit Browsers */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+  border: 2px solid transparent; /* creates inset look */
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--ring));
+}
+
+@layer components {
+  /* Hero Section Styles */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-accent {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Pirata One font for HAPPENINGS */
+  .font-pirata {
+    font-family: 'Pirata One', sans-serif !important;
+  }
+
+  /* Glass Morphism Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Leader Page Bar - Ensure no blue tint when scrolled */
+  .leader-page-bar-scrolled {
+    background-color: #1e293b !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-image: none !important;
+  }
+
+  /* Kinetic Typography Animation */
+  .kinetic-text {
+    display: inline-block;
+    animation: kinetic-float 3s ease-in-out infinite;
+  }
+
+  .kinetic-text:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .kinetic-text:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  /* Hover Glow Effects */
+  .hover-glow {
+    transition: all var(--transition-normal) ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+  }
+
+  .hover-glow-accent {
+    transition: all var(--transition-normal) ease;
+  }
+
+  .hover-glow-accent:hover {
+    box-shadow: var(--shadow-accent-glow);
+    transform: translateY(-2px);
+  }
+
+  /* Scroll Reveal Animations */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all var(--transition-cinematic) ease;
+  }
+
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .scroll-reveal-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all var(--transition-cinematic) ease;
+  }
+
+  .scroll-reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .scroll-reveal-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all var(--transition-cinematic) ease;
+  }
+
+  .scroll-reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Parallax Elements */
+  .parallax {
+    will-change: transform;
+  }
+
+  /* Hide Scrollbar Utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Interactive Cards */
+  .interactive-card {
+    transition: all var(--transition-normal) ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .interactive-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left var(--transition-slow) ease;
+  }
+
+  .interactive-card:hover::before {
+    left: 100%;
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Enhanced Department Cards */
+  .department-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+  }
+
+  .department-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.6s ease;
+    z-index: 10;
+  }
+
+  .department-card:hover::before {
+    left: 100%;
+  }
+
+  .department-card:hover {
+    transform: translateY(-12px) scale(1.03) rotateX(2deg);
+    box-shadow: 
+      var(--shadow-xl),
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .department-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .department-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Removed ribbon angled ends per design choice */
+}
+
+@keyframes kinetic-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(27 79% 58% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(27 79% 58% / 0.6);
+  }
+}
+
+@keyframes text-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.animate-text-blink {
+  animation: text-blink 1s ease-in-out infinite;
+}
+
+/* Liquid Fill Button Animation - Amrita Style */
+.liquid-fill-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-fill-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: currentColor;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.liquid-fill-btn:hover::before {
+  height: 100%;
+}
+
+.liquid-fill-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Liquid Fill Outline Button */
+.liquid-fill-outline {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #E1731A;
+  background: transparent;
+  color: #E1731A;
+  transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-fill-outline::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: #E1731A;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.liquid-fill-outline:hover {
+  color: white;
+}
+
+.liquid-fill-outline:hover::before {
+  height: 100%;
+}
+
+.liquid-fill-outline > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Liquid Fill Solid Button (Reverse) */
+.liquid-fill-solid {
+  position: relative;
+  overflow: hidden;
+  background: #E1731A;
+  color: white;
+  transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-fill-solid::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: white;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.liquid-fill-solid:hover {
+  color: #E1731A;
+}
+
+.liquid-fill-solid:hover::before {
+  height: 100%;
+}
+
+.liquid-fill-solid > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Interest Category Card Hover */
+.interest-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interest-card:hover {
+  background-color: rgba(10, 25, 47, 0.03);
+  transform: translateY(-2px);
+}
+
+.interest-card:hover .interest-icon {
+  transform: scale(1.1);
+}
+
+.interest-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Orange bg image for news/happenings sections – minimal blur */
+.glossy-green-texture {
+  position: relative;
+}
+.glossy-green-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url('/stamp.png') center center / cover no-repeat;
+}
+.glossy-green-texture > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Vibe@VIET Section - Life@Amrita Style */
+.vibe-gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+}
+
+.vibe-gallery-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(0px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.vibe-gallery-item:hover::after {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.vibe-gallery-item img {
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vibe-gallery-item:hover img {
+  transform: scale(1.08);
+}
+
+.vibe-gallery-item iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 177.78%;
+  height: 177.78%;
+  min-width: 100%;
+  min-height: 100%;
+  border: none;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.vibe-gallery-item:hover iframe {
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.vibe-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.25rem;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.vibe-gallery-item:hover .vibe-caption {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Video Hero Section - Amrita Style */
+.video-hero-container {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 768px) {
+  .video-hero-container {
+    border-radius: 2rem;
+  }
+}
+
+.video-hero-container video,
+.video-hero-container img {
+  transition: transform 0.8s ease-out;
+}
+
+.video-hero-container:hover video,
+.video-hero-container:hover img {
+  transform: scale(1.02);
+}
+
+/* Hero Navigation Dots Animation */
+.hero-nav-dot {
+  transition: all 0.3s ease;
+}
+
+.hero-nav-dot.active {
+  width: 2rem;
+}
+
+
+/* Hero Slide Content Animation */
+.hero-slide-content {
+  animation: heroFadeIn 0.8s ease-out forwards;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* About Us page text wrapping around Rankings */
+@media (min-width: 768px) {
+  /* Spacer to control when text wraps below rankings (400px rankings height - ~13 lines of text at 1.75rem line-height) */
+  .rankings-spacer {
+    height: calc(400px - (1.75rem * 13));
+    width: 1px;
+    float: right;
+    clear: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .rankings-spacer {
+    display: none;
+  }
+}

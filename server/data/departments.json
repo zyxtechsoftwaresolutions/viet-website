@@ -1,0 +1,212 @@
+{
+  "departments": [
+    {
+      "id": 1,
+      "name": "DIPLOMA - Agriculture Engineering",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/civil-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "DIPLOMA - Civil Engineering",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/civil-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "DIPLOMA - Computer Science Engineering",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "name": "DIPLOMA - ECE",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/ece-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "name": "DIPLOMA - EEE",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/eee-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "name": "DIPLOMA - Mechanical Engineering",
+      "stream": "DIPLOMA",
+      "level": "Diploma",
+      "image": "/assets/mechanical-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 7,
+      "name": "ENGINEERING UG - Automobile Engineering (AME)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/mechanical-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "name": "ENGINEERING UG - Basic Science and Humanities (BS&H)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/management-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 9,
+      "name": "ENGINEERING UG - Civil Engineering (CIV)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/civil-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 10,
+      "name": "ENGINEERING UG - Computer Science and Engineering (CSE)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 11,
+      "name": "ENGINEERING UG - CSE DataScience (CSD)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 12,
+      "name": "ENGINEERING UG - CSE CyberSecurity (CSC)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 13,
+      "name": "ENGINEERING UG - CSE MachineLearning (CSM)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 14,
+      "name": "ENGINEERING UG - Electronics and Communication Engineering (ECE)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/ece-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "name": "ENGINEERING UG - Electrical and Electronics Engineering (EEE)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/eee-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 16,
+      "name": "ENGINEERING UG - Mechanical Engineering (Mech)",
+      "stream": "ENGINEERING",
+      "level": "UG",
+      "image": "/assets/mechanical-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 17,
+      "name": "ENGINEERING PG - CAD/CAM",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/mechanical-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 18,
+      "name": "ENGINEERING PG - Computer Science and Engineering (CSE)",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 19,
+      "name": "ENGINEERING PG - Power Systems",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/eee-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 20,
+      "name": "ENGINEERING PG - Structural Engineering",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/civil-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 21,
+      "name": "ENGINEERING PG - Thermal Engineering",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/mechanical-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 22,
+      "name": "ENGINEERING PG - VLSI and Embedded Systems",
+      "stream": "ENGINEERING",
+      "level": "PG",
+      "image": "/assets/ece-department.svg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 23,
+      "name": "MANAGEMENT UG - BBA",
+      "stream": "MANAGEMENT",
+      "level": "UG",
+      "image": "/assets/management-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 24,
+      "name": "MANAGEMENT UG - BCA",
+      "stream": "MANAGEMENT",
+      "level": "UG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 25,
+      "name": "MANAGEMENT PG - MBA",
+      "stream": "MANAGEMENT",
+      "level": "PG",
+      "image": "/assets/management-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 26,
+      "name": "MANAGEMENT PG - MCA",
+      "stream": "MANAGEMENT",
+      "level": "PG",
+      "image": "/assets/cse-department.jpg",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    }
+  ]
+}

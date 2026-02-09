@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250" fill="none">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="400" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B91C1C"/>
+      <stop offset="0.5" stop-color="#7F1D1D"/>
+      <stop offset="1" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#FDE68A"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="250" fill="url(#bg1)" rx="8"/>
+  <rect width="400" height="250" fill="url(#gold)" fill-opacity="0.15" rx="8"/>
+  <text x="200" y="115" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="22" font-weight="bold">NEW YEAR</text>
+  <text x="200" y="145" text-anchor="middle" fill="url(#gold)" font-family="system-ui, sans-serif" font-size="28" font-weight="bold">CELEBRATIONS 2K26</text>
+  <text x="200" y="195" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-family="system-ui, sans-serif" font-size="14">Ring in the New Year with VIET</text>
+</svg>

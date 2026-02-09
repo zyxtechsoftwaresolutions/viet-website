@@ -1,0 +1,50 @@
+{
+  "images": [
+    {
+      "id": 1,
+      "src": "/uploads/carousel/image-1765460423751-248460627.jpg",
+      "title": "WELCOME TO VIET",
+      "subtitle": "Your Gateway to Excellence",
+      "createdAt": "2025-01-15T00:00:00.000Z",
+      "uploadType": "carousel",
+      "updatedAt": "2025-12-11T13:40:23.762Z"
+    },
+    {
+      "id": 2,
+      "src": "/uploads/carousel/image-1765460500406-52326603.jpg",
+      "title": "",
+      "subtitle": "",
+      "createdAt": "2025-01-15T00:00:00.000Z",
+      "uploadType": "carousel",
+      "updatedAt": "2025-12-11T13:41:40.414Z"
+    },
+    {
+      "id": 3,
+      "src": "/assets/carousel-3.jpg",
+      "title": "",
+      "subtitle": "",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "src": "/assets/carousel-4.jpg",
+      "title": "",
+      "subtitle": "",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "src": "/assets/carousel-5.jpg",
+      "title": "",
+      "subtitle": "",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "src": "/assets/carousel-6.jpg",
+      "title": "",
+      "subtitle": "",
+      "createdAt": "2025-01-15T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f3d91"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g)"/>
+  <g opacity="0.25">
+    <circle cx="200" cy="150" r="140" fill="#ffffff"/>
+    <circle cx="1050" cy="250" r="90" fill="#ffffff"/>
+    <circle cx="600" cy="700" r="120" fill="#ffffff"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(300,220) scale(1.1)">
+    <path d="M100 260 L200 120 L160 120 L260 -20 L220 -20 L320 -160"/>
+    <path d="M360 200 h140"/>
+    <circle cx="360" cy="200" r="18"/>
+    <circle cx="500" cy="200" r="18"/>
+  </g>
+  <text x="60" y="720" font-family="'Segoe UI', Roboto, Arial" font-size="56" font-weight="700" fill="#ffffff" opacity="0.95">
+    Electrical & Electronics Engineering (EEE)
+  </text>
+  <text x="60" y="760" font-family="'Segoe UI', Roboto, Arial" font-size="24" fill="#ffffff" opacity="0.8">
+    Power Systems • Control • Embedded & Automation
+  </text>
+</svg>
+
+
+

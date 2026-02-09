@@ -1,0 +1,19 @@
+{
+  "routes": [
+    {
+      "id": 1769844156075,
+      "name": "BUS 1",
+      "from": "KOMMADI Jn",
+      "to": "VIET Campus, Narava",
+      "stops": 10,
+      "time": "90min",
+      "frequency": "Morning & Evening",
+      "busNo": "AP39WG2935",
+      "driverName": "NAIDU",
+      "driverContactNo": "9966999666",
+      "seatingCapacity": 29,
+      "image": "/uploads/transport-routes/image-1769844156070-748341754.jpg",
+      "createdAt": "2026-01-31T07:22:36.075Z"
+    }
+  ]
+}

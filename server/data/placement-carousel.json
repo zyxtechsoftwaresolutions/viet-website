@@ -1,0 +1,46 @@
+{
+  "images": [
+    {
+      "id": 1770272130663,
+      "src": "/uploads/placement-carousel/image-1770272130646-489715994.jpeg",
+      "title": "PLACEMENT DRIVE 2K26",
+      "subtitle": "Our Students with Recruiter",
+      "createdAt": "2026-02-05T06:15:30.663Z"
+    },
+    {
+      "id": 1770272200915,
+      "src": "/uploads/placement-carousel/image-1770272200837-147661778.png",
+      "title": "PLACEMENT DRIVE 2K26",
+      "subtitle": "AMAZON rEcruiting company",
+      "createdAt": "2026-02-05T06:16:40.915Z"
+    },
+    {
+      "id": 1770272238316,
+      "src": "/uploads/placement-carousel/image-1770272237803-147933422.JPG",
+      "title": "PLACEMENT DRIVE 2K26",
+      "subtitle": "Students with Placement giving speech",
+      "createdAt": "2026-02-05T06:17:18.316Z"
+    },
+    {
+      "id": 1770353983703,
+      "src": "/uploads/placement-carousel/image-1770353983455-598618462.JPG",
+      "title": "Prasanna Kumar",
+      "subtitle": "AMAZON, 12LPA",
+      "createdAt": "2026-02-06T04:59:43.703Z"
+    },
+    {
+      "id": 1770354013847,
+      "src": "/uploads/placement-carousel/image-1770354013601-469093724.JPG",
+      "title": "SOKULADI",
+      "subtitle": "TCS,1LPA",
+      "createdAt": "2026-02-06T05:00:13.847Z"
+    },
+    {
+      "id": 1770354053799,
+      "src": "/uploads/placement-carousel/image-1770354053796-857639936.jpg",
+      "title": "CHAIRMAN",
+      "subtitle": "VIET,$$$",
+      "createdAt": "2026-02-06T05:00:53.799Z"
+    }
+  ]
+}

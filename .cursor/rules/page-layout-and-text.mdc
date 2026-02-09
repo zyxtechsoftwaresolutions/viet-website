@@ -1,0 +1,34 @@
+---
+description: Page layout and text alignment — match Chairman page spacing; no center-aligned content; left-aligned, well-formatted text
+globs: "**/pages/**/*.tsx"
+alwaysApply: false
+---
+
+# Page layout and text alignment
+
+**Default for every new page:** Use Chairman-style spacing and left-aligned content. Do not center-align body matter. Apply these rules by default when creating or editing any page—no need to be asked.
+
+When building or redesigning pages (Chairman, Principal, CSE department, facilities, leader or content pages), **use the same spacing as the Chairman page** and keep text **left-aligned** (content matter must not be center-aligned).
+
+## Spacing (match Chairman page exactly)
+
+Use these container and section classes so content occupies more width and layout is consistent:
+
+- **Hero section:** `container mx-auto px-4 md:px-8` — no `max-w-*` so content uses full container width.
+- **Content sections (main body):** `container mx-auto px-4 md:px-10 lg:px-12` — reduced left/right spacing so text is wider. **Do not** add `max-w-5xl` or `max-w-6xl`; leave container full width.
+- **Section vertical padding:** `py-20 md:py-28` for main content sections (same as Chairman message/quote sections).
+
+Reference: `src/pages/Chairman.tsx` — hero uses `px-4 md:px-8`, content uses `px-4 md:px-10 lg:px-12` and sections use `py-20 md:py-28`.
+
+## Do NOT center-align main content
+
+- Body text and prose must be **left-aligned**. Avoid `text-center` for paragraphs, lists, and multi-line content.
+- Use `text-center` only for short, intentional elements (e.g. a single CTA, or a number in a stat pill).
+- Headings and section titles: **left-aligned** unless a design explicitly requires a centered hero title.
+
+## Text format and alignment
+
+- Text: **left-aligned**, clear hierarchy (section label → title → body), consistent spacing.
+- Cards with icon + body: **left-aligned text**; icon and title left-aligned (no `mx-auto` on content).
+
+Apply this to all page redesigns and new pages so spacing and alignment match Chairman and text stays wide and readable.

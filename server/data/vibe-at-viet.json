@@ -1,0 +1,112 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "image": "/uploads/vibe-at-viet/image-1770266853194-600870575.JPG",
+      "video": null,
+      "caption": "Manoj Anchoring and rocking the stage",
+      "order": 0,
+      "createdAt": "2026-02-05T04:47:33.413Z",
+      "updatedAt": "2026-02-05T04:47:33.413Z"
+    },
+    {
+      "id": 2,
+      "image": "/uploads/vibe-at-viet/image-1770266996703-74224076.JPG",
+      "video": null,
+      "caption": "Satish and Jaggu rocking the stage with their Dance Performance",
+      "order": 1,
+      "createdAt": "2026-02-05T04:49:56.967Z",
+      "updatedAt": "2026-02-05T04:49:56.967Z"
+    },
+    {
+      "id": 3,
+      "image": "/uploads/vibe-at-viet/image-1770267037904-283706636.JPG",
+      "video": null,
+      "caption": "Prasanna Singing in his ICONIC style",
+      "order": 2,
+      "createdAt": "2026-02-05T04:50:38.150Z",
+      "updatedAt": "2026-02-05T04:50:38.150Z"
+    },
+    {
+      "id": 4,
+      "image": "/uploads/vibe-at-viet/image-1770267103238-400545506.jpeg",
+      "video": null,
+      "caption": "ONETAP Team outstanding their skills at RTIH",
+      "order": 3,
+      "createdAt": "2026-02-05T04:51:43.244Z",
+      "updatedAt": "2026-02-05T04:51:43.244Z"
+    },
+    {
+      "id": 5,
+      "image": "/uploads/vibe-at-viet/image-1770267163401-629472680.png",
+      "video": "/uploads/vibe-at-viet/video-1770267163455-291189379.mp4",
+      "caption": "CSE FEST Performance",
+      "order": 4,
+      "createdAt": "2026-02-05T04:52:43.742Z",
+      "updatedAt": "2026-02-05T04:52:43.742Z"
+    },
+    {
+      "id": 6,
+      "image": "/uploads/vibe-at-viet/image-1770267275411-195464951.jpeg",
+      "video": null,
+      "caption": "Team ONETAP ORBIT at VIEW Campus Hackathon",
+      "order": 5,
+      "createdAt": "2026-02-05T04:54:35.414Z",
+      "updatedAt": "2026-02-05T04:54:35.414Z"
+    },
+    {
+      "id": 7,
+      "image": "/uploads/vibe-at-viet/image-1770267315176-698771094.png",
+      "video": "/uploads/vibe-at-viet/video-1770267315215-437524908.mp4",
+      "caption": "AURA fest Classical Dance Glimpse",
+      "order": 6,
+      "createdAt": "2026-02-05T04:55:16.476Z",
+      "updatedAt": "2026-02-05T04:55:45.257Z"
+    },
+    {
+      "id": 8,
+      "image": "/uploads/vibe-at-viet/image-1770267477786-199762695.jpeg",
+      "video": null,
+      "caption": "Team ONETAP ORBIT at VIEW Campus Hackathon",
+      "order": 7,
+      "createdAt": "2026-02-05T04:57:57.791Z",
+      "updatedAt": "2026-02-05T04:57:57.791Z"
+    },
+    {
+      "id": 9,
+      "image": "/uploads/vibe-at-viet/image-1770267570093-566952684.png",
+      "video": null,
+      "caption": "Diploma Students Mesmerizes the audience with their act",
+      "order": 8,
+      "createdAt": "2026-02-05T04:59:30.123Z",
+      "updatedAt": "2026-02-05T04:59:43.563Z"
+    },
+    {
+      "id": 10,
+      "image": "/uploads/vibe-at-viet/image-1770267634546-949661054.png",
+      "video": "/uploads/vibe-at-viet/video-1770267634573-906703536.mp4",
+      "caption": "AURA fest Flasmob Dance Glimpse",
+      "order": 9,
+      "createdAt": "2026-02-05T05:00:35.288Z",
+      "updatedAt": "2026-02-05T05:00:35.288Z"
+    },
+    {
+      "id": 11,
+      "image": "/uploads/vibe-at-viet/image-1770267716984-213486198.png",
+      "video": "/uploads/vibe-at-viet/video-1770267717017-533229442.mp4",
+      "caption": "AURA fest Flasmob Dance Glimpse",
+      "order": 10,
+      "createdAt": "2026-02-05T05:01:58.758Z",
+      "updatedAt": "2026-02-05T05:01:58.758Z"
+    },
+    {
+      "id": 12,
+      "image": "/uploads/vibe-at-viet/image-1770267780592-115734882.png",
+      "video": "https://youtube.com/shorts/Ny_4YaMzbPE?si=4-P25MJLmhvMdlSQ",
+      "caption": "AURA fest Flasmob Dance Glimpse",
+      "order": 11,
+      "createdAt": "2026-02-05T05:03:00.793Z",
+      "updatedAt": "2026-02-06T06:17:53.997Z"
+    }
+  ]
+}

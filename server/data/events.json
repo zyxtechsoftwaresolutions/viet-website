@@ -1,0 +1,58 @@
+{
+  "events": [
+    {
+      "id": 1763547049745,
+      "title": "CSE HACKATHON 2K26",
+      "description": "HUHJUGX",
+      "date": "2026-01-29",
+      "time": "09:00",
+      "location": "SEMINAR HALL",
+      "link": "",
+      "createdAt": "2025-11-19T10:10:49.745Z"
+    },
+    {
+      "id": 1765531203594,
+      "title": "flashmob",
+      "description": "event is gonna happen ",
+      "date": "2025-12-12",
+      "time": "16:49",
+      "location": "cmr",
+      "link": "",
+      "createdAt": "2025-12-12T09:20:03.595Z"
+    },
+    {
+      "id": 1770095400538,
+      "title": "CONCERT",
+      "description": "CSE & allied Branches are organizing a tech mixed music concert in the second week of FEB",
+      "date": "2026-02-14",
+      "time": "10:00",
+      "location": "B.Tech Ground",
+      "link": "www.zyxtechsolutions.in",
+      "image": "/uploads/events/image-1770095399904-254703011.JPG",
+      "createdAt": "2026-02-03T05:10:00.539Z",
+      "updatedAt": "2026-02-03T05:19:28.447Z"
+    },
+    {
+      "id": 1770100475839,
+      "title": "SANKARANTHI SAMBARALU",
+      "description": "SANKARATHI",
+      "date": "2026-01-11",
+      "time": "09:00",
+      "location": "",
+      "link": "",
+      "image": "/uploads/events/image-1770100475570-443870752.png",
+      "createdAt": "2026-02-03T06:34:35.839Z"
+    },
+    {
+      "id": 1770100575997,
+      "title": "NEW YEAR CELEBRATIONS",
+      "description": "NEW YEAR 2K26",
+      "date": "2026-01-01",
+      "time": "00:00",
+      "location": "",
+      "link": "",
+      "image": "/uploads/events/image-1770100575770-121678613.jpeg",
+      "createdAt": "2026-02-03T06:36:15.997Z"
+    }
+  ]
+}

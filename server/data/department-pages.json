@@ -1,0 +1,2617 @@
+{
+  "pages": {
+    "cse": {
+      "slug": "cse",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770184344601-64253179.jpg",
+          "badge": "B.Tech-Undergraduate",
+          "title": "B.Tech in Computer Science & Engineering",
+          "subtitle": "Computer science engineering is a rapidly evolving field, basically merging the principles of computer science with that of engineering, to result in very innovative solutions in technology.",
+          "buttonText": "Apply Now",
+          "buttonLink": "https://www.zyxtechsolutions.in"
+        },
+        "overview": {
+          "title": "Prepare for a career in B.Tech",
+          "content": "The Department of Computer Science & Engineering (CSE) offers a four-year Under Graduation (UG) B.Tech degree program with an intake of 240 students and offers CSE (Artificial Intelligence & Machine Learning) with annual intake of 60 students, CSE (Data Science) with intake of 60 students and CSE (Cyber Security) with an intake of 30 students.\n\nAlso, it offers a two-year Post Graduation (PG) M.Tech program in Computer Science Engineering with an intake of 60 students.",
+          "whyChoose": "The curriculum of CSE programs usually covers a broad range of topics, ensuring that students gain a comprehensive understanding of both theoretical concepts and practical applications. Courses often include programming languages, Computer architecture, Operating Systems, software engineering concepts, SQL, Oracle Data bases, advanced topics like Artificial Intelligence, Machine Learning, Deep Learning Techniques, real-time applications like Mobile Android Applications, Full Stack Development and many more. ,,,\nCSE departments typically have specialized laboratories and facilities equipped with state-of-the-art hardware and software resources for research and practical learning. These may include computer labs, networking labs, AI and machine learning labs, and more. ,,,\nCollaborated with industry partners through Internships, Industry-Sponsored Workshops, Seminars, and Projects. These connections help students gain real-world experience and provide opportunities for networking and career advancement. ,,,\nApart From Academics, we engage students with different activities and encourage them to develop social and public speaking skills, leadership qualities, and Soft skills, to showcase their extra-curricular activities of their interest through different clubs and Idea Cell. ,,,\nWe encourage students to pursue their dreams of interest by training them with good trainers to develop and start their start-ups with the support of EISC (Entrepreneurship Innovation Start-up Cell) and COE (Center of Excellence)."
+        },
+        "visionMission": {
+          "vision": "\"To become a pioneer in providing high-quality education and research in the area of Computer Science and Engineering.\"",
+          "mission": "Enrich society and advance Computer Science and Engineering by preparing graduates with the knowledge, ability, and skill to become innovators and leaders who are able to contribute to the aspirations of the country and society ,,,\nBenefit humanity through research, creativity, problem-solving, and application development. ,,,\nShare knowledge and expertise to benefit the country, region, and beyond while inspiring people to engage in computing fields."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770190929316",
+              "name": "B.Tech ( AP EAMCET )",
+              "programs": [
+                {
+                  "name": "CSE",
+                  "seats": "240",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "CS",
+                  "seats": "60",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "DS",
+                  "seats": "60",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "AIML",
+                  "seats": "60",
+                  "fee": "43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770190947553",
+              "name": "B.Tech ( AP ECET )",
+              "programs": [
+                {
+                  "name": "CSE",
+                  "seats": "240",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "CS",
+                  "seats": "60",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "DS",
+                  "seats": "60",
+                  "fee": "43,000"
+                },
+                {
+                  "name": "AIML",
+                  "seats": "60",
+                  "fee": "43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770190959691",
+              "name": "M.Tech & MCA",
+              "programs": [
+                {
+                  "name": "CSE ( M.Tech )",
+                  "seats": "18",
+                  "fee": "53,000"
+                },
+                {
+                  "name": "MCA",
+                  "seats": "120",
+                  "fee": "35,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 50,000"
+            },
+            {
+              "programName": "MCA",
+              "fee": "₹ 35,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "To possess knowledge in both fundamental and application aspects of mathematical, scientific, and engineering principles to analyze complex engineering problems for meeting national and international requirements and demonstrating the need for sustainable development. ,,,\nTo adapt to the modern engineering tools for planning, analysis, design, implementation of analytical data and assess their relevant significance in societal and legal issues necessary in their professional career. ,,,\nTo exhibit professionalism, ethical attitude, communication, managerial skills, teamwork, and social responsibility in their profession and adapt to current trends by engaging in continuous learning.",
+          "psos": "Able to acquire practical competency with emerging technologies, programming languages and open source platforms. ,,,\nAble to assess hardware and software aspects necessary to develop IT based solutions.",
+          "posText": "",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "The engineer and society",
+            "Environment and sustainability",
+            "Ethics",
+            "Individual and team work",
+            "Communication",
+            "Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770195269423",
+              "icon": "/uploads/department-assets/file-1770195304193-327380428.svg",
+              "name": "ECE Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195305757",
+              "icon": "/uploads/department-assets/file-1770195322533-758757543.svg",
+              "name": "ECE Lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195324246",
+              "icon": "/uploads/department-assets/file-1770195442213-683201736.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195470446",
+              "icon": "/uploads/department-assets/file-1770195491714-686537418.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195493881",
+              "icon": "/uploads/department-assets/file-1770195515197-74213416.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195516503",
+              "icon": "/uploads/department-assets/file-1770195535876-505431150.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195537121",
+              "icon": "/uploads/department-assets/file-1770195554255-144860790.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195555980",
+              "icon": "/uploads/department-assets/file-1770195570856-441337710.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195572787",
+              "icon": "/uploads/department-assets/file-1770195591341-540010385.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195592734",
+              "icon": "/uploads/department-assets/file-1770195607534-910459226.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770196176292",
+              "icon": "/uploads/department-assets/file-1770196254456-388133462.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education."
+            },
+            {
+              "id": "wv-1770196191021",
+              "icon": "/uploads/department-assets/file-1770196260602-574554979.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum."
+            },
+            {
+              "id": "wv-1770196193344",
+              "icon": "/uploads/department-assets/file-1770196267367-937281147.svg",
+              "title": "Research & Innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770192059671-435271247.png",
+            "/uploads/department-assets/file-1770192070695-161230029.png",
+            "/uploads/department-assets/file-1770192076368-803369468.png",
+            "/uploads/department-assets/file-1770192081753-644867689.png",
+            "/uploads/department-assets/file-1770192087856-174563201.png",
+            "/uploads/department-assets/file-1770192093428-533693314.png"
+          ],
+          "cards": [
+            {
+              "id": "plc-1770192170144",
+              "image": "/uploads/department-assets/file-1770192212362-169471569.jpeg",
+              "name": "SANTHOSH",
+              "company": "AMAZON",
+              "role": "UI/UX DESIGNER",
+              "package": "30 LPA"
+            }
+          ]
+        },
+        "rd": {
+          "title": "R&D ( Research & Development ) Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [
+            "Quantum Computing",
+            "Artificial intelligence",
+            "Block Chain Technologies",
+            "Cyber Security",
+            "Data Science"
+          ],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": [
+            {
+              "id": "club-1770192388147",
+              "category": "PROGRAMMING",
+              "title": "Code Crafters",
+              "subtitle": "Coding challenging Club that solves any complex problem effectively "
+            },
+            {
+              "id": "club-1770192557031",
+              "category": "QUIZ CLUB",
+              "title": "Think Tank Trivia",
+              "subtitle": "Coding challenging Club that solves any complex problem effectively "
+            },
+            {
+              "id": "club-1770192610978",
+              "category": "SPORTS & FITNESS",
+              "title": "Binary Sports",
+              "subtitle": "Coding challenging Club that solves any complex problem effectively "
+            },
+            {
+              "id": "club-1770192651449",
+              "category": "CULTURALS",
+              "title": "Fusion Fantasia",
+              "subtitle": "Coding challenging Club that solves any complex problem effectively "
+            }
+          ]
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": [
+          {
+            "name": "B.Tech CSE",
+            "regulations": [
+              {
+                "name": "VR24",
+                "fileUrl": "/uploads/syllabus/syllabus-1770265559075-155221469.pdf",
+                "fileName": "B.TECH VR 24 DATA SCIENCE SYLLABUS.pdf",
+                "createdAt": "2026-02-05T04:25:59.109Z"
+              }
+            ]
+          }
+        ]
+      },
+      "updatedAt": "2026-02-05T06:07:27.291Z"
+    },
+    "ece": {
+      "slug": "ece",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770197057101-834210500.jfif",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Electronics & Communication Engineering",
+          "subtitle": "Electronics and Communication Engineering (ECE) is a dynamic field focusing on the design, development, and testing of electronic equipment, circuits, and communication systems.",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for a career in B.Tech ECE",
+          "content": "The Department of Electronics and Communication Engineering has contributed much through its committed academic legacy.\n\nThis Department of Electronics and Communication Engineering has well qualified and experienced faculty with excellent infrastructural and well equipped lab facilities. The Department offers Under Graduate program with an intake of 180 students. Both the Department and its Alumni are mutually proud of their achievements. This Department also offers Post Graduate program M.Tech in VLSI&ES specialization.\n\nElectronics and Communication Engineering Department is playing vital role in the areas of Communication, Nanotechnology, Signal Processing, Image Processing, VLSI Design, Antennas and Wave Propagation. Department Classrooms, Laboratories and staff rooms are well furnished with Wi-Fi facility. The department is contributing towards research by encouraging the faculty in various fields.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"The Electronics and Communication Engineering Department wants to be recognized as the leading Department in the state in terms of education and research and to be recognized nationally as leader in at least three areas of technical expertise\"",
+          "mission": "The mission of the Electronics and Communication Engineering Department is to provide education for the students who are able to compete internationally, able to produce creative solutions to the society's needs. ,,,\nTo provide quality education and to make the students entrepreneur and employable. ,,,\nContinuous up gradation of techniques for reaching heights of excellence in a global."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770193138265",
+              "name": "B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "ECE",
+                  "seats": "180",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770193147248",
+              "name": "B.Tech AP ECET",
+              "programs": [
+                {
+                  "name": "ECE",
+                  "seats": "79",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770193155803",
+              "name": "M.Tech",
+              "programs": [
+                {
+                  "name": "VLSI",
+                  "seats": "18",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "Learn Core Skills, Intensive and extensive engineering knowledge and skill to understand, analyze, design and create novel products and solutions in the field of Electronics and Communication Engineering. ,,,\nProblem solving & Lifelong learning, Capability to pursue career in industry or higher studies with continuous learning. ,,,\nEntrepreneurship Skills, Leadership qualities, team spirit, multi-disciplinary approach, character moulding and lifelong learning for a successful professional career. ,,,\nProfessionalism, Professional and ethical attitude, effective communication skills, and sense of responsibility towards society.",
+          "psos": "Design and implementation of complex systems by applying basic concepts in Electronics & Communication Engineering to Electronics, Communications, Signal processing, VLSI, Embedded Systems (Core Skills). ,,,\nSolve complex Electronics and Communication Engineering problems, using hardware and software tools, along with analytical skills to arrive cost effective and appropriate solutions relevant to the society (Problem-Solving Skills). ,,,\nQuality in technical subjects for successful higher studies and employment (Professional Career).",
+          "posText": "Engineering Graduates will be able to:",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "The engineer and society",
+            "Environment and sustainability",
+            "Ethics",
+            "Individual and team work",
+            "Communicate effectively",
+            " Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770196391361",
+              "icon": "/uploads/department-assets/file-1770199766541-549990871.svg",
+              "name": "ECE Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199621805",
+              "icon": "/uploads/department-assets/file-1770199777229-213928427.svg",
+              "name": "ECE Lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199622989",
+              "icon": "/uploads/department-assets/file-1770199789121-820743490.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199623851",
+              "icon": "/uploads/department-assets/file-1770199796069-806204220.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199624876",
+              "icon": "/uploads/department-assets/file-1770199803442-250120325.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199626253",
+              "icon": "/uploads/department-assets/file-1770199816618-499238127.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199627969",
+              "icon": "/uploads/department-assets/file-1770199835650-418340722.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199630743",
+              "icon": "/uploads/department-assets/file-1770199843210-940271842.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199632337",
+              "icon": "/uploads/department-assets/file-1770199850037-679966713.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199633819",
+              "icon": "/uploads/department-assets/file-1770199857112-530195337.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770196401812",
+              "icon": "/uploads/department-assets/file-1770196507808-340905280.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education."
+            },
+            {
+              "id": "wv-1770196411379",
+              "icon": "/uploads/department-assets/file-1770196516255-186807087.svg",
+              "title": "Industry Connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum."
+            },
+            {
+              "id": "wv-1770196413209",
+              "icon": "/uploads/department-assets/file-1770196524836-898199173.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770196560721-751785074.png",
+            "/uploads/department-assets/file-1770196566139-379559273.png",
+            "/uploads/department-assets/file-1770196572562-411809920.png",
+            "/uploads/department-assets/file-1770196577926-703539935.png",
+            "/uploads/department-assets/file-1770196583457-343095248.png",
+            "/uploads/department-assets/file-1770196588263-10339842.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T10:10:59.608Z"
+    },
+    "eee": {
+      "slug": "eee",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770197288089-126171796.jpg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Electrical & Electronics Engineering",
+          "subtitle": "Electrical and Electronics Engineering (EEE) is a core engineering discipline that blends the study of electrical power generation and distribution with the design of electronic systems, components, and circuits.",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for career in B.Tech in EEE",
+          "content": "DEPARTMENT OF ELECTRICAL AND ELECTRONICS ENGINEERING, Established as one of the major departments of the Institute, the Department of Electrical and Electronics Engineering Visakha Institute of Engineering and Technology strives to produce highly competent engineers equipped with advanced professional knowledge, professional and ethical attitude, entrepreneurial thinking, analytical skills and critical problem solving through effective teaching learning process, research and industrial collaboration.\n\nThe faculties of the department, a rich blend with academic and industrial experience, have been constantly carrying out research on many cutting edge technologies .The academic quality of the department is reflected by the opportunities won by the students and the distinguished positions in industry and academia occupied by alumni.\n\nThe department strives to upgrade the knowledge of faculty and students by organizing various Workshops, Industry-Institute Interactions, Continuous Improvement Programs inviting eminent personalities from Industry and academic Institutions, Seminars and Research activities. Students are provided internship programs in various power plants and industries like Reliance, HPCL, GMR, GVK, VPT, Vizag steel plant, , APEPDCL etc.\n\nThe department is accredited by NAAC with “A” Grade.\n\nThe department has well equipped laboratories such as Electrical Machines laboratory, Power System Simulation Laboratory, Control Systems laboratory, Electrical Measurements & Instrumentation laboratory, Power Electronics Laboratory, Electrical workshop laboratory and Electrical Circuits Laboratory. The department spares no expense to equip the labs with latest equipment like, Three Phase AC Integrated Machine, DC Integrated Machine, and technical software like MATLAB & P-Spice.\n\nThe department of Electrical and Electronics Engineering is committed to innovation and excellence in teaching and research, service and provide programs of the high quality, collaborative efforts with industry to produce world class engineering professionals.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"The department of Electrical and Electronics Engineering is committed to innovation and excellence in teaching and research, service and provide programs of the high quality, collaborative efforts with industry to produce world class engineering professionals.\"",
+          "mission": " To inculcate value based socially committed professionalism to the cause overall development of student and society. ,,,\nCultivate the spirit of entrepreneurship and the connection between engineering and business that encourages technology commercialization. ,,,\n IImprove continuously the engineering pedagogical methods employed in delivering its academic programs. ,,,\nEvolve thoughtfully in response to the needs of industry, society and the changing world."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770193351851",
+              "name": " B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "EEE",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770193727501",
+              "name": "B.Tech AP ECET",
+              "programs": [
+                {
+                  "name": "EEE",
+                  "seats": "53",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770193786024",
+              "name": "M.Tech",
+              "programs": [
+                {
+                  "name": "POWER SYSTEMS",
+                  "seats": "18",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "The program educational objectives of the Electrical Engineering Program at visakha institute of engineering and technology are that its graduates could demonstrate the following essential components of a successful engineer and/or consultant within two to four years of graduation. ,,,\nTo train the students of Electrical Engineering program so that they can work with government or private sector companies responsible for development of power sector & prove themselves in electrical maintenance for the industry. ,,,\nTo train students of Electrical Engineering program who can contribute to teaching profession, research & development by pursuing higher studies. ,,,\nTo train students of Electrical engineering program in a manner that they should function effectively in the multicultural and multidisciplinary groups in their practice of Electrical engineering profession.",
+          "psos": "Graduates will demonstrate their knowledge in effective implementation during their practice of profession of Electrical Engineering with due regard to environment and social concerns. ,,,\nGraduates will demonstrate their knowledge in analysis, design, erection and laboratory experimentation regarding Electrical Engineering. ,,,\n Graduates will be motivated for continuous self learning in engineering practice and pursue research in advanced areas of Electrical Engineering in order to offer engineering services to the society, ethically. ",
+          "posText": "Engineering Graduates will be able to:",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "The engineer and society",
+            "Environment and sustainability",
+            "Ethics",
+            "Individual and team work",
+            " Communication",
+            " Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770196008863",
+              "icon": "/uploads/department-assets/file-1770195958751-705846672.svg",
+              "name": "EEE Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196052101",
+              "icon": "/uploads/department-assets/file-1770195976445-344897600.svg",
+              "name": "EEE lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196069851",
+              "icon": "/uploads/department-assets/file-1770196112135-442860915.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196110476",
+              "icon": "/uploads/department-assets/file-1770196117461-795856224.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196115743",
+              "icon": "/uploads/department-assets/file-1770196123916-951110636.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196123724",
+              "icon": "/uploads/department-assets/file-1770196133738-156904586.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196146751",
+              "icon": "/uploads/department-assets/file-1770196139959-223932133.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196161175",
+              "icon": "/uploads/department-assets/file-1770196149334-494499378.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196178427",
+              "icon": "/uploads/department-assets/file-1770196155187-481043725.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770196183458",
+              "icon": "/uploads/department-assets/file-1770196162952-380785035.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770196391217",
+              "icon": "/uploads/department-assets/file-1770196448881-718613123.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education."
+            },
+            {
+              "id": "wv-1770196426451",
+              "icon": "/uploads/department-assets/file-1770196453866-527495727.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum."
+            },
+            {
+              "id": "wv-1770196460870",
+              "icon": "/uploads/department-assets/file-1770196461055-75289147.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770196628948-239251305.png",
+            "/uploads/department-assets/file-1770196636220-58171415.png",
+            "/uploads/department-assets/file-1770196641657-232543234.png",
+            "/uploads/department-assets/file-1770196649785-259824928.png",
+            "/uploads/department-assets/file-1770196680964-436065565.png",
+            "/uploads/department-assets/file-1770196686490-836226342.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T09:28:08.140Z"
+    },
+    "mechanical": {
+      "slug": "mechanical",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770196912373-887598795.jpeg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Mechanical Engineering",
+          "subtitle": "Mechanical engineering is a broad, foundational discipline focused on the design, analysis, manufacturing, and maintenance of, machines, and energy systems. It applies physics, material science, and engineering",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": " Prepare for a career in B.Tech MECH",
+          "content": "The Department Mechanical Engineering was one of the major branches started when Visakha Institute of Engineering and Technology (VIET) college of Engineering was established in 2008. The Department of Mechanical Engineering was established In the year 2011 with an intake of 60, later on intake of 240 in the A.Y: 2014 and from Academic Year 2023 – 2024 intake of 120, the department has seen lot of progress in academics, research and consultancy activities. The department offers two PG course namely M.Tech in CAD/CAM and Thermal Engineering started in the year 2020 with an intake of each 18. The Department is accredited by NAAC with “A” Grade. Both students and faculty are encouraged to enhance their knowledge level through enrolment of NPTEL courses. The department also has Memoranda of Understanding (MoUs) with various Industry Research Organizations and good no: of paper publications, patents, book/book chapters. The academic quality of the department is reflected by the opportunities won by the students and the distinguished positions in industry and academia occupied by alumni.\n\nThe department strives to upgrade the knowledge of faculty and students by organizing various Workshops, Industry-Institute Interactions, Continuous Improvement Programs inviting eminent personalities from Industry and academic Institutions, Seminars and Research activities. Students are provided internship programs in various power plants and industries like VIZAG DOCK YARD, HPCL, GMR, GVK, VPT, Vizag steel plant, , APSRTC etc.\n\nThe department has well equipped laboratories such as Workshop laboratory, Fluid Mechanics Laboratory, Strength of Materials laboratory, Instrumentation laboratory, Metallurgy Laboratory, CAD Simulation laboratory, Thermal engineering laboratory, Refrigeration and Air Conditioning laboratory",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"The vision of the Department of Mechanical Engineering is to be Regionally, Nationally and Internationally recognized in providing mechanical engineering education, leading to well qualified engineers who are innovative, immediate contributors to their profession and successful in advanced studies.\"",
+          "mission": "The mission of the Department of Mechanical Engineering is to educate, prepare, inspire, and mentor students to excel as professionals and to grow throughout their careers in the art, science, and responsibilities of engineering. ,,,\nProviding the facilities and environment conducive to a high quality education, well grounding the students in the fundamental principles of engineering and preparing them for diverse careers. ,,,\nEngaging in academic and scholarly activities, which strengthen the major’s Regional, National, and International reputation.\n"
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770193254512",
+              "name": " B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "MECH",
+                  "seats": "180",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "AME",
+                  "seats": "30",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770198023346",
+              "name": "M.Tech",
+              "programs": [
+                {
+                  "name": "CAD / CAM & Thermal Engineering",
+                  "seats": "36",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": " To prepare graduates with a solid foundation in engineering, Science and Technology for a successful career in Mechanical Engineering. ,,,\nTo prepare graduates to become effective collaborators/ innovators in effects to address social, technical and engineering challenges. ,,,\nTo prepare graduates to get employment in industries or pursue higher studies or research assignments or turn as entrepreneurs and also with good communications skills, leadership skills, professional, ethical and social responsibilities.",
+          "psos": "Demonstrate sufficient basic competency in the design and manufacture of mechanical systems, thermal and hydraulic devices, materials and the like to support computer-based solutions while maintaining professional standards and a value system.",
+          "posText": "The graduate of mechanical engineering will be able to:",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem Analysis",
+            "Design/Development of Solutions",
+            "Investigation of Complex Problems",
+            "Modern tool usage",
+            "The Engineer and Society",
+            "The Engineer and Society",
+            "Ethics",
+            "Individual and team work",
+            "Communication",
+            "Project Finance and Management",
+            "Life Long Learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770195258903",
+              "icon": "/uploads/department-assets/file-1770195375380-374660923.svg",
+              "name": "MECH Labs 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195297944",
+              "icon": "/uploads/department-assets/file-1770195385621-938949188.svg",
+              "name": "MECH Lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195332914",
+              "icon": "/uploads/department-assets/file-1770195429632-822304665.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195436314",
+              "icon": "/uploads/department-assets/file-1770195493308-128995155.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195496274",
+              "icon": "/uploads/department-assets/file-1770195512880-408588582.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195513069",
+              "icon": "/uploads/department-assets/file-1770195533910-356840626.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195534114",
+              "icon": "/uploads/department-assets/file-1770195560960-350146379.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195560934",
+              "icon": "/uploads/department-assets/file-1770195578738-634532278.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195579701",
+              "icon": "/uploads/department-assets/file-1770195595038-934033542.svg",
+              "name": "LIbrary",
+              "href": ""
+            },
+            {
+              "id": "fac-1770195595811",
+              "icon": "/uploads/department-assets/file-1770195620504-662554823.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770195829240",
+              "icon": "/uploads/department-assets/file-1770196218389-153806357.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education."
+            },
+            {
+              "id": "wv-1770196009132",
+              "icon": "/uploads/department-assets/file-1770196225386-603265746.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum.\n"
+            },
+            {
+              "id": "wv-1770196023146",
+              "icon": "/uploads/department-assets/file-1770196230925-554876828.svg",
+              "title": " Research & innovation",
+              "subtitle": "Research & innovation\nProjects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770196537126-995670089.png",
+            "/uploads/department-assets/file-1770196542883-755807740.png",
+            "/uploads/department-assets/file-1770196548570-109839814.png",
+            "/uploads/department-assets/file-1770196553986-422548257.png",
+            "/uploads/department-assets/file-1770196558966-896069119.png",
+            "/uploads/department-assets/file-1770196564004-320603307.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T09:42:36.438Z"
+    },
+    "civil": {
+      "slug": "civil",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770197100941-627099226.jpeg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Civil Engineering",
+          "subtitle": "Civil engineering is the professional discipline focused on designing, constructing, and maintaining the built environment, including infrastructure like roads, bridges, dams, and buildings",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": " Prepare for a career in B.Tech Civil",
+          "content": "The Department of Civil Engineering was established in the year 2009 with an initial sanctioned strength of 120. The P.G. Programme in Structural engineering was started in 2013 with an intake of 36 students. Civil engineering is a professional engineering discipline that deals with the design, construction, and maintenance of the physical and naturally built environment. The primary focus of the department is to become a center of excellence in the field of Civil Engineering and to create outstanding engineers with advanced teaching techniques and learning aids for undergraduate students.\n\n\nThe principal educational objective of our department is to train students in both theories and practice for designing safe, innovative, ecologically conservative civil engineering structures, with excellent quality to fit to conquer tomorrow’s technology at the global level. Students are made to gain practical experience from field visits to industries, dams and irrigation structures, construction sites, etc. The department provides the right kind of environment for the students to groom themselves for a challenging near future. Students are not only made experts in technical aspects but also in interpersonal skills, which form a vital ingredient to excel in the fast-paced world.\n\nThe department has full-fledged laboratories with the latest machines and instruments to support the syllabi and promote research & consultancy. The department is having MoUs with various reputed central government organizations and private organizations.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"To make the students strong in both technical and practical aspects to meet the national and international requirements.\"",
+          "mission": "To facilitate the graduates in acquiring technical exposure to create innovative ideas through a state-of-the-art curriculum and conducive learning environment. ,,,\nTo provide quality education for a successful career and higher studies in Civil Engineering that emphasizes academic and technical excellence in profession and research, effective communication, teamwork, and leadership to meet the challenges of society. ,,,\nTo improve the professional skills of the rural students to fulfill the present industry and society requirements."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770197783464",
+              "name": "B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "Civil",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770197863683",
+              "name": "B.Tech AP ECET",
+              "programs": [
+                {
+                  "name": "Lateral Entry",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770197929564",
+              "name": " M.Tech",
+              "programs": [
+                {
+                  "name": "Structural Engineering",
+                  "seats": "36",
+                  "fee": "₹ 50,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "To possess knowledge in both fundamental and application aspects of mathematical, scientific, engineering principles to analyze complex engineering problems for meeting the national and international requirements and demonstrating the need for sustainable development. ,,,\nTo adapt to the modern engineering tools for planning, analysis, design, implementation of analytical data and assess their relevant significance in societal and legal issues necessary in their professional career. ,,,\nTo exhibit professionalism, ethical attitude, communication, managerial skills, team work and social responsibility in their profession and adapt to current trends by engaging in continuous learning.",
+          "psos": "Graduates will have an ability to design components of diverse civil structures like buildings, roads, bridges, hydraulic structures etc.Graduates will have an ability to understand the materials and processes involved in various domains of civil engineering using codes of practices. ,,,\nGraduates will have an ability to understand the materials and processes involved in various domains of civil engineering using codes of practices.\n\n\n",
+          "posText": "The graduate of mechanical engineering will be able to:",
+          "posBadges": [
+            "Engineering knowledge",
+            " Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "The engineer and society",
+            "Environment and sustainability",
+            "Ethics",
+            " Individual and team work",
+            " Communication",
+            "Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770199009855",
+              "icon": "/uploads/department-assets/file-1770199058462-615677655.svg",
+              "name": "Civil Lab",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199058486",
+              "icon": "/uploads/department-assets/file-1770199165539-636879578.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199080931",
+              "icon": "/uploads/department-assets/file-1770199175512-217153553.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199082164",
+              "icon": "/uploads/department-assets/file-1770199187258-318248603.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199083417",
+              "icon": "/uploads/department-assets/file-1770199198574-352724223.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199084638",
+              "icon": "/uploads/department-assets/file-1770199205849-421097801.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199140281",
+              "icon": "/uploads/department-assets/file-1770199215494-284829554.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199146946",
+              "icon": "/uploads/department-assets/file-1770199230528-844007490.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770199239973",
+              "icon": "/uploads/department-assets/file-1770199394857-585515795.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education.\n"
+            },
+            {
+              "id": "wv-1770199265009",
+              "icon": "/uploads/department-assets/file-1770199400853-52264702.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum.\n\n"
+            },
+            {
+              "id": "wv-1770199268608",
+              "icon": "/uploads/department-assets/file-1770199406970-545833085.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770199506072-519921817.png",
+            "/uploads/department-assets/file-1770199521270-358709375.png",
+            "/uploads/department-assets/file-1770199525663-309179374.png",
+            "/uploads/department-assets/file-1770199564804-685979277.png",
+            "/uploads/department-assets/file-1770199570309-710685530.png",
+            "/uploads/department-assets/file-1770199574684-183680871.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T10:06:16.946Z"
+    },
+    "bsh": {
+      "slug": "bsh",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770199938631-994232993.jpeg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Basic Science & Humanities",
+          "subtitle": "The Basic Science and Humanities (BS&H) department serves as the foundation for first-year engineering students, providing essential knowledge in Physics, Chemistry, Mathematics, and English.",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for a career in B.Tech ",
+          "content": "Department of Basic Science & Humanities started functioning from the year 2009 consisting of qualified experienced faculty basic sciences to cater the needs of First Year Engineering classes as well some of the Senior Classes in Engineering. The department comprises sections of Mathematics, Physics, Chemistry, Environmental Sciences, English and Management Sciences which meets the nexus of basic sciences and core engineering domains. The department has well equipped laboratories to impart practical training to the students in the field of Physics, Chemistry, Computer Programming, Engineering Drawing and Advanced English & Communication Skills.\n\nDepartment of Basic Sciences & Humanities is a Supporting department to all Engineering branches, MBA department. Here the students are exposed to Basic Sciences like Mathematics, Physics and Chemistry in addition to English and Environmental Science. Department of Basic Sciences & Humanities has well stack of faculty with rich experience and expertise in their select domains. Of them, two are Ph.D’s, eight are M. Phils and five are pursuing their Ph.D’s.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"To lay a strong foundation for the first year students of the engineering discipline in the area of Applied Sciences and Humanities with a view to make them capable of innovating and inventing engineering solutions and also develop students as capable and responsible citizens of our nation.\"",
+          "mission": "To impart knowledge, leading to understanding between engineering and other core areas of Applied Sciences and Humanities. ,,,\nTo strive to inculcate the scientific temper and the spirit of enquiry in the students. ,,,\nTo make students achieve a superior level in communication and presentation skills. ,,,\nTo foster values and ethics and make students responsible citizens of India. ,,,\nTo pursue inter-disciplinary research for the larger good of the society."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770198193555",
+              "name": "ENGINEERING COURSES (AP EAPCET )",
+              "programs": [
+                {
+                  "name": "CIVIL",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "CSE",
+                  "seats": "240",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "CSE – AI & ML",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "CSE – DATA SCIENCE",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "CSE – CYBER SECURITY",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": " ECE",
+                  "seats": "180",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "EEE",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                },
+                {
+                  "name": "MECHANICAL ENGINEERING",
+                  "seats": "150",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "B.Tech",
+              "fee": "₹ 43,000"
+            },
+            {
+              "programName": "M.Tech",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "The program educational objectives of the Electrical Engineering Program at visakha institute of engineering and technology are that its graduates could demonstrate the following essential components of a successful engineer and/or consultant within two to four years of graduation. ,,,\nTo train the students of Electrical Engineering program so that they can work with government or private sector companies responsible for development of power sector & prove themselves in electrical maintenance for the industry. ,,,\nTo train students of Electrical Engineering program who can contribute to teaching profession, research & development by pursuing higher studies. ,,,\nTo train students of Electrical engineering program in a manner that they should function effectively in the multicultural and multidisciplinary groups in their practice of Electrical engineering profession.",
+          "psos": "Graduates will demonstrate their knowledge in effective implementation during their practice of profession of Electrical Engineering with due regard to environment and social concerns. ,,,\nGraduates will demonstrate their knowledge in analysis, design, erection and laboratory experimentation regarding Electrical Engineering. ,,,\nGraduates will be motivated for continuous self learning in engineering practice and pursue research in advanced areas of Electrical Engineering in order to offer engineering services to the society, ethically.",
+          "posText": "Engineering Graduates will be able to:",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            " The engineer and society",
+            " Environment and sustainability",
+            "Ethics",
+            "Individual and team work",
+            "Communication",
+            " Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770199235544",
+              "icon": "/uploads/department-assets/file-1770199270879-334754797.svg",
+              "name": "BS&H Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199248636",
+              "icon": "/uploads/department-assets/file-1770199313972-334563356.svg",
+              "name": "BS&H Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199261761",
+              "icon": "/uploads/department-assets/file-1770199328328-413476159.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199267921",
+              "icon": "/uploads/department-assets/file-1770199336513-712209051.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199274841",
+              "icon": "/uploads/department-assets/file-1770199345546-168205256.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199282121",
+              "icon": "/uploads/department-assets/file-1770199356275-692773959.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199287920",
+              "icon": "/uploads/department-assets/file-1770199362213-768682047.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199306761",
+              "icon": "/uploads/department-assets/file-1770199381532-413917674.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199316355",
+              "icon": "/uploads/department-assets/file-1770199393728-501038930.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770199327385",
+              "icon": "/uploads/department-assets/file-1770199405888-254496199.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770199518246",
+              "icon": "/uploads/department-assets/file-1770199556697-874874210.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education."
+            },
+            {
+              "id": "wv-1770199556669",
+              "icon": "/uploads/department-assets/file-1770199565112-281431940.svg",
+              "title": " Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum."
+            },
+            {
+              "id": "wv-1770199602794",
+              "icon": "/uploads/department-assets/file-1770199582323-404884576.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770199673043-555639002.png",
+            "/uploads/department-assets/file-1770199680791-115391726.png",
+            "/uploads/department-assets/file-1770199685621-805966421.png",
+            "/uploads/department-assets/file-1770199691032-216476547.png",
+            "/uploads/department-assets/file-1770199696265-327565154.png",
+            "/uploads/department-assets/file-1770199704789-50959875.png"
+          ],
+          "cards": [
+            {
+              "id": "plc-1770199721639",
+              "image": "",
+              "name": "",
+              "company": "",
+              "role": "",
+              "package": ""
+            }
+          ]
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T10:13:16.420Z"
+    },
+    "cyber-security": {
+      "slug": "cyber-security",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770200462581-740092250.jpeg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Computer Science Engineering (Cyber Security)",
+          "subtitle": "Cybersecurity engineering is the, specialized, technical field of designing, building, and maintaining secure IT infrastructures to protect systems, networks, and data from cyber threats. ",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for a career in B.Tech ",
+          "content": "Recognizing the overwhelming demand for computer engineering education, the Institute started the 4 year B.Tech course in Computer Science and Engineering in 2008 with an intake of 60 and M.Tech (CSE) Programme M.Tech – 18 approved by AICTE. Now the current intake for the Branch is 270.\n\nThe students are facilitated with sufficient number of computers with the latest LAN/WAN configuration. Networked with Hi-end servers. Fiber Optic Network Backbone for connectivity providing users access to the Reliance 4Mbps & BSNL 50 Mbps VPN broad band facilities. The computer laboratory has systems with latest configuration. It has a LAN environment operating Windows XP and Linux. All the two environments are connected and operating with TCP/IP Protocol. All language processors needed by the undergraduate curriculum are supported by Netware, Windows and Linux environments. With the objective of being responsive to industry’s needs, the course goes beyond fulfilling the syllabus requirements of the University and offers students opportunities to work on the different hardware and software platforms prevalent in industry.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "To become a pioneer in providing high quality education and research in the area of Computer Science and Engineering.",
+          "mission": "Enrich society and advance Computer Science and Engineering by preparing graduates with the knowledge, ability and skill to become innovators and leaders who are able to contribute to the aspirations of the country and society. ,,,\nBenefit humanity through research, creativity, problem solving and application development. ,,,\nShare knowledge and expertise to benefit the country, region, and beyond while inspiring people to engage in computing fields."
+        },
+        "courses": {
+          "categories": []
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": []
+        },
+        "programOverview": {
+          "peos": "",
+          "psos": "",
+          "posText": "",
+          "posBadges": []
+        },
+        "facilities": {
+          "cards": []
+        },
+        "whyViet": {
+          "cards": []
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-04T10:25:02.462Z"
+    },
+    "aiml": {
+      "slug": "aiml",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770200558258-636289701.jpeg",
+          "badge": "B.Tech - Undergraduate",
+          "title": "B.Tech in Computer Science Engineering (AI&ML) ",
+          "subtitle": "Computer Science Engineering with Artificial Intelligence & Machine Learning (CSE AI&ML) is a 4-year undergraduate program merging core computer science with specialized AI, machine learning, deep learning, and data analytics.",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for a career in B.tech ",
+          "content": "Recognizing the overwhelming demand for computer engineering education, the Institute started the 4 year B.Tech course in Computer Science and Engineering in 2008 with an intake of 60 and M.Tech (CSE) Programme M.Tech – 18 approved by AICTE. Now the current intake for the Branch is 270.\n\nThe students are facilitated with sufficient number of computers with the latest LAN/WAN configuration. Networked with Hi-end servers. Fiber Optic Network Backbone for connectivity providing users access to the Reliance 4Mbps & BSNL 50 Mbps VPN broad band facilities. The computer laboratory has systems with latest configuration. It has a LAN environment operating Windows XP and Linux. All the two environments are connected and operating with TCP/IP Protocol. All language processors needed by the undergraduate curriculum are supported by Netware, Windows and Linux environments. With the objective of being responsive to industry’s needs, the course goes beyond fulfilling the syllabus requirements of the University and offers students opportunities to work on the different hardware and software platforms prevalent in industry.",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "\"To become a pioneer in providing high quality education and research in the area of Computer Science and Engineering.\"",
+          "mission": "Enrich society and advance Computer Science and Engineering by preparing graduates with the knowledge, ability and skill to become innovators and leaders who are able to contribute to the aspirations of the country and society. ,,,\nBenefit humanity through research, creativity, problem solving and application development. ,,,\nShare knowledge and expertise to benefit the country, region, and beyond while inspiring people to engage in computing fields."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770266824140",
+              "name": "B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "CSE - AI&ML",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770266850907",
+              "name": "",
+              "programs": [
+                {
+                  "name": "CSE - AI&ML",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "CSE - AI&ML",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "To possess knowledge in both fundamental and application aspects of mathematical, scientific, and engineering principles to analyze complex engineering problems for meeting national and international requirements and demonstrating the need for sustainable development. ,,,\nTo adapt to the modern engineering tools for planning, analysis, design, implementation of analytical data and assess their relevant significance in societal and legal issues necessary in their professional career. ,,,\nTo exhibit professionalism, ethical attitude, communication, managerial skills, teamwork, and social responsibility in their profession and adapt to current trends by engaging in continuous learning.",
+          "psos": "Able to acquire practical competency with emerging technologies, programming languages and open source platforms. ,,,\nAble to assess hardware and software aspects necessary to develop IT based solutions",
+          "posText": "",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "Modern tool usage:",
+            "Environment and sustainability",
+            "Ethics",
+            "Individual and team work",
+            "Communication",
+            "Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770267520850",
+              "icon": "/uploads/department-assets/file-1770267657426-436325128.svg",
+              "name": "AI&ML Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267522174",
+              "icon": "/uploads/department-assets/file-1770267668097-303320264.svg",
+              "name": "AI&ML Lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267523052",
+              "icon": "/uploads/department-assets/file-1770267686133-491378233.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267523899",
+              "icon": "/uploads/department-assets/file-1770267734059-844060349.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267524819",
+              "icon": "/uploads/department-assets/file-1770267742136-189420388.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267526946",
+              "icon": "/uploads/department-assets/file-1770267755875-206549390.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267527917",
+              "icon": "/uploads/department-assets/file-1770267764929-483058869.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267529249",
+              "icon": "/uploads/department-assets/file-1770267772442-342180502.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267530565",
+              "icon": "/uploads/department-assets/file-1770267778915-780945053.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770267532315",
+              "icon": "/uploads/department-assets/file-1770267786774-854364089.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770267798113",
+              "icon": "/uploads/department-assets/file-1770267908038-603217591.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education.\n\n"
+            },
+            {
+              "id": "wv-1770267822515",
+              "icon": "/uploads/department-assets/file-1770267912855-672383061.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum.\n\n"
+            },
+            {
+              "id": "wv-1770267824036",
+              "icon": "/uploads/department-assets/file-1770267919164-748637264.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770267945152-77762366.png",
+            "/uploads/department-assets/file-1770267949596-492645838.png",
+            "/uploads/department-assets/file-1770267954538-569008826.png",
+            "/uploads/department-assets/file-1770267961896-587342677.png",
+            "/uploads/department-assets/file-1770267966543-252087030.png",
+            "/uploads/department-assets/file-1770267970606-322267117.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-05T05:06:16.973Z"
+    },
+    "data-science": {
+      "slug": "data-science",
+      "sections": {
+        "hero": {
+          "image": "/uploads/department-hero/image-1770268942494-188504116.jpeg",
+          "badge": "B. Tech - Undergraduate",
+          "title": "B.Tech in Computer Science & Engineering (Data Science)",
+          "subtitle": "Data science is an interdisciplinary field that combines mathematics, statistics, artificial intelligence, and computer science to analyze large data sets, uncovering actionable insights for strategic decision-making. ",
+          "buttonText": "Apply Now",
+          "buttonLink": ""
+        },
+        "overview": {
+          "title": "Prepare for a career in B. Tech ",
+          "content": "Recognizing the overwhelming demand for computer engineering education, the Institute started the 4 year B.Tech course in Computer Science and Engineering in 2008 with an intake of 60 and M.Tech (CSE) Programme M.Tech – 18 approved by AICTE. Now the current intake for the Branch is 270.\n\nThe students are facilitated with sufficient number of computers with the latest LAN/WAN configuration. Networked with Hi-end servers. Fiber Optic Network Backbone for connectivity providing users access to the Reliance 4Mbps & BSNL 50 Mbps VPN broad band facilities. The computer laboratory has systems with latest configuration. It has a LAN environment operating Windows XP and Linux. All the two environments are connected and operating with TCP/IP Protocol. All language processors needed by the undergraduate curriculum are supported by Netware, Windows and Linux environments. With the objective of being responsive to industry’s needs, the course goes beyond fulfilling the syllabus requirements of the University and offers students opportunities to work on the different hardware and software platforms prevalent in industry.\n\n",
+          "whyChoose": ""
+        },
+        "visionMission": {
+          "vision": "To become a pioneer in providing high quality education and research in the area of Computer Science and Engineering",
+          "mission": "Enrich society and advance Computer Science and Engineering by preparing graduates with the knowledge, ability and skill to become innovators and leaders who are able to contribute to the aspirations of the country and society. ,,,\nBenefit humanity through research, creativity, problem solving and application development. ,,,\nShare knowledge and expertise to benefit the country, region, and beyond while inspiring people to engage in computing fields."
+        },
+        "courses": {
+          "categories": [
+            {
+              "id": "cat-1770269140122",
+              "name": "B.Tech AP EAPCET",
+              "programs": [
+                {
+                  "name": "CSE (Data Science)",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            },
+            {
+              "id": "cat-1770269187966",
+              "name": "B.Tech AP ECET",
+              "programs": [
+                {
+                  "name": "CSE (Data Science)",
+                  "seats": "60",
+                  "fee": "₹ 43,000"
+                }
+              ]
+            }
+          ]
+        },
+        "curriculum": {
+          "introText": "Select a program and regulation to download the syllabus."
+        },
+        "admission": {
+          "title": "",
+          "content": "",
+          "link": ""
+        },
+        "fee": {
+          "title": "Fee at a glance",
+          "items": [
+            {
+              "programName": "CSE (Data Science)",
+              "fee": "₹ 43,000"
+            }
+          ]
+        },
+        "programOverview": {
+          "peos": "To possess knowledge in both fundamental and application aspects of mathematical, scientific, engineering principles to analyze complex engineering problems for meeting the national and international requirements and demonstrating the need for sustainable development. ,,,\nTo adapt to the modern engineering tools for planning, analysis, design, implementation of analytical data and assess their relevant significance in societal and legal issues necessary in their professional career. ,,,\nTo exhibit professionalism, ethical attitude, communication, managerial skills, team work and social responsibility in their profession and adapt to current trends by engaging in continuous learning. ,,,\nThe program specific outcomes (PSO) for department of Computer Science & Engineering.",
+          "psos": "Able to acquire practical competency with emerging technologies, programming languages and open source platforms. ,,,\nAble to assess hardware and software aspects necessary to develop IT based solutions.",
+          "posText": "",
+          "posBadges": [
+            "Engineering knowledge",
+            "Problem analysis",
+            "Design/development of solutions",
+            "Conduct investigations of complex problems",
+            "Modern tool usage",
+            "The engineer and society",
+            "Environment and sustainability",
+            "Ethics:",
+            "Individual and team work",
+            "Communication",
+            "Project management and finance",
+            "Life-long learning"
+          ]
+        },
+        "facilities": {
+          "cards": [
+            {
+              "id": "fac-1770269822420",
+              "icon": "/uploads/department-assets/file-1770269989948-887171567.svg",
+              "name": "Data Science Lab 1",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269823542",
+              "icon": "/uploads/department-assets/file-1770270000892-680440484.svg",
+              "name": "Data Science Lab 2",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269824427",
+              "icon": "/uploads/department-assets/file-1770270019449-453417805.svg",
+              "name": "Hostel",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269825587",
+              "icon": "/uploads/department-assets/file-1770270025935-22902712.svg",
+              "name": "Wifi",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269827012",
+              "icon": "/uploads/department-assets/file-1770270037715-220573102.svg",
+              "name": "Sports",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269828014",
+              "icon": "/uploads/department-assets/file-1770270045070-273364242.svg",
+              "name": "Transport",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269829272",
+              "icon": "/uploads/department-assets/file-1770270059192-772313681.svg",
+              "name": "RO Water Plant",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269832036",
+              "icon": "/uploads/department-assets/file-1770270068980-347546559.svg",
+              "name": "Medical Facility",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269839699",
+              "icon": "/uploads/department-assets/file-1770270076850-650857357.svg",
+              "name": "Library",
+              "href": ""
+            },
+            {
+              "id": "fac-1770269841261",
+              "icon": "/uploads/department-assets/file-1770270082387-406340192.svg",
+              "name": "Cafeteria",
+              "href": ""
+            }
+          ]
+        },
+        "whyViet": {
+          "cards": [
+            {
+              "id": "wv-1770270189255",
+              "icon": "/uploads/department-assets/file-1770270265973-770915275.svg",
+              "title": "NAAC 'A' Grade",
+              "subtitle": "Accredited institution committed to quality education.\n\n"
+            },
+            {
+              "id": "wv-1770270190500",
+              "icon": "/uploads/department-assets/file-1770270271942-26405739.svg",
+              "title": "Industry connect",
+              "subtitle": "Placements, internships and industry-aligned curriculum."
+            },
+            {
+              "id": "wv-1770270191864",
+              "icon": "/uploads/department-assets/file-1770270279899-615628286.svg",
+              "title": "Research & innovation",
+              "subtitle": "Projects, labs and opportunities for research and startups."
+            }
+          ]
+        },
+        "faculty": {
+          "content": ""
+        },
+        "projects": {
+          "stats": [
+            {
+              "label": "Completed",
+              "value": "50+"
+            },
+            {
+              "label": "Industry",
+              "value": "25+"
+            },
+            {
+              "label": "Research",
+              "value": "15+"
+            },
+            {
+              "label": "Award winning",
+              "value": "10+"
+            }
+          ],
+          "cards": []
+        },
+        "placements": {
+          "stats": [
+            {
+              "label": "Placement rate",
+              "value": "95%"
+            },
+            {
+              "label": "Companies",
+              "value": "50+"
+            },
+            {
+              "label": "Highest package",
+              "value": "₹8.5L"
+            },
+            {
+              "label": "Average package",
+              "value": "₹4.2L"
+            }
+          ],
+          "recruiterImages": [
+            "/uploads/department-assets/file-1770270102285-237413877.png",
+            "/uploads/department-assets/file-1770270109944-696977246.png",
+            "/uploads/department-assets/file-1770270115346-952301799.png",
+            "/uploads/department-assets/file-1770270120662-111065551.png",
+            "/uploads/department-assets/file-1770270125442-409820977.png",
+            "/uploads/department-assets/file-1770270133666-655311921.png"
+          ],
+          "cards": []
+        },
+        "rd": {
+          "title": "R&D Lab",
+          "stats": [
+            {
+              "label": "Papers",
+              "value": "25+"
+            },
+            {
+              "label": "Ph.D Faculty",
+              "value": "8"
+            },
+            {
+              "label": "Ongoing",
+              "value": "5"
+            },
+            {
+              "label": "Patents",
+              "value": "3"
+            }
+          ],
+          "researchAreas": [],
+          "cards": []
+        },
+        "ideaCell": {
+          "title": "Innovation & entrepreneurship hub",
+          "subtitle": "Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.",
+          "stats": [
+            {
+              "label": "Ideas submitted",
+              "value": "50+"
+            },
+            {
+              "label": "Startups launched",
+              "value": "15+"
+            },
+            {
+              "label": "Mentors",
+              "value": "25+"
+            },
+            {
+              "label": "Awards won",
+              "value": "5"
+            }
+          ],
+          "pillars": []
+        },
+        "clubActivities": {
+          "title": "Club Activities",
+          "subtitle": "Join vibrant student communities that ignite passions, build skills, and create lasting connections.",
+          "cards": []
+        },
+        "gallery": {
+          "content": ""
+        },
+        "alumni": {
+          "content": ""
+        }
+      },
+      "curriculum": {
+        "programs": []
+      },
+      "updatedAt": "2026-02-05T05:44:42.616Z"
+    }
+  }
+}

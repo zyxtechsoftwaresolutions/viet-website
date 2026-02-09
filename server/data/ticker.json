@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": 1770106929503,
+      "text": "VIET - VISAKHA INSTITUTE OF ENGINEERING & TECHNOLOGY",
+      "isActive": true,
+      "createdAt": "2026-02-03T08:22:09.503Z",
+      "updatedAt": "2026-02-07T10:09:27.468Z"
+    },
+    {
+      "id": 1770107500132,
+      "text": "VSPT - EAPCET CODE",
+      "isActive": true,
+      "createdAt": "2026-02-03T08:31:40.132Z",
+      "updatedAt": "2026-02-03T13:38:23.517Z"
+    },
+    {
+      "id": 1770458980930,
+      "text": "Narava",
+      "isActive": true,
+      "createdAt": "2026-02-07T10:09:40.930Z"
+    }
+  ]
+}

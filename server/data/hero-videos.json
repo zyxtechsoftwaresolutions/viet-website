@@ -1,0 +1,30 @@
+{
+  "videos": [
+    {
+      "id": 1770127086663,
+      "src": "/uploads/hero-videos/video-1770127086590-998852164.mp4",
+      "poster": null,
+      "title": "VISAKHA INSTITUTE OF ENGINEERING & TECHNOLOGY (A)",
+      "subtitle": "88TH Division, GVMC, Narava, Visakhapatnam, AP, India 530027",
+      "buttonText": "Apply Now",
+      "buttonLink": "www.zyxtechsolutions.in",
+      "order": 0,
+      "createdAt": "2026-02-03T13:58:06.663Z",
+      "updatedAt": "2026-02-05T07:10:12.248Z",
+      "badge": "Start Your Career @"
+    },
+    {
+      "id": 1770127192365,
+      "src": "/uploads/hero-videos/video-1770127192302-573392036.mp4",
+      "poster": null,
+      "title": "VISAKHA INSTITUTE OF ENGINEERING & TECHNOLOGY",
+      "subtitle": "88TH Division, GVMC, Narava, Visakhapatnam, Andhra Pradesh, India 530027",
+      "buttonText": "Apply Now",
+      "buttonLink": "",
+      "order": 1,
+      "createdAt": "2026-02-03T13:59:52.365Z",
+      "badge": "Admissions Open 2026",
+      "updatedAt": "2026-02-05T04:35:42.114Z"
+    }
+  ]
+}

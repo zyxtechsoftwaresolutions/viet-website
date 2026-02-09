@@ -1,0 +1,25 @@
+{
+  "images": [
+    {
+      "id": 1770212411112,
+      "src": "/uploads/gallery/image-1770212410607-609094220.JPG",
+      "alt": "AURA FEST",
+      "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
+      "createdAt": "2026-02-04T13:40:11.112Z"
+    },
+    {
+      "id": 1770212461739,
+      "src": "/uploads/gallery/image-1770212461293-281954466.JPG",
+      "alt": "AURA FEST",
+      "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
+      "createdAt": "2026-02-04T13:41:01.739Z"
+    },
+    {
+      "id": 1770212480859,
+      "src": "/uploads/gallery/image-1770212479892-195565087.JPG",
+      "alt": "AURA FEST",
+      "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
+      "createdAt": "2026-02-04T13:41:20.859Z"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250" fill="none">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="400" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EA580C"/>
+      <stop offset="0.4" stop-color="#C2410C"/>
+      <stop offset="0.7" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#FBBF24"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="250" fill="url(#bg2)" rx="8"/>
+  <rect width="400" height="250" fill="white" fill-opacity="0.1" rx="8"/>
+  <text x="200" y="110" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="24" font-weight="bold">SANKRANTHI</text>
+  <text x="200" y="145" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="24" font-weight="bold">SAMBARALU</text>
+  <text x="200" y="195" text-anchor="middle" fill="rgba(255,255,255,0.95)" font-family="system-ui, sans-serif" font-size="14">Harvest festival celebrations at campus</text>
+</svg>
