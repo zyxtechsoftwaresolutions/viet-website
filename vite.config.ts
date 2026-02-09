@@ -24,42 +24,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Performance optimizations
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Large dependencies - split into separate chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('framer-motion')) {
-              return 'animation-vendor';
-            }
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'ui-vendor';
-            }
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor';
-            }
-            if (id.includes('lucide-react')) {
-              return 'icons-vendor';
-            }
-            // Other node_modules
-            return 'vendor';
-          }
-          
-          // Large component chunks
-          if (id.includes('DisciplinesSection')) {
-            return 'disciplines'; // Contains many image imports
-          }
-          if (id.includes('admin')) {
-            return 'admin';
-          }
-        },
-      },
-    },
-    // Chunk size warnings threshold
     chunkSizeWarningLimit: 1000,
     // Minify for production
     minify: 'terser',
