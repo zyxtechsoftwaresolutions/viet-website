@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { facultyAPI, hodsAPI } from '@/lib/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { imgUrl } from '@/lib/imageUtils';
 
 interface DynamicContentProps {
   activeSection: string;
@@ -196,7 +196,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision of the Department</h3>
-                <p className="text-gray-700 italic">
+                <p className="text-gray-700 italic text-justify">
                   "To lay a strong foundation for the first year students of the engineering discipline in the area of Applied Sciences and Humanities with a view to make them capable of innovating and inventing engineering solutions and also develop students as capable and responsible citizens of our nation."
                 </p>
               </div>
@@ -386,7 +386,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
 
             <div className="bg-blue-50 p-6 rounded-lg mb-8">
               <h4 className="text-lg font-semibold text-blue-900 mb-2">HoD Message</h4>
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 mb-4 text-justify">
                 "The Basic Sciences and Humanities Department is responsible for providing the best educational space that provides uncompromising infrastructure and challenging research atmosphere. The department has been committed to devise innovative programs that assure the overall development of the student community, equipping them with the advancements in the field of Science. Our duty is extended to preparing them, for the upcoming challenges, diverse work space and social responsibility. We have been formulating and improvising strategies that ensure the quality of education which in turn produces the best generation engineers who are ethically strong and morally responsible."
               </p>
               <p className="text-gray-700 font-semibold">Wish you all the best,</p>
@@ -408,11 +408,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-blue-200">
                       <img 
-                            src={faculty.image 
-                              ? (faculty.image.startsWith('/') 
-                                  ? `${API_BASE_URL}${faculty.image}` 
-                                  : `${API_BASE_URL}/${faculty.image}`)
-                              : '/placeholder.svg'} 
+                            src={faculty.image ? imgUrl(faculty.image) : '/placeholder.svg'} 
                             alt={faculty.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -464,7 +460,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
           <>
             <h2 className="text-3xl font-bold text-blue-900 mb-6">Syllabus</h2>
             <div className="bg-blue-50 p-6 rounded-lg">
-              <p className="text-gray-700">
+              <p className="text-gray-700 text-justify">
                 The syllabus for Basic Sciences & Humanities courses is designed to support all engineering branches. Detailed syllabus documents are available for Mathematics, Physics, Chemistry, English, and Environmental Sciences.
               </p>
             </div>

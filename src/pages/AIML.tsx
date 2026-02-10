@@ -8,7 +8,12 @@ const galleryFilter = (img: { department?: string }) => {
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
-  return d.includes('aiml') || d.includes('ai') || d.includes('ml') || d.includes('computer') || d.includes('cse');
+  // Match only CSM: "CSE MachineLearning (CSM)" or exact "CSM"
+  return d.includes('cse machinelearning (csm)') || 
+         d.includes('machinelearning (csm)') ||
+         (d.includes('machine learning') && d.includes('(csm)')) ||
+         (d.includes('aiml') && d.includes('(csm)')) ||
+         d === 'csm';
 };
 
 const AIML: React.FC = () => (

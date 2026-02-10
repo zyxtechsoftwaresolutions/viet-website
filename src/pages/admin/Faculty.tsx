@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,6 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react';
 import { facultyAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
@@ -43,6 +51,8 @@ interface Faculty {
   department?: string;
   image?: string;
   resume?: string;
+  sort_order?: number;
+  sortOrder?: number;
 }
 
 interface Department {
@@ -219,26 +229,50 @@ const Faculty = () => {
     }
   };
 
-  const columns = [
-    {
-      key: 'image',
-      header: 'Image',
-      render: (item: Faculty) => (
-        <img
-          src={item.image || '/placeholder.svg'}
-          alt={item.name}
-          className="w-16 h-16 object-cover rounded-full"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder.svg';
-          }}
-        />
-      ),
-    },
-    { key: 'name', header: 'Name' },
-    { key: 'designation', header: 'Designation' },
-    { key: 'qualification', header: 'Qualification' },
-    { key: 'department', header: 'Department' },
-  ];
+  const handleMoveUp = async (index: number) => {
+    if (index === 0) return;
+    const newFaculty = [...faculty];
+    // Swap items in array
+    [newFaculty[index - 1], newFaculty[index]] = [newFaculty[index], newFaculty[index - 1]];
+    
+    // Reassign sort_order based on new positions (higher number = higher priority)
+    // Start from a high number and decrement to ensure unique values
+    const baseSortOrder = 10000;
+    const orderUpdates = newFaculty.map((item, idx) => ({
+      id: item.id,
+      sortOrder: baseSortOrder - idx,
+    }));
+    
+    try {
+      await facultyAPI.reorder(orderUpdates);
+      toast.success('Order updated successfully');
+      fetchFaculty();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update order');
+    }
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index === faculty.length - 1) return;
+    const newFaculty = [...faculty];
+    // Swap items in array
+    [newFaculty[index], newFaculty[index + 1]] = [newFaculty[index + 1], newFaculty[index]];
+    
+    // Reassign sort_order based on new positions (higher number = higher priority)
+    const baseSortOrder = 10000;
+    const orderUpdates = newFaculty.map((item, idx) => ({
+      id: item.id,
+      sortOrder: baseSortOrder - idx,
+    }));
+    
+    try {
+      await facultyAPI.reorder(orderUpdates);
+      toast.success('Order updated successfully');
+      fetchFaculty();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update order');
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -248,18 +282,102 @@ const Faculty = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Faculty</h1>
-        <p className="text-muted-foreground mt-2">Manage faculty members</p>
+        <p className="text-muted-foreground mt-2">Manage faculty members and their display order</p>
       </div>
 
-      <DataTable
-        data={faculty}
-        columns={columns}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        addLabel="Add Faculty"
-        getId={(item) => item.id}
-      />
+      <div className="space-y-4">
+        <Button onClick={handleAdd}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Faculty
+        </Button>
+
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Designation</TableHead>
+                <TableHead>Qualification</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {faculty.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No faculty members available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                faculty.map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex flex-col items-center gap-1">
+                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex flex-col gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleMoveUp(index)}
+                            disabled={index === 0}
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleMoveDown(index)}
+                            disabled={index === faculty.length - 1}
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <img
+                        src={item.image || '/placeholder.svg'}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-full"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.designation}</TableCell>
+                    <TableCell>{item.qualification}</TableCell>
+                    <TableCell>{item.department}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(item)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

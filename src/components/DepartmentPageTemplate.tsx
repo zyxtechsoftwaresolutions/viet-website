@@ -35,13 +35,14 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 const DEFAULT_ADMISSIONS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form';
+import { imgUrl } from '@/lib/imageUtils';
 
 const NAV_SECTIONS = [
   { id: 'overview', label: 'Overview' },
   { id: 'vision-mission', label: 'Vision & Mission' },
+  { id: 'hod', label: 'Head of Department' },
   { id: 'courses', label: 'Programs Offered' },
   { id: 'curriculum', label: 'Curriculum' },
-  { id: 'admission', label: 'Admission' },
   { id: 'fee', label: 'Fee Structure' },
   { id: 'program-overview', label: 'Program Overview' },
   { id: 'facilities', label: 'Facilities' },
@@ -426,13 +427,13 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       </section>
 
       <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <div className="flex gap-1 overflow-x-auto py-2.5 scrollbar-hide">
+        <div className="w-full px-4 md:px-8 lg:px-12">
+          <div className="flex gap-0 overflow-x-auto py-2.5 scrollbar-hide md:justify-between">
             {NAV_SECTIONS.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => scrollTo(id)}
-                className={`flex-shrink-0 px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                className={`flex-shrink-0 px-2 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap md:flex-1 ${
                   activeNavId === id ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
@@ -508,6 +509,99 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Head of Department */}
+      <section id="hod" ref={(el) => { sectionRefs.current['hod'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
+        <div className="container mx-auto px-4 md:px-10 lg:px-12">
+          <SectionHead label="Head of Department" title="Head of Department" accent="violet" />
+          {hods.length > 0 ? (
+            <div className="space-y-12">
+              {hods.map((hod: any, index: number) => (
+                <div key={hod.id} className={`grid md:grid-cols-[auto_1fr] gap-6 md:gap-8 items-start ${index === 0 && s.hod?.message ? '' : 'md:grid-cols-1'}`}>
+                  {/* Left: HOD Image and Details */}
+                  <div className="flex flex-col items-center md:items-start">
+                    {/* Large HOD Image */}
+                    <div className="w-48 h-48 md:w-64 md:h-64 rounded-lg mb-6 overflow-hidden bg-slate-100 shadow-lg">
+                      {hod.image ? (
+                        <img
+                          src={imgUrl(hod.image)}
+                          alt={hod.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent && !parent.querySelector('.placeholder-icon')) {
+                              const placeholder = document.createElement('div');
+                              placeholder.className = 'placeholder-icon w-full h-full flex items-center justify-center text-slate-400';
+                              placeholder.innerHTML = '<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
+                              parent.appendChild(placeholder);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Users className="w-24 h-24" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* HOD Details */}
+                    <div className="text-center md:text-left space-y-2">
+                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{hod.name}</h3>
+                      {hod.designation && (
+                        <p className="text-lg md:text-xl font-semibold text-slate-700">{hod.designation}</p>
+                      )}
+                      {hod.qualification && (
+                        <p className="text-base md:text-lg text-slate-600">{hod.qualification}</p>
+                      )}
+                      {hod.email && (
+                        <div className="flex items-center justify-center md:justify-start gap-2 mt-4 text-sm text-slate-600">
+                          <Mail className="w-4 h-4" />
+                          <span>{hod.email}</span>
+                        </div>
+                      )}
+                      {hod.phone && (
+                        <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-slate-600">
+                          <Phone className="w-4 h-4" />
+                          <span>{hod.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: HOD Message - Only show with first HOD */}
+                  {index === 0 && s.hod?.message && (
+                    <div className="mt-8 md:mt-0">
+                      <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: s.hod.message }}
+                          className="message-content indent-8"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+              <p className="text-slate-500 text-sm">Heads of Department will appear here once added through the Admin → HODs panel.</p>
+              {s.hod?.message && (
+                <div className="mt-8 text-left max-w-3xl mx-auto">
+                  <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
+                    <div
+                      dangerouslySetInnerHTML={{ __html: s.hod.message }}
+                      className="message-content indent-8"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -587,40 +681,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
             )}
             {!curriculumFromApi && (
               <p className="text-slate-500 text-sm">Upload syllabus PDFs in the Admin → Department Pages → Curriculum.</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Admission */}
-      <section id="admission" ref={(el) => { sectionRefs.current['admission'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-blue-50/40 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Admission" title={s.admission?.title || 'Eligibility'} accent="blue" />
-          <div className="p-6 md:p-8 rounded-2xl border border-blue-200 bg-white shadow-sm">
-            {s.admission?.content ? (
-              <>
-                {renderContent(s.admission.content)}
-                <a
-                  href={admissionLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full font-semibold text-white bg-primary hover:bg-primary/90 text-sm"
-                >
-                  Apply Now <ExternalLink className="w-4 h-4" />
-                </a>
-              </>
-            ) : (
-              <>
-                <p className="text-slate-500 text-sm">Admission content can be edited in the Admin panel.</p>
-                <a
-                  href={admissionLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full font-semibold text-white bg-primary hover:bg-primary/90 text-sm"
-                >
-                  Apply Now <ExternalLink className="w-4 h-4" />
-                </a>
-              </>
             )}
           </div>
         </div>
@@ -814,67 +874,45 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       {/* Faculty */}
       <section id="faculty" ref={(el) => { sectionRefs.current['faculty'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Faculty" title="Faculty & HOD" accent="emerald" />
-          {(hods.length > 0 || faculty.length > 0) ? (
-            <div className="space-y-8">
-              {hods.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Head of Department</h3>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {hods.map((hod: any) => (
-                      <div key={hod.id} className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm text-left">
-                        <div className="w-20 h-20 rounded-full mb-4 overflow-hidden border-2 border-slate-200 bg-slate-100">
-                          {hod.image ? (
-                            <img
-                              src={(hod.image || '').startsWith('/') ? `${API_BASE}${hod.image}` : `${API_BASE}/${hod.image}`}
-                              alt={hod.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <Users className="w-8 h-8" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="font-semibold text-slate-900">{hod.name}</p>
-                        <p className="text-sm text-slate-600">{hod.designation}</p>
-                        {hod.qualification && <p className="text-xs text-slate-500 mt-1">{hod.qualification}</p>}
+          <SectionHead label="Faculty" title="Faculty" accent="emerald" />
+          {faculty.length > 0 ? (
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {faculty.map((f: any) => (
+                <div key={f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
+                  <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
+                    {f.image ? (
+                      <img
+                        src={imgUrl(f.image)}
+                        alt={f.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.placeholder-icon')) {
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'placeholder-icon w-full h-full flex items-center justify-center text-slate-400';
+                            placeholder.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
+                            parent.appendChild(placeholder);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Users className="w-6 h-6" />
                       </div>
-                    ))}
+                    )}
                   </div>
+                  <p className="font-medium text-slate-900 text-sm">{f.name}</p>
+                  <p className="text-xs text-slate-600">{f.designation}</p>
+                  {f.qualification && (
+                    <p className="text-xs text-slate-500 mt-0.5 truncate" title={f.qualification}>
+                      {f.qualification}
+                    </p>
+                  )}
                 </div>
-              )}
-              {faculty.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Faculty</h3>
-                  <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {faculty.map((f: any) => (
-                      <div key={f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
-                        <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
-                          {f.image ? (
-                            <img
-                              src={(f.image || '').startsWith('/') ? `${API_BASE}${f.image}` : `${API_BASE}/${f.image}`}
-                              alt={f.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <Users className="w-6 h-6" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="font-medium text-slate-900 text-sm">{f.name}</p>
-                        <p className="text-xs text-slate-600">{f.designation}</p>
-                        {f.qualification && (
-                          <p className="text-xs text-slate-500 mt-0.5 truncate" title={f.qualification}>
-                            {f.qualification}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           ) : (
             <>
@@ -1515,35 +1553,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         </div>
       </section>
 
-      {/* Admission & Enquiries / Contact */}
-      <section id="contact" className="py-20 md:py-28 bg-[#fafafa] border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <div className="p-8 md:p-10 rounded-2xl border border-blue-200 bg-blue-50/40">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">{s.admission?.title || 'Admissions & enquiries'}</h3>
-            {s.admission?.content ? (
-              renderContent(s.admission.content)
-            ) : (
-              <p className="text-slate-600 text-sm mb-6">Contact the admissions team for programmes in this department.</p>
-            )}
-            <div className="flex flex-wrap gap-6 text-slate-700 text-sm mt-4">
-              <a href="tel:+919959617477" className="flex items-center gap-2 font-medium hover:text-primary">
-                <Phone className="w-4 h-4" /> +91-9959617477, +91-8341111786
-              </a>
-              <a href="mailto:admissions@viet.edu.in" className="flex items-center gap-2 font-medium hover:text-[#1e3a8a]">
-                <Mail className="w-4 h-4" /> admissions@viet.edu.in
-              </a>
-            </div>
-            <a
-              href={admissionLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-full font-semibold text-white bg-primary hover:bg-primary/90 text-sm"
-            >
-              Apply Now <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-      </section>
 
       <Dialog open={isModalOpen} onOpenChange={closeImageModal}>
         <DialogContent className="max-w-5xl max-h-[90vh] p-0 border-0 bg-transparent">

@@ -113,7 +113,7 @@ const DynamicPage = () => {
           <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
             <CardContent className="p-8 md:p-12">
               <div 
-                className="prose prose-lg max-w-none text-slate-700 leading-relaxed"
+                className="prose prose-lg max-w-none text-slate-700 leading-relaxed text-justify [&_p]:text-justify"
                 dangerouslySetInnerHTML={{ __html: content.mainContent }}
               />
             </CardContent>
@@ -124,7 +124,7 @@ const DynamicPage = () => {
           <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-100 mb-8">
             <CardContent className="p-8 md:p-12">
               <div 
-                className="prose prose-lg max-w-none text-slate-700 leading-relaxed"
+                className="prose prose-lg max-w-none text-slate-700 leading-relaxed text-justify [&_p]:text-justify"
                 dangerouslySetInnerHTML={{ __html: content.message }}
               />
             </CardContent>
@@ -197,7 +197,7 @@ const DynamicPage = () => {
                 <div key={key} className="mb-6">
                   <h3 className="text-xl font-bold mb-2">{key}</h3>
                   {typeof value === 'string' ? (
-                    <div dangerouslySetInnerHTML={{ __html: value }} />
+                    <div className="text-justify [&_p]:text-justify" dangerouslySetInnerHTML={{ __html: value }} />
                   ) : (
                     <pre className="bg-slate-100 p-4 rounded overflow-x-auto">
                       {JSON.stringify(value, null, 2)}

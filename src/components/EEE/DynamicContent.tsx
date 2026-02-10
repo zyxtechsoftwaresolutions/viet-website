@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Phone, Mail, ExternalLink, ChevronRight, BookOpen, ChevronDown, FileText, Users, Award } from 'lucide-react';
 import { facultyAPI, hodsAPI } from '@/lib/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { imgUrl } from '@/lib/imageUtils';
 
 interface DynamicContentProps {
   activeSection: string;
@@ -167,7 +166,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision of the Department</h3>
-                <p className="text-gray-700 italic">
+                <p className="text-gray-700 italic text-justify">
                   "The department of Electrical and Electronics Engineering is committed to innovation and excellence in teaching and research, service and provide programs of the high quality, collaborative efforts with industry to produce world-class engineering professionals."
                 </p>
               </div>
@@ -289,11 +288,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {hods.map((hod) => {
-                    const imageSrc = hod.image 
-                      ? (hod.image.startsWith('/') 
-                          ? `${API_BASE_URL}${hod.image}` 
-                          : `${API_BASE_URL}/${hod.image}`)
-                      : '/placeholder.svg';
+                    const imageSrc = hod.image ? imgUrl(hod.image) : '/placeholder.svg';
                     return (
                       <div key={hod.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                         <div className="text-center">
@@ -339,10 +334,10 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
 
             <div className="bg-blue-50 p-6 rounded-lg mb-8">
               <h4 className="text-lg font-semibold text-blue-900 mb-2">HoD Message</h4>
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 mb-4 text-justify">
                 "On behalf of our students and faculty, it is my privilege to welcome all of you to the Department of Electrical and Electronics Engineering at VIET. We take pride in our faculty, a team of highly capable and dedicated professionals, most of whom have academic and industrial experience and degrees from leading universities of India."
               </p>
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 mb-4 text-justify">
                 "The department of Electrical and Electronics Engineering is distinguished by its highly collaborative culture as well as its core strength in advanced studies of electrical machines, power systems, control systems, and power electronics."
               </p>
               <p className="text-gray-700 font-semibold">Mr. Varaprasad K S B</p>
@@ -364,11 +359,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
                       <div className="text-center">
                         <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-blue-200">
                           <img 
-                            src={faculty.image 
-                              ? (faculty.image.startsWith('/') 
-                                  ? `${API_BASE_URL}${faculty.image}` 
-                                  : `${API_BASE_URL}/${faculty.image}`)
-                              : '/placeholder.svg'} 
+                            src={faculty.image ? imgUrl(faculty.image) : '/placeholder.svg'} 
                             alt={faculty.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {

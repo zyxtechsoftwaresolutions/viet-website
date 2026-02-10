@@ -8,7 +8,12 @@ const galleryFilter = (img: { department?: string }) => {
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
-  return d.includes('computer') || d.includes('cse');
+  // Match only CSE: "Computer Science and Engineering (CSE)" or exact "CSE"
+  // Exclude CSC, CSD, CSM which have their own filters
+  return (d.includes('computer science and engineering (cse)') || 
+          d === 'cse' ||
+          (d.includes('computer science') && d.includes('(cse)') && !d.includes('cyber') && !d.includes('datascience') && !d.includes('machinelearning'))) &&
+         !d.includes('(csc)') && !d.includes('(csd)') && !d.includes('(csm)');
 };
 
 const ComputerScience: React.FC = () => (

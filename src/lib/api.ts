@@ -179,21 +179,33 @@ export const departmentPagesAPI = {
 // Faculty API (image, resume = Supabase Storage URLs)
 export const facultyAPI = {
   getAll: () => apiCall('/faculty'),
-  create: (data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null }) =>
+  create: (data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null; sortOrder?: number }) =>
     apiCall('/faculty', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null }) =>
+  update: (id: number, data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null; sortOrder?: number }) =>
     apiCall(`/faculty/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/faculty/${id}`, { method: 'DELETE' }),
+  reorder: (orderUpdates: Array<{ id: number; sortOrder: number }>) =>
+    apiCall('/faculty/reorder', { method: 'POST', body: JSON.stringify({ orderUpdates: orderUpdates.map(u => ({ id: u.id, sort_order: u.sortOrder })) }) }),
 };
 
 // HOD API (image, resume = Supabase Storage URLs)
 export const hodsAPI = {
   getAll: () => apiCall('/hods'),
-  create: (data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null }) =>
+  create: (data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null; sortOrder?: number }) =>
     apiCall('/hods', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null }) =>
+  update: (id: number, data: { name?: string; designation?: string; qualification?: string; email?: string; phone?: string; experience?: string; department?: string; image?: string | null; resume?: string | null; sortOrder?: number }) =>
     apiCall(`/hods/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/hods/${id}`, { method: 'DELETE' }),
+  reorder: (orderUpdates: Array<{ id: number; sortOrder: number }>) =>
+    apiCall('/hods/reorder', { method: 'POST', body: JSON.stringify({ orderUpdates: orderUpdates.map(u => ({ id: u.id, sort_order: u.sortOrder })) }) }),
+};
+
+// Intro Video Settings API
+export const introVideoSettingsAPI = {
+  get: () => apiCall('/intro-video-settings'),
+  update: (data: { video_url?: string | null; is_enabled?: boolean }) =>
+    apiCall('/intro-video-settings', { method: 'PUT', body: JSON.stringify(data) }),
+  delete: () => apiCall('/intro-video-settings', { method: 'DELETE' }),
 };
 
 // Gallery API (src = Supabase Storage URL)

@@ -61,7 +61,11 @@ const Departments = () => {
   const fetchDepartments = async () => {
     try {
       const data = await departmentsAPI.getAll();
-      setDepartments(data);
+      // Sort alphabetically by name
+      const sorted = [...data].sort((a, b) => 
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      );
+      setDepartments(sorted);
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch departments');
     } finally {
@@ -104,6 +108,18 @@ const Departments = () => {
 
   const handleSubmit = async () => {
     try {
+      // Check for duplicates before creating
+      if (!selectedItem) {
+        const key = `${formData.name.toLowerCase().trim()}|${formData.stream}|${formData.level}`;
+        const existing = departments.find(
+          (d) => `${d.name.toLowerCase().trim()}|${d.stream}|${d.level}` === key
+        );
+        if (existing) {
+          toast.error(`Duplicate department found: "${formData.name}" already exists with the same stream and level.`);
+          return;
+        }
+      }
+      
       let imageUrl: string | null = null;
       if (imageFile) {
         toast.info('Uploading image…');
@@ -161,11 +177,52 @@ const Departments = () => {
     return <div>Loading...</div>;
   }
 
+  const removeDuplicates = async () => {
+    try {
+      const data = await departmentsAPI.getAll();
+      const seen = new Set<string>();
+      const duplicates: Department[] = [];
+      const unique: Department[] = [];
+      
+      data.forEach((dept) => {
+        const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
+        if (seen.has(key)) {
+          duplicates.push(dept);
+        } else {
+          seen.add(key);
+          unique.push(dept);
+        }
+      });
+      
+      if (duplicates.length === 0) {
+        toast.info('No duplicates found');
+        return;
+      }
+      
+      // Delete duplicates (keep first occurrence)
+      for (const dup of duplicates) {
+        await departmentsAPI.delete(dup.id);
+      }
+      
+      toast.success(`Removed ${duplicates.length} duplicate department(s)`);
+      fetchDepartments();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to remove duplicates');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Departments</h1>
-        <p className="text-muted-foreground mt-2">Manage department images and information</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Departments</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage department images and information. Departments appear in the "Explore Your Path" section automatically.
+          </p>
+        </div>
+        <Button variant="outline" onClick={removeDuplicates}>
+          Remove Duplicates
+        </Button>
       </div>
 
       <DataTable

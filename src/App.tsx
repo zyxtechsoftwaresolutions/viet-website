@@ -72,6 +72,7 @@ const Pages = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
 const TransportRoutes = lazy(() => import("./pages/admin/TransportRoutes"));
 const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
+const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -154,6 +155,7 @@ const App = () => (
               <Route path="news-announcements" element={<NewsAndAnnouncements />} />
               <Route path="events" element={<Events />} />
               <Route path="hero-videos" element={<HeroVideos />} />
+              <Route path="intro-video" element={<IntroVideoAdmin />} />
               <Route path="ticker" element={<Ticker />} />
               <Route path="departments" element={<Departments />} />
               <Route path="department-pages" element={<DepartmentPages />} />

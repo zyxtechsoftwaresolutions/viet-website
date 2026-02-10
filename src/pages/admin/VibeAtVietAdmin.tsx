@@ -377,7 +377,7 @@ const VibeAtVietAdmin = () => {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingItem ? 'Edit Vibe@Viet Item' : 'Add Photo to Vibe@Viet'}</DialogTitle>
             <DialogDescription>
@@ -386,7 +386,7 @@ const VibeAtVietAdmin = () => {
                 : 'Upload an image file or paste a Google Drive link (required), optional video, and caption.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
             <div className="space-y-2">
               <Label>Grid position in layout</Label>
               <p className="text-xs text-muted-foreground">
@@ -534,7 +534,7 @@ const VibeAtVietAdmin = () => {
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>

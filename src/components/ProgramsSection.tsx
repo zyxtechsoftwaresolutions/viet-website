@@ -4,14 +4,13 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { facultyAPI } from '@/lib/api';
+import { imgUrl } from '@/lib/imageUtils';
 import cseImage from '@/assets/cse-department.jpg';
 import mechanicalImage from '@/assets/mechanical-department.jpg';
 import managementImage from '@/assets/management-department.jpg';
 import eeeImage from '@/assets/eee-department.svg';
 import eceImage from '@/assets/ece-department.svg';
 import civilImage from '@/assets/civil-department.svg';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Only show resumes that are admin-uploaded (Supabase) or external links.
 // Old public-folder resumes were removed to keep the repo lightweight.
@@ -716,7 +715,7 @@ const PROGRAMS_DATA: Program[] = [
                                 <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex-shrink-0">
                                   {program.faculty.hod.image ? (
                                     <img 
-                                      src={program.faculty.hod.image} 
+                                      src={imgUrl(program.faculty.hod.image)} 
                                       alt={program.faculty.hod.name}
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
@@ -787,9 +786,7 @@ const PROGRAMS_DATA: Program[] = [
                                     <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-muted">
                                       {member.image ? (
                                         <img 
-                                          src={member.image.startsWith('/') 
-                                            ? `${API_BASE_URL}${member.image}` 
-                                            : `${API_BASE_URL}/${member.image}`} 
+                                          src={imgUrl(member.image)} 
                                           alt={member.name}
                                           className="w-full h-full object-cover"
                                           onError={(e) => {
@@ -853,9 +850,7 @@ const PROGRAMS_DATA: Program[] = [
                                     <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-muted">
                                       {member.image ? (
                                         <img 
-                                          src={member.image.startsWith('/') 
-                                            ? `${API_BASE_URL}${member.image}` 
-                                            : `${API_BASE_URL}/${member.image}`} 
+                                          src={imgUrl(member.image)} 
                                           alt={member.name}
                                           className="w-full h-full object-cover"
                                           onError={(e) => {

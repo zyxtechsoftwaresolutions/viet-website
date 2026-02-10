@@ -61,6 +61,7 @@ const defaultSections = () => ({
   hero: { image: '', badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' },
   overview: { title: '', content: '', whyChoose: '' },
   visionMission: { vision: '', mission: '' },
+  hod: { message: '' },
   courses: { categories: [] as ProgramCategory[] },
   curriculum: { introText: 'Select a program and regulation to download the syllabus.' },
   admission: { title: '', content: '', link: '' },
@@ -91,6 +92,7 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
   }
   if (raw.overview) out.overview = { ...def.overview, ...raw.overview };
   if (raw.visionMission) out.visionMission = { ...def.visionMission, ...raw.visionMission };
+  if (raw.hod) out.hod = { ...def.hod, ...raw.hod };
   if (raw.curriculum) out.curriculum = { ...def.curriculum, ...raw.curriculum };
   if (raw.admission) out.admission = { ...def.admission, ...raw.admission };
 
@@ -668,18 +670,18 @@ const DepartmentPages = () => {
           <TabsTrigger value="hero">1. Hero</TabsTrigger>
           <TabsTrigger value="overview">2. Overview</TabsTrigger>
           <TabsTrigger value="vision">3. Vision & Mission</TabsTrigger>
-          <TabsTrigger value="courses">4. Programs Offered</TabsTrigger>
-          <TabsTrigger value="curriculum">5. Curriculum</TabsTrigger>
-          <TabsTrigger value="fee">6. Fee At Glance</TabsTrigger>
-          <TabsTrigger value="programOverview">7. Program Overview</TabsTrigger>
-          <TabsTrigger value="facilities">8. Facilities</TabsTrigger>
-          <TabsTrigger value="whyViet">9. Why VIET</TabsTrigger>
-          <TabsTrigger value="projects">10. Projects</TabsTrigger>
-          <TabsTrigger value="placements">11. Placements</TabsTrigger>
-          <TabsTrigger value="rd">12. R&D</TabsTrigger>
-          <TabsTrigger value="ideaCell">13. Idea Cell</TabsTrigger>
-          <TabsTrigger value="clubActivities">14. Club Activities</TabsTrigger>
-          <TabsTrigger value="admission">Admission</TabsTrigger>
+          <TabsTrigger value="hod">4. Message</TabsTrigger>
+          <TabsTrigger value="courses">5. Programs Offered</TabsTrigger>
+          <TabsTrigger value="curriculum">6. Curriculum</TabsTrigger>
+          <TabsTrigger value="fee">7. Fee At Glance</TabsTrigger>
+          <TabsTrigger value="programOverview">8. Program Overview</TabsTrigger>
+          <TabsTrigger value="facilities">9. Facilities</TabsTrigger>
+          <TabsTrigger value="whyViet">10. Why VIET</TabsTrigger>
+          <TabsTrigger value="projects">11. Projects</TabsTrigger>
+          <TabsTrigger value="placements">12. Placements</TabsTrigger>
+          <TabsTrigger value="rd">13. R&D</TabsTrigger>
+          <TabsTrigger value="ideaCell">14. Idea Cell</TabsTrigger>
+          <TabsTrigger value="clubActivities">15. Club Activities</TabsTrigger>
           <TabsTrigger value="more">More Sections</TabsTrigger>
         </TabsList>
 
@@ -843,6 +845,36 @@ const DepartmentPages = () => {
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => updateSection('visionMission', 'mission', '')}>
                   Clear Mission
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="hod" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Message</CardTitle>
+              <CardDescription>
+                Add a message that will appear in the Head of Department section. This message will be displayed above the HOD cards. HODs themselves are managed separately in the Admin → HODs panel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Message</Label>
+                <Textarea
+                  value={sections.hod?.message ?? ''}
+                  onChange={(e) => updateSection('hod', 'message', e.target.value)}
+                  rows={6}
+                  placeholder="Enter the message for the Head of Department section..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can use HTML tags for formatting. The message will appear above the HOD cards.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => updateSection('hod', 'message', '')}>
+                  Clear Message
                 </Button>
               </div>
             </CardContent>
@@ -1428,28 +1460,6 @@ const DepartmentPages = () => {
                 <Button variant="outline" size="sm" onClick={addClubCard}>
                   <Plus className="h-4 w-4 mr-1" /> Add club card
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="admission" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Admission Section</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input value={sections.admission?.title ?? ''} onChange={(e) => updateSection('admission', 'title', e.target.value)} placeholder="Eligibility" />
-              </div>
-              <div className="space-y-2">
-                <Label>Content</Label>
-                <Textarea value={sections.admission?.content ?? ''} onChange={(e) => updateSection('admission', 'content', e.target.value)} rows={4} />
-              </div>
-              <div className="space-y-2">
-                <Label>Apply link (URL)</Label>
-                <Input value={sections.admission?.link ?? ''} onChange={(e) => updateSection('admission', 'link', e.target.value)} placeholder="https://..." />
               </div>
             </CardContent>
           </Card>

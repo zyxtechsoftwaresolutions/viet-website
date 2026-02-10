@@ -22,6 +22,7 @@ import {
   PlayCircle,
   Briefcase,
   Award,
+  Film,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -45,7 +46,8 @@ const AdminLayout = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: PlayCircle, label: 'Hero Videos', path: '/admin/hero-videos' },
-    { icon: ScrollText, label: 'Ticker', path: '/admin/ticker' },
+    { icon: Film, label: 'Intro Video', path: '/admin/intro-video' },
+    { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker' },
     { icon: Newspaper, label: 'News & Announcements', path: '/admin/news-announcements' },
     { icon: Calendar, label: 'Events', path: '/admin/events' },
     { icon: Building2, label: 'Departments', path: '/admin/departments' },

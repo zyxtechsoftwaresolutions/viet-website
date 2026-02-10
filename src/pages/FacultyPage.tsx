@@ -5,6 +5,7 @@ import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { facultyAPI, hodsAPI, departmentsAPI } from '@/lib/api';
+import { imgUrl } from '@/lib/imageUtils';
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ interface FacultyMember {
   department?: string;
   image?: string;
   resume?: string;
+  sort_order?: number;
+  sortOrder?: number;
   _role?: 'principal' | 'hod' | 'faculty';
   _source: 'faculty' | 'hod';
 }
@@ -74,6 +77,8 @@ const FacultyPage = () => {
           department: item.department,
           image: item.image,
           resume: item.resume,
+          sort_order: item.sort_order ?? item.sortOrder,
+          sortOrder: item.sort_order ?? item.sortOrder,
           _role: role,
           _source: source,
         });
@@ -83,18 +88,38 @@ const FacultyPage = () => {
 
         const combined: FacultyMember[] = [];
 
+        // Add HODs first (they're already sorted by sort_order from API)
         hodsList.forEach((hod: any) => {
           combined.push(withRole(hod, principalDesignation(hod.designation) ? 'principal' : 'hod', 'hod'));
         });
 
+        // Add faculty (excluding duplicates with HODs)
         facultyList.forEach((f: any) => {
           if (hodKeys.has(hodKey(f))) return;
           const role = principalDesignation(f.designation) ? 'principal' : 'faculty';
           combined.push(withRole(f, role, 'faculty'));
         });
 
-        const order = { principal: 0, hod: 1, faculty: 2 };
-        combined.sort((a, b) => (order[a._role!] ?? 2) - (order[b._role!] ?? 2));
+        // Sort by role first (principal, hod, faculty), then by sort_order (desc), then by designation, then by name
+        const roleOrder = { principal: 0, hod: 1, faculty: 2 };
+        combined.sort((a, b) => {
+          const roleA = roleOrder[a._role!] ?? 2;
+          const roleB = roleOrder[b._role!] ?? 2;
+          if (roleA !== roleB) return roleA - roleB;
+          
+          // Within same role, sort by sort_order (descending - higher first)
+          const sortOrderA = Number(a.sort_order ?? a.sortOrder ?? 0);
+          const sortOrderB = Number(b.sort_order ?? b.sortOrder ?? 0);
+          if (sortOrderB !== sortOrderA) return sortOrderB - sortOrderA;
+          
+          // Then by designation
+          const desA = String(a.designation ?? '').toLowerCase();
+          const desB = String(b.designation ?? '').toLowerCase();
+          if (desA !== desB) return desA.localeCompare(desB);
+          
+          // Finally by name
+          return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+        });
         setFaculty(combined);
       } catch (e) {
         console.error(e);
@@ -152,12 +177,6 @@ const FacultyPage = () => {
     });
   }, [faculty, streamFilter, departmentFilter, designationFilter, deptNameToStream]);
 
-  const imgUrl = (path: string | undefined) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    const base = (API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
-    return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
-  };
 
   return (
     <div className="min-h-screen bg-slate-50">

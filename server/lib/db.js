@@ -22,6 +22,7 @@ const SNAKE_MAP = {
   totalOffers: 'total_offers', companiesVisited: 'companies_visited',
   videoLink: 'video_link', isActive: 'is_active',
   pdfUrl: 'pdf_url', isLatest: 'is_latest', sortOrder: 'sort_order',
+  videoUrl: 'video_url', isEnabled: 'is_enabled',
 };
 function toSnake(obj) {
   if (!obj || typeof obj !== 'object') return obj;
@@ -593,9 +594,31 @@ export async function deleteDepartment(id) {
 export async function getFaculty() {
   if (useJsonFallback) {
     const d = await readJsonFile('faculty');
-    return d.faculty;
+    const faculty = Array.isArray(d.faculty) ? d.faculty : [];
+    // Sort by sort_order (desc), then designation, then name
+    return faculty.sort((a, b) => {
+      const soA = Number(a.sort_order ?? a.sortOrder ?? 0);
+      const soB = Number(b.sort_order ?? b.sortOrder ?? 0);
+      if (soB !== soA) return soB - soA;
+      const desA = String(a.designation ?? '').toLowerCase();
+      const desB = String(b.designation ?? '').toLowerCase();
+      if (desA !== desB) {
+        // Principal first, then HOD, then others
+        if (desA.includes('principal') && !desB.includes('principal')) return -1;
+        if (!desA.includes('principal') && desB.includes('principal')) return 1;
+        if ((desA.includes('hod') || desA.includes('head')) && !(desB.includes('hod') || desB.includes('head'))) return -1;
+        if (!(desA.includes('hod') || desA.includes('head')) && (desB.includes('hod') || desB.includes('head'))) return 1;
+        return desA.localeCompare(desB);
+      }
+      return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+    });
   }
-  const { data, error } = await supabase.from('faculty').select('*').order('id');
+  const { data, error } = await supabase
+    .from('faculty')
+    .select('*')
+    .order('sort_order', { ascending: false })
+    .order('designation')
+    .order('name');
   if (error) throw error;
   return data || [];
 }
@@ -603,12 +626,29 @@ export async function getFaculty() {
 export async function createFaculty(item) {
   if (useJsonFallback) {
     const d = await readJsonFile('faculty');
-    const newItem = { id: Date.now(), ...item };
-    d.faculty.push(newItem);
+    const faculty = Array.isArray(d.faculty) ? d.faculty : [];
+    // Assign default sort_order based on designation if not provided
+    let sortOrder = item.sort_order ?? item.sortOrder ?? 0;
+    if (sortOrder === 0) {
+      const des = String(item.designation ?? '').toLowerCase();
+      if (des.includes('principal')) sortOrder = 1000;
+      else if (des.includes('hod') || des.includes('head')) sortOrder = 500;
+    }
+    const newItem = { id: Date.now(), ...item, sort_order: sortOrder, sortOrder };
+    faculty.push(newItem);
+    d.faculty = faculty;
     await writeJsonFile('faculty', d);
     return newItem;
   }
-  const { data, error } = await supabase.from('faculty').insert(toSnake(item)).select().single();
+  // Assign default sort_order based on designation if not provided
+  const payload = { ...item };
+  if (!payload.sort_order && !payload.sortOrder) {
+    const des = String(item.designation ?? '').toLowerCase();
+    if (des.includes('principal')) payload.sort_order = 1000;
+    else if (des.includes('hod') || des.includes('head')) payload.sort_order = 500;
+    else payload.sort_order = 0;
+  }
+  const { data, error } = await supabase.from('faculty').insert(toSnake(payload)).select().single();
   if (error) throw error;
   return data;
 }
@@ -638,13 +678,63 @@ export async function deleteFaculty(id) {
   if (error) throw error;
 }
 
+export async function reorderFaculty(orderUpdates) {
+  // orderUpdates is an array of { id, sort_order }
+  if (useJsonFallback) {
+    const d = await readJsonFile('faculty');
+    const updates = Array.isArray(orderUpdates) ? orderUpdates : [];
+    updates.forEach(({ id, sort_order }) => {
+      const idx = d.faculty.findIndex(f => f.id === parseInt(id));
+      if (idx !== -1) {
+        d.faculty[idx].sort_order = sort_order;
+        d.faculty[idx].sortOrder = sort_order; // Also update camelCase for consistency
+      }
+    });
+    await writeJsonFile('faculty', d);
+    return d.faculty;
+  }
+  // Batch update using Supabase
+  const updates = Array.isArray(orderUpdates) ? orderUpdates : [];
+  const promises = updates.map(({ id, sort_order }) =>
+    supabase.from('faculty').update({ sort_order }).eq('id', id)
+  );
+  const results = await Promise.all(promises);
+  const errors = results.filter(r => r.error);
+  if (errors.length > 0) {
+    throw new Error(`Failed to update some faculty: ${errors.map(e => e.error.message).join(', ')}`);
+  }
+  return await getFaculty();
+}
+
 // ==================== HODs ====================
 export async function getHods() {
   if (useJsonFallback) {
     const d = await readJsonFile('hods');
-    return d.hods;
+    const hods = Array.isArray(d.hods) ? d.hods : [];
+    // Sort by sort_order (desc), then designation, then name
+    return hods.sort((a, b) => {
+      const soA = Number(a.sort_order ?? a.sortOrder ?? 0);
+      const soB = Number(b.sort_order ?? b.sortOrder ?? 0);
+      if (soB !== soA) return soB - soA;
+      const desA = String(a.designation ?? '').toLowerCase();
+      const desB = String(b.designation ?? '').toLowerCase();
+      if (desA !== desB) {
+        // Principal first, then HOD, then others
+        if (desA.includes('principal') && !desB.includes('principal')) return -1;
+        if (!desA.includes('principal') && desB.includes('principal')) return 1;
+        if ((desA.includes('hod') || desA.includes('head')) && !(desB.includes('hod') || desB.includes('head'))) return -1;
+        if (!(desA.includes('hod') || desA.includes('head')) && (desB.includes('hod') || desB.includes('head'))) return 1;
+        return desA.localeCompare(desB);
+      }
+      return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+    });
   }
-  const { data, error } = await supabase.from('hods').select('*').order('id');
+  const { data, error } = await supabase
+    .from('hods')
+    .select('*')
+    .order('sort_order', { ascending: false })
+    .order('designation')
+    .order('name');
   if (error) throw error;
   return data || [];
 }
@@ -652,12 +742,29 @@ export async function getHods() {
 export async function createHod(item) {
   if (useJsonFallback) {
     const d = await readJsonFile('hods');
-    const newItem = { id: Date.now(), ...item };
-    d.hods.push(newItem);
+    const hods = Array.isArray(d.hods) ? d.hods : [];
+    // Assign default sort_order based on designation if not provided
+    let sortOrder = item.sort_order ?? item.sortOrder ?? 0;
+    if (sortOrder === 0) {
+      const des = String(item.designation ?? '').toLowerCase();
+      if (des.includes('principal')) sortOrder = 1000;
+      else if (des.includes('hod') || des.includes('head')) sortOrder = 500;
+    }
+    const newItem = { id: Date.now(), ...item, sort_order: sortOrder, sortOrder };
+    hods.push(newItem);
+    d.hods = hods;
     await writeJsonFile('hods', d);
     return newItem;
   }
-  const { data, error } = await supabase.from('hods').insert(toSnake(item)).select().single();
+  // Assign default sort_order based on designation if not provided
+  const payload = { ...item };
+  if (!payload.sort_order && !payload.sortOrder) {
+    const des = String(item.designation ?? '').toLowerCase();
+    if (des.includes('principal')) payload.sort_order = 1000;
+    else if (des.includes('hod') || des.includes('head')) payload.sort_order = 500;
+    else payload.sort_order = 0;
+  }
+  const { data, error } = await supabase.from('hods').insert(toSnake(payload)).select().single();
   if (error) throw error;
   return data;
 }
@@ -671,7 +778,7 @@ export async function updateHod(id, item) {
     await writeJsonFile('hods', d);
     return d.hods[idx];
   }
-  const { data, error } = await supabase.from('hods').update(item).eq('id', id).select().single();
+  const { data, error } = await supabase.from('hods').update(toSnake(item)).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
@@ -685,6 +792,34 @@ export async function deleteHod(id) {
   }
   const { error } = await supabase.from('hods').delete().eq('id', id);
   if (error) throw error;
+}
+
+export async function reorderHods(orderUpdates) {
+  // orderUpdates is an array of { id, sort_order }
+  if (useJsonFallback) {
+    const d = await readJsonFile('hods');
+    const updates = Array.isArray(orderUpdates) ? orderUpdates : [];
+    updates.forEach(({ id, sort_order }) => {
+      const idx = d.hods.findIndex(h => h.id === parseInt(id));
+      if (idx !== -1) {
+        d.hods[idx].sort_order = sort_order;
+        d.hods[idx].sortOrder = sort_order; // Also update camelCase for consistency
+      }
+    });
+    await writeJsonFile('hods', d);
+    return d.hods;
+  }
+  // Batch update using Supabase
+  const updates = Array.isArray(orderUpdates) ? orderUpdates : [];
+  const promises = updates.map(({ id, sort_order }) =>
+    supabase.from('hods').update({ sort_order }).eq('id', id)
+  );
+  const results = await Promise.all(promises);
+  const errors = results.filter(r => r.error);
+  if (errors.length > 0) {
+    throw new Error(`Failed to update some HODs: ${errors.map(e => e.error.message).join(', ')}`);
+  }
+  return await getHods();
 }
 
 // ==================== GALLERY ====================
@@ -1194,4 +1329,52 @@ export async function deleteAicteAffiliationLetter(id) {
   }
   const { error } = await supabase.from('aicte_affiliation_letters').delete().eq('id', id);
   if (error) throw error;
+}
+
+// ==================== INTRO VIDEO SETTINGS ====================
+export async function getIntroVideoSettings() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('intro-video-settings');
+      return d.settings || { id: 1, video_url: null, is_enabled: false };
+    } catch (e) {
+      return { id: 1, video_url: null, is_enabled: false };
+    }
+  }
+  const { data, error } = await supabase
+    .from('intro_video_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error) {
+    // If table doesn't exist or no row, return default
+    if (error.code === 'PGRST116') {
+      return { id: 1, video_url: null, is_enabled: false };
+    }
+    throw error;
+  }
+  return data || { id: 1, video_url: null, is_enabled: false };
+}
+
+export async function updateIntroVideoSettings(item) {
+  const payload = {
+    updated_at: new Date().toISOString(),
+  };
+  if (item.video_url !== undefined) payload.video_url = item.video_url;
+  if (item.is_enabled !== undefined) payload.is_enabled = item.is_enabled;
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('intro-video-settings');
+    d.settings = { id: 1, ...(d.settings || {}), ...payload };
+    await writeJsonFile('intro-video-settings', d);
+    return d.settings;
+  }
+  // Upsert (insert or update) since we only have one row
+  const { data, error } = await supabase
+    .from('intro_video_settings')
+    .upsert({ id: 1, ...payload }, { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }

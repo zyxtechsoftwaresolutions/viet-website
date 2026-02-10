@@ -349,7 +349,7 @@ const AboutUs = () => {
               </motion.div>
 
               {/* About Us Text Content - Flows around Rankings */}
-              <div className="text-[#0a192f] text-base md:text-lg leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div className="text-[#0a192f] text-base md:text-lg leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {pageContent?.mainContent ? (
                   <>
                     {/* Content flows beside rankings, then continues below after spacer */}
@@ -408,7 +408,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Rankings
               </h3>
-              <p className="text-gray-600" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 VIET has been recognized as one of the leading institutions of higher learning in Andhra Pradesh, consistently maintaining high standards of academic excellence and student success.
               </p>
             </div>
@@ -416,7 +416,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Accreditation
               </h3>
-              <p className="text-gray-600" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 In 2023, the institution was awarded an A grade by the NAAC, reflecting our commitment to quality education and continuous improvement.
               </p>
             </div>
@@ -424,7 +424,7 @@ const AboutUs = () => {
               <h3 className="text-xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Governance
               </h3>
-              <p className="text-gray-600" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 The governance structure of Visakha Institute of Engineering & Technology's academic and administrative departments ensures transparency and excellence.
               </p>
             </div>
@@ -456,7 +456,7 @@ const AboutUs = () => {
               <h2 className="text-3xl md:text-4xl font-semibold text-[#0a192f] mb-6" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Vision
               </h2>
-              <p className="text-gray-700 text-lg leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-700 text-lg leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {pageContent?.vision || 'Our vision is to be an exemplary institution that thrives on its commitment to the transformative power of value-based education, providing the impetus to develop the expansiveness to harmonize both scientific knowledge and spiritual understanding, to utilize knowledge for societal benefit and contribute to a prosperous and sustainable future for all.'}
               </p>
             </motion.div>
@@ -477,7 +477,7 @@ const AboutUs = () => {
             <h2 className="text-3xl md:text-4xl font-semibold text-[#0a192f] mb-6" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
               Mission
             </h2>
-            <p className="text-gray-700 text-lg leading-relaxed max-w-4xl" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+            <p className="text-gray-700 text-lg leading-relaxed max-w-4xl text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
               {pageContent?.mission || 'VIET\'s profound mission of providing education for life, and emphasis on excellence-driven research, has shaped VIET as a unique institution.'}
             </p>
           </motion.div>
@@ -495,10 +495,10 @@ const AboutUs = () => {
                 <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   Education for Life
                 </h3>
-                <p className="text-gray-700 leading-relaxed mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   There are two types of education: education for living and education for life. Studying to become a professional is education for a living, while education for life requires an understanding of the essential human values. At VIET, we believe that education should also impart a culture of the heart, based on enduring values and inner strength.
                 </p>
-                <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   VIET's culture of education helps to inculcate in our students the right ethos to be rooted in the values of excellence, integrity, and innovation. Endowed with qualities of acceptance, patience, self-confidence, perseverance, and enthusiasm, the benefit of humanity will become foremost in the students' thoughts, words and actions.
                 </p>
               </motion.div>
@@ -539,10 +539,10 @@ const AboutUs = () => {
                 <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   Excellence Driven Research
                 </h3>
-                <p className="text-gray-700 leading-relaxed mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   Our motivation to pursue research is focused on addressing major global problems related to technology, innovation, and sustainable development. We believe that if we could transform excellence from a mere word into a path of action, we would be able to address most of the world's challenges.
                 </p>
-                <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   If we take this step courageously, then our research and its outcome will have a special impact, spontaneity, and power. This has translated into many latest advancements and innovations that have culminated in greater societal benefit.
                 </p>
               </motion.div>
@@ -559,10 +559,10 @@ const AboutUs = () => {
                 <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   Global Impact
                 </h3>
-                <p className="text-gray-700 leading-relaxed mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   At VIET, we stand united in our mission towards solving globally recognized scientific and societal challenges, including environment, development, and technology. VIET stands at the strategic juncture of two streams of cultures: tradition and innovation.
                 </p>
-                <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                   It is our vision to bring both cultures together to bridge the division through meaningful collaborations with world-class universities and innovative approaches that will benefit the entire planet.
                 </p>
               </motion.div>
@@ -614,7 +614,7 @@ const AboutUs = () => {
             className="grid md:grid-cols-2 gap-8"
           >
             <div className="bg-white rounded-lg p-6 shadow-md">
-              <blockquote className="text-gray-700 italic mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <blockquote className="text-gray-700 italic mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 "{pageContent?.quote?.text || 'Take up one idea, make that one idea your life. Think of it, dream of it, live on that idea. Let the brain, muscles, nerves, every part of your body be full of that idea, and just leave every other idea alone. This is the way to success.'}"
               </blockquote>
               <cite className="text-gray-600 font-semibold" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -622,10 +622,10 @@ const AboutUs = () => {
               </cite>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-md">
-              <p className="text-gray-700 mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-700 mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 VIET has established itself as a premier institution in the region, attracting students from across Andhra Pradesh and neighboring states. Our alumni have made significant contributions in various fields, working with leading multinational corporations, government organizations, and entrepreneurial ventures.
               </p>
-              <p className="text-gray-600 text-sm" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <p className="text-gray-600 text-sm text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 The institution continues to evolve and adapt to the changing needs of the industry and society, regularly updating curriculum, enhancing facilities, and strengthening industry partnerships.
               </p>
             </div>
@@ -645,7 +645,7 @@ const AboutUs = () => {
             <h2 className="text-3xl md:text-4xl font-semibold text-[#0a192f] mb-8" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
               Find Us
             </h2>
-            <p className="text-gray-700 mb-8 max-w-3xl" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+            <p className="text-gray-700 mb-8 max-w-3xl text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
               Accredited 'A' by NAAC, Visakha Institute of Engineering & Technology is a multidisciplinary research institution located in Visakhapatnam, Andhra Pradesh, India. The institution's campus is situated at Narava, Visakhapatnam.
             </p>
             

@@ -17,8 +17,7 @@ import {
   Award
 } from 'lucide-react';
 import { facultyAPI, hodsAPI } from '@/lib/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { imgUrl } from '@/lib/imageUtils';
 
 interface DynamicContentProps {
   activeSection: string;
@@ -305,7 +304,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision of the Department</h3>
-                <p className="text-gray-700 italic">
+                <p className="text-gray-700 italic text-justify">
                   "To become a pioneer in providing high-quality education and research in the area of Computer Science and Engineering."
                 </p>
               </div>
@@ -518,11 +517,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {hods.map((hod) => {
-                    const imageSrc = hod.image 
-                      ? (hod.image.startsWith('/') 
-                          ? `${API_BASE_URL}${hod.image}` 
-                          : `${API_BASE_URL}/${hod.image}`)
-                      : '/placeholder.svg';
+                    const imageSrc = hod.image ? imgUrl(hod.image) : '/placeholder.svg';
 
                     return (
                       <div key={hod.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -578,11 +573,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* API-fetched Faculty Members */}
                   {facultyFromAPI.map((faculty) => {
-                    const imageSrc = faculty.image 
-                      ? (faculty.image.startsWith('/') 
-                          ? `${API_BASE_URL}${faculty.image}` 
-                          : `${API_BASE_URL}/${faculty.image}`)
-                      : '/placeholder.svg';
+                    const imageSrc = faculty.image ? imgUrl(faculty.image) : '/placeholder.svg';
 
                     return (
                       <div key={faculty.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">

@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Phone, Mail, ExternalLink, ChevronRight, BookOpen, ChevronDown, FileText, Users, Award } from 'lucide-react';
 import { facultyAPI, hodsAPI } from '@/lib/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { imgUrl } from '@/lib/imageUtils';
 
 interface DynamicContentProps {
   activeSection: string;
@@ -195,7 +194,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision of the Department</h3>
-                <p className="text-gray-700 italic">
+                <p className="text-gray-700 italic text-justify">
                   "The Electronics and Communication Engineering Department wants to be recognized as the leading Department in the state in terms of education and research and to be recognized nationally as a leader in at least three areas of technical expertise."
                 </p>
               </div>
@@ -313,11 +312,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {hods.map((hod) => {
-                    const imageSrc = hod.image 
-                      ? (hod.image.startsWith('/') 
-                          ? `${API_BASE_URL}${hod.image}` 
-                          : `${API_BASE_URL}/${hod.image}`)
-                      : '/placeholder.svg';
+                    const imageSrc = hod.image ? imgUrl(hod.image) : '/placeholder.svg';
                     return (
                       <div key={hod.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                         <div className="text-center">
@@ -363,7 +358,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
 
             <div className="bg-blue-50 p-6 rounded-lg mb-8">
               <h4 className="text-lg font-semibold text-blue-900 mb-2">HoD Message</h4>
-              <p className="text-gray-700 mb-4">
+              <p className="text-gray-700 mb-4 text-justify">
                 "The Department of Electronics & Communication Engineering has highly qualified and efficient staff. The main aim of the department is not only to provide a strong base but also to give exposure about the latest technological trends required to survive in the Industrial Sector. Technologies like VLSI, Embedded Systems, and Image Processing help mold quality engineers for today's competitive environment."
               </p>
               <p className="text-gray-700 font-semibold">Dr. Jeevanarao Batakala</p>
@@ -385,11 +380,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({ activeSection, galleryI
                       <div className="text-center">
                         <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-blue-200">
                           <img 
-                            src={faculty.image 
-                              ? (faculty.image.startsWith('/') 
-                                  ? `${API_BASE_URL}${faculty.image}` 
-                                  : `${API_BASE_URL}/${faculty.image}`)
-                              : '/placeholder.svg'} 
+                            src={faculty.image ? imgUrl(faculty.image) : '/placeholder.svg'} 
                             alt={faculty.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {

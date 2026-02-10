@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,6 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react';
 import { hodsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
@@ -43,6 +51,8 @@ interface HOD {
   department?: string;
   image?: string;
   resume?: string;
+  sort_order?: number;
+  sortOrder?: number;
 }
 
 interface Department {
@@ -229,37 +239,50 @@ const HODs = () => {
     }
   };
 
-  const columns = [
-    {
-      key: 'image',
-      header: 'Image',
-      render: (item: HOD) => {
-        const imageUrl = item.image 
-          ? (item.image.startsWith('http') 
-              ? item.image 
-              : item.image.startsWith('/') 
-                  ? `http://localhost:3001${item.image}` 
-                  : `http://localhost:3001/${item.image}`)
-          : '/placeholder.svg';
-        console.log(`HOD ${item.name} image URL:`, imageUrl, 'Original image path:', item.image);
-        return (
-          <img
-            src={imageUrl}
-            alt={item.name}
-            className="w-16 h-16 object-cover rounded-full"
-            onError={(e) => {
-              console.error(`Failed to load image for ${item.name}:`, imageUrl);
-              e.currentTarget.src = '/placeholder.svg';
-            }}
-          />
-        );
-      },
-    },
-    { key: 'name', header: 'Name' },
-    { key: 'designation', header: 'Designation' },
-    { key: 'qualification', header: 'Qualification' },
-    { key: 'department', header: 'Department' },
-  ];
+  const handleMoveUp = async (index: number) => {
+    if (index === 0) return;
+    const newHODs = [...hods];
+    // Swap items in array
+    [newHODs[index - 1], newHODs[index]] = [newHODs[index], newHODs[index - 1]];
+    
+    // Reassign sort_order based on new positions (higher number = higher priority)
+    // Start from a high number and decrement to ensure unique values
+    const baseSortOrder = 10000;
+    const orderUpdates = newHODs.map((item, idx) => ({
+      id: item.id,
+      sortOrder: baseSortOrder - idx,
+    }));
+    
+    try {
+      await hodsAPI.reorder(orderUpdates);
+      toast.success('Order updated successfully');
+      fetchHODs();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update order');
+    }
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index === hods.length - 1) return;
+    const newHODs = [...hods];
+    // Swap items in array
+    [newHODs[index], newHODs[index + 1]] = [newHODs[index + 1], newHODs[index]];
+    
+    // Reassign sort_order based on new positions (higher number = higher priority)
+    const baseSortOrder = 10000;
+    const orderUpdates = newHODs.map((item, idx) => ({
+      id: item.id,
+      sortOrder: baseSortOrder - idx,
+    }));
+    
+    try {
+      await hodsAPI.reorder(orderUpdates);
+      toast.success('Order updated successfully');
+      fetchHODs();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update order');
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -269,18 +292,111 @@ const HODs = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Heads of Department (HODs)</h1>
-        <p className="text-muted-foreground mt-2">Manage Heads of Department</p>
+        <p className="text-muted-foreground mt-2">Manage Heads of Department and their display order</p>
       </div>
 
-      <DataTable
-        data={hods}
-        columns={columns}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        addLabel="Add HOD"
-        getId={(item) => item.id}
-      />
+      <div className="space-y-4">
+        <Button onClick={handleAdd}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add HOD
+        </Button>
+
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Designation</TableHead>
+                <TableHead>Qualification</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {hods.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No HODs available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                hods.map((item, index) => {
+                  const imageUrl = item.image 
+                    ? (item.image.startsWith('http') 
+                        ? item.image 
+                        : item.image.startsWith('/') 
+                            ? `http://localhost:3001${item.image}` 
+                            : `http://localhost:3001/${item.image}`)
+                    : '/placeholder.svg';
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex flex-col items-center gap-1">
+                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                          <div className="flex flex-col gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleMoveUp(index)}
+                              disabled={index === 0}
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleMoveDown(index)}
+                              disabled={index === hods.length - 1}
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <img
+                          src={imageUrl}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.designation}</TableCell>
+                      <TableCell>{item.qualification}</TableCell>
+                      <TableCell>{item.department}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(item)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

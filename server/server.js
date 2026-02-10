@@ -138,7 +138,8 @@ async function initializeData() {
     },
     'placement-carousel': { images: [] },
     accreditations: { items: [] },
-    'aicte-affiliation-letters': { letters: [] }
+    'aicte-affiliation-letters': { letters: [] },
+    'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } }
   };
 
   for (const [file, defaultData] of Object.entries(dataFiles)) {
@@ -777,6 +778,7 @@ app.delete('/api/departments/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/faculty', async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store');
     const faculty = await db.getFaculty();
     res.json(faculty || []);
   } catch (error) {
@@ -833,10 +835,24 @@ app.delete('/api/faculty/:id', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/faculty/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { orderUpdates } = req.body || {};
+    if (!Array.isArray(orderUpdates)) {
+      return res.status(400).json({ error: 'orderUpdates must be an array of { id, sort_order }' });
+    }
+    const updated = await db.reorderFaculty(orderUpdates);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to reorder faculty' });
+  }
+});
+
 // ==================== HOD ROUTES ====================
 
 app.get('/api/hods', async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store');
     const hods = await db.getHods();
     res.json(hods || []);
   } catch (error) {
@@ -893,7 +909,18 @@ app.delete('/api/hods/:id', authenticateToken, async (req, res) => {
   }
 });
 
-
+app.post('/api/hods/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { orderUpdates } = req.body || {};
+    if (!Array.isArray(orderUpdates)) {
+      return res.status(400).json({ error: 'orderUpdates must be an array of { id, sort_order }' });
+    }
+    const updated = await db.reorderHods(orderUpdates);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to reorder HODs' });
+  }
+});
 
 // ==================== GALLERY ROUTES ====================
 
@@ -1321,6 +1348,57 @@ app.delete('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, 
     }
     await db.deleteAicteAffiliationLetter(req.params.id);
     res.json({ message: 'Letter deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== INTRO VIDEO SETTINGS ROUTES ====================
+
+app.get('/api/intro-video-settings', async (req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const settings = await db.getIntroVideoSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/intro-video-settings', authenticateToken, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const updateData = {};
+    
+    if (body.video_url !== undefined) {
+      const videoUrl = body.video_url === null ? null : (typeof body.video_url === 'string' ? body.video_url.trim() : undefined);
+      if (videoUrl !== undefined && videoUrl !== null && !isValidStorageUrl(videoUrl)) {
+        return res.status(400).json({ error: 'video_url must be a valid Supabase Storage URL' });
+      }
+      updateData.video_url = videoUrl;
+    }
+    
+    if (body.is_enabled !== undefined) {
+      updateData.is_enabled = Boolean(body.is_enabled);
+    }
+    
+    const updated = await db.updateIntroVideoSettings(updateData);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to update intro video settings' });
+  }
+});
+
+app.delete('/api/intro-video-settings', authenticateToken, async (req, res) => {
+  try {
+    // Delete video from storage if exists
+    const settings = await db.getIntroVideoSettings();
+    if (settings && settings.video_url && settings.video_url.includes('supabase.co/storage')) {
+      await deleteFromStorage(settings.video_url).catch(() => {});
+    }
+    // Reset to default (disabled, no video)
+    const updated = await db.updateIntroVideoSettings({ video_url: null, is_enabled: false });
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

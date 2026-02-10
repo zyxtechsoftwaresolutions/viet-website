@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { facultyAPI, hodsAPI } from '@/lib/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { imgUrl } from '@/lib/imageUtils';
 
 interface DynamicContentProps {
   activeSection: string;
@@ -213,7 +213,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-blue-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision of the Department</h3>
-                <p className="text-gray-700 italic">
+                <p className="text-gray-700 italic text-justify">
                   "To be a renowned learning center in the field of Automobile Engineering contributing towards the development of society."
                 </p>
               </div>
@@ -315,11 +315,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {hods.map((hod) => {
-                    const imageSrc = hod.image 
-                      ? (hod.image.startsWith('/') 
-                          ? `${API_BASE_URL}${hod.image}` 
-                          : `${API_BASE_URL}/${hod.image}`)
-                      : '/placeholder.svg';
+                    const imageSrc = hod.image ? imgUrl(hod.image) : '/placeholder.svg';
                     return (
                       <div key={hod.id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                         <div className="text-center">
@@ -365,7 +361,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
 
             <div className="bg-blue-50 p-6 rounded-lg mb-8">
               <h4 className="text-lg font-semibold text-blue-900 mb-2">HoD Message</h4>
-              <p className="text-gray-700 italic">
+              <p className="text-gray-700 italic text-justify">
                 "Mechanical Engineering is a versatile and evergreen branch of engineering. It is a distinct honor for me to serve as Head of the Mechanical Engineering Department. The department started its journey in 2009. Our department has a team of highly qualified and experienced faculty with good infrastructure and lab facilities. We are striving hard continuously to improve upon the quality of education and to maintain our position of leadership in engineering and technology."
               </p>
             </div>
@@ -385,11 +381,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
                       <div className="text-center">
                         <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-blue-200">
                           <img 
-                            src={faculty.image 
-                              ? (faculty.image.startsWith('/') 
-                                  ? `${API_BASE_URL}${faculty.image}` 
-                                  : `${API_BASE_URL}/${faculty.image}`)
-                              : '/placeholder.svg'} 
+                            src={faculty.image ? imgUrl(faculty.image) : '/placeholder.svg'} 
                             alt={faculty.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {

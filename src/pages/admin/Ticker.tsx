@@ -54,10 +54,10 @@ const Ticker = () => {
       const data = await tickerAPI.getAll();
       setItems(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      console.error('Error fetching ticker items:', error);
+      console.error('Error fetching scrolling text items:', error);
       setItems([]);
       if (!error.message?.includes('404') && !error.message?.includes('not found')) {
-        toast.error(error.message || 'Failed to fetch ticker items');
+        toast.error(error.message || 'Failed to fetch scrolling text items');
       }
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ const Ticker = () => {
 
   const handleSubmit = async () => {
     if (!formData.text.trim()) {
-      toast.error('Please enter ticker text');
+      toast.error('Please enter scrolling text');
       return;
     }
     try {
@@ -98,12 +98,12 @@ const Ticker = () => {
         toast.success('Ticker item updated successfully');
       } else {
         await tickerAPI.create(formData);
-        toast.success('Ticker item created successfully');
+        toast.success('Scrolling text item created successfully');
       }
       setDialogOpen(false);
       fetchItems();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save ticker item');
+      toast.error(error.message || 'Failed to save scrolling text item');
     }
   };
 
@@ -111,11 +111,11 @@ const Ticker = () => {
     if (!selectedItem) return;
     try {
       await tickerAPI.delete(selectedItem.id);
-      toast.success('Ticker item deleted successfully');
+      toast.success('Scrolling text item deleted successfully');
       setDeleteDialogOpen(false);
       fetchItems();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to delete ticker item');
+      toast.error(error.message || 'Failed to delete scrolling text item');
     }
   };
 
@@ -158,10 +158,10 @@ const Ticker = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <ScrollText className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">Ticker Management</h1>
+        <h1 className="text-3xl font-bold">SCROLLING TEXT Management</h1>
       </div>
       <p className="text-muted-foreground">
-        Manage scrolling ticker text displayed at the top of the website. Only active items will be shown.
+        Manage scrolling text displayed at the top of the website. Only active items will be shown.
       </p>
 
       <DataTable
@@ -170,7 +170,7 @@ const Ticker = () => {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        addLabel="Add Ticker Item"
+        addLabel="Add Scrolling Text Item"
         getId={(item) => item.id}
       />
 
@@ -178,22 +178,22 @@ const Ticker = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedItem ? 'Edit Ticker Item' : 'Add Ticker Item'}
+              {selectedItem ? 'Edit Scrolling Text Item' : 'Add Scrolling Text Item'}
             </DialogTitle>
             <DialogDescription>
               {selectedItem
-                ? 'Update ticker text and status'
-                : 'Create a new ticker item to display on the website'}
+                ? 'Update scrolling text and status'
+                : 'Create a new scrolling text item to display on the website'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="ticker-text">Ticker Text</Label>
+              <Label htmlFor="ticker-text">Scrolling Text</Label>
               <Input
                 id="ticker-text"
                 value={formData.text}
                 onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                placeholder="Enter text to display in the scrolling ticker"
+                placeholder="Enter text to display in the scrolling text"
                 maxLength={500}
               />
               <p className="text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ const Ticker = () => {
               <div className="space-y-0.5">
                 <Label htmlFor="ticker-active">Active</Label>
                 <p className="text-xs text-muted-foreground">
-                  Only active items will be displayed in the ticker
+                  Only active items will be displayed in the scrolling text
                 </p>
               </div>
               <Switch
@@ -230,9 +230,9 @@ const Ticker = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Ticker Item</AlertDialogTitle>
+            <AlertDialogTitle>Delete Scrolling Text Item</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this ticker item? This action cannot be undone.
+              Are you sure you want to delete this scrolling text item? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

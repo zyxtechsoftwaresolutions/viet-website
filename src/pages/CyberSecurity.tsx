@@ -8,7 +8,11 @@ const galleryFilter = (img: { department?: string }) => {
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
-  return d.includes('cyber') || d.includes('computer') || d.includes('cse');
+  // Match only CSC: "CSE CyberSecurity (CSC)" or exact "CSC"
+  return d.includes('cse cybersecurity (csc)') || 
+         d.includes('cybersecurity (csc)') ||
+         (d.includes('cyber') && d.includes('(csc)')) ||
+         d === 'csc';
 };
 
 const CyberSecurity: React.FC = () => (

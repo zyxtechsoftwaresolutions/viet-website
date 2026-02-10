@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { heroVideosAPI } from '@/lib/api';
+import { heroVideosAPI, departmentsAPI } from '@/lib/api';
 import NewsAnnouncementsSection from '@/components/NewsAnnouncementsSection';
 import ScrollingTicker from '@/components/ScrollingTicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -67,6 +67,145 @@ const HeroSection = () => {
   const [loading, setLoading] = useState(true);
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
+  const [interestCategories, setInterestCategories] = useState<{
+    diploma: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
+    engineering: {
+      ug: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
+      pg: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
+    };
+    management: {
+      ug: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
+      pg: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
+    };
+  }>({
+    diploma: [],
+    engineering: { ug: [], pg: [] },
+    management: { ug: [], pg: [] },
+  });
+
+  // Map department name to icon and href
+  const getDepartmentMapping = (name: string, stream: string, level: string): { icon: keyof typeof ProgramIcons; href: string } => {
+    const normalizedName = name.toLowerCase().replace(/^(diploma|engineering|management)\s*(ug|pg)?\s*-\s*/i, '').trim();
+    
+    // Icon mapping
+    let icon: keyof typeof ProgramIcons = 'Computer';
+    if (normalizedName.includes('agriculture')) icon = 'Agriculture';
+    else if (normalizedName.includes('civil')) icon = 'Civil';
+    else if (normalizedName.includes('computer') || normalizedName.includes('cse')) icon = 'Computer';
+    else if (normalizedName.includes('ece') || normalizedName.includes('electronics and communication')) icon = 'Electronics';
+    else if (normalizedName.includes('eee') || normalizedName.includes('electrical')) icon = 'Electrical';
+    else if (normalizedName.includes('mechanical')) icon = 'Mechanical';
+    else if (normalizedName.includes('data science') || normalizedName.includes('datascience') || normalizedName.includes('csd')) icon = 'DataScience';
+    else if (normalizedName.includes('cyber') || normalizedName.includes('csc')) icon = 'CyberSecurity';
+    else if (normalizedName.includes('machine learning') || normalizedName.includes('ai') || normalizedName.includes('csm')) icon = 'AI';
+    else if (normalizedName.includes('automobile') || normalizedName.includes('ame')) icon = 'Automobile';
+    else if (normalizedName.includes('basic science') || normalizedName.includes('bs&h')) icon = 'Science';
+    else if (normalizedName.includes('cad') || normalizedName.includes('cam')) icon = 'Mechanical';
+    else if (normalizedName.includes('power')) icon = 'Electrical';
+    else if (normalizedName.includes('structural')) icon = 'Civil';
+    else if (normalizedName.includes('thermal')) icon = 'Mechanical';
+    else if (normalizedName.includes('vlsi') || normalizedName.includes('embedded')) icon = 'Electronics';
+    else if (normalizedName.includes('bba')) icon = 'Business';
+    else if (normalizedName.includes('bca')) icon = 'Computing';
+    else if (normalizedName.includes('mba')) icon = 'Management';
+    else if (normalizedName.includes('mca')) icon = 'Applications';
+    
+    // Href mapping - try to match existing routes
+    let href = '#';
+    if (normalizedName.includes('agriculture')) href = '/agricultural-engineering';
+    else if (normalizedName.includes('civil') && level.toLowerCase() === 'diploma') href = '/civil-engineering';
+    else if (normalizedName.includes('civil') && level.toLowerCase() === 'ug') href = '/civil-engineering-ug';
+    else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'diploma') href = '/computer-engineering';
+    else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'ug') href = '/programs/engineering/ug/cse';
+    else if (normalizedName.includes('datascience') || normalizedName.includes('csd')) href = '/programs/engineering/ug/data-science';
+    else if (normalizedName.includes('cyber') || normalizedName.includes('csc')) href = '/programs/engineering/ug/cyber-security';
+    else if (normalizedName.includes('machine learning') || normalizedName.includes('csm')) href = '/programs/engineering/ug/aiml';
+    else if (normalizedName.includes('ece') && level.toLowerCase() === 'diploma') href = '/electronics-communications-engineering';
+    else if (normalizedName.includes('ece') && level.toLowerCase() === 'ug') href = '/electronics-communications-engineering-ug';
+    else if (normalizedName.includes('eee') && level.toLowerCase() === 'diploma') href = '/electrical-electronics-engineering';
+    else if (normalizedName.includes('eee') && level.toLowerCase() === 'ug') href = '/electrical-electronics-engineering-ug';
+    else if (normalizedName.includes('mechanical') && level.toLowerCase() === 'diploma') href = '/mechanical-engineering';
+    else if (normalizedName.includes('mechanical') && level.toLowerCase() === 'ug') href = '/mechanical-engineering-ug';
+    else if (normalizedName.includes('automobile') || normalizedName.includes('ame')) href = '/automobile-engineering';
+    else if (normalizedName.includes('basic science') || normalizedName.includes('bs&h')) href = '/bs-h';
+    else if (normalizedName.includes('bba')) href = '/bba';
+    else if (normalizedName.includes('bca')) href = '/bca';
+    else if (normalizedName.includes('mba')) href = '/mba';
+    else if (normalizedName.includes('mca')) href = '/mca';
+    
+    return { icon, href };
+  };
+
+  // Fetch departments and build interestCategories
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const departments = await departmentsAPI.getAll();
+        // Remove duplicates
+        const seen = new Set<string>();
+        const unique = departments.filter((dept) => {
+          const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        
+        // Group by stream and level
+        const diploma: { name: string; icon: keyof typeof ProgramIcons; href: string }[] = [];
+        const engineeringUG: { name: string; icon: keyof typeof ProgramIcons; href: string }[] = [];
+        const engineeringPG: { name: string; icon: keyof typeof ProgramIcons; href: string }[] = [];
+        const managementUG: { name: string; icon: keyof typeof ProgramIcons; href: string }[] = [];
+        const managementPG: { name: string; icon: keyof typeof ProgramIcons; href: string }[] = [];
+        
+        unique.forEach((dept) => {
+          // Clean department name (remove prefix like "DIPLOMA - " or "ENGINEERING UG - ")
+          const cleanName = dept.name.replace(/^(DIPLOMA|ENGINEERING|MANAGEMENT)\s*(UG|PG)?\s*-\s*/i, '').trim();
+          const mapping = getDepartmentMapping(dept.name, dept.stream, dept.level);
+          
+          const item = {
+            name: cleanName,
+            icon: mapping.icon,
+            href: mapping.href,
+          };
+          
+          if (dept.stream === 'DIPLOMA') {
+            diploma.push(item);
+          } else if (dept.stream === 'ENGINEERING') {
+            if (dept.level === 'UG') {
+              engineeringUG.push(item);
+            } else if (dept.level === 'PG') {
+              engineeringPG.push(item);
+            }
+          } else if (dept.stream === 'MANAGEMENT') {
+            if (dept.level === 'UG') {
+              managementUG.push(item);
+            } else if (dept.level === 'PG') {
+              managementPG.push(item);
+            }
+          }
+        });
+        
+        // Sort each category alphabetically by name
+        diploma.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        engineeringUG.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        engineeringPG.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        managementUG.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        managementPG.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        
+        setInterestCategories({ 
+          diploma, 
+          engineering: { ug: engineeringUG, pg: engineeringPG },
+          management: { ug: managementUG, pg: managementPG }
+        });
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        // Fallback to empty arrays
+        setInterestCategories({ diploma: [], engineering: [], management: [] });
+      }
+    };
+    
+    fetchDepartments();
+  }, []);
 
   // Video/poster URLs from API are full Supabase Storage URLs; use as-is.
   useEffect(() => {
@@ -196,40 +335,6 @@ const HeroSection = () => {
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Explore Your Path – categories with professional icon keys
-  const interestCategories: {
-    diploma: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
-    engineering: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
-    management: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
-  } = {
-    diploma: [
-      { name: 'Agriculture Engineering', icon: 'Agriculture', href: '/agricultural-engineering' },
-      { name: 'Civil Engineering', icon: 'Civil', href: '/civil-engineering' },
-      { name: 'Computer Engineering', icon: 'Computer', href: '/computer-engineering' },
-      { name: 'ECE', icon: 'Electronics', href: '/electronics-communications-engineering' },
-      { name: 'EEE', icon: 'Electrical', href: '/electrical-electronics-engineering' },
-      { name: 'Mechanical Engineering', icon: 'Mechanical', href: '/mechanical-engineering' },
-    ],
-    engineering: [
-      { name: 'Computer Science & Engineering', icon: 'Computer', href: '/programs/engineering/ug/cse' },
-      { name: 'Data Science', icon: 'DataScience', href: '/programs/engineering/ug/data-science' },
-      { name: 'Cyber Security', icon: 'CyberSecurity', href: '/programs/engineering/ug/cyber-security' },
-      { name: 'AI & Machine Learning', icon: 'AI', href: '/programs/engineering/ug/aiml' },
-      { name: 'Electronics & Communication', icon: 'Electronics', href: '/electronics-communications-engineering-ug' },
-      { name: 'Electrical & Electronics', icon: 'Electrical', href: '/electrical-electronics-engineering-ug' },
-      { name: 'Mechanical Engineering', icon: 'Mechanical', href: '/mechanical-engineering-ug' },
-      { name: 'Civil Engineering', icon: 'Civil', href: '/civil-engineering-ug' },
-      { name: 'Automobile Engineering', icon: 'Automobile', href: '/automobile-engineering' },
-      { name: 'Basic Science & Humanities', icon: 'Science', href: '/bs-h' },
-    ],
-    management: [
-      { name: 'BBA', icon: 'Business', href: '/bba' },
-      { name: 'BCA', icon: 'Computing', href: '/bca' },
-      { name: 'MBA', icon: 'Management', href: '/mba' },
-      { name: 'MCA', icon: 'Applications', href: '/mca' },
-    ],
   };
 
   const handleAdmissionsClick = () => {
@@ -435,128 +540,344 @@ const HeroSection = () => {
       {/* News & Announcements - below hero, above EXPLORE YOUR PATH */}
       <NewsAnnouncementsSection />
 
-      {/* Explore Your Path – enhanced classic layout with professional icons */}
-      <div id="whats-your-interest" className="relative bg-white py-16 md:py-24 border-t border-slate-100">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          {/* Section Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-12 md:mb-16 gap-6">
-            <div className="flex items-center gap-4">
-              <h2
-                className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0a192f] tracking-tight"
-                style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: '-0.02em' }}
-              >
-                EXPLORE YOUR PATH
-              </h2>
-              <img 
-                src="/footprints-direction-sketch.png" 
-                alt="" 
-                className="h-10 md:h-12 lg:h-14 w-auto object-contain hidden sm:block"
-                width={56}
-                height={56}
-                loading="lazy"
-                decoding="async"
-                fetchpriority="auto"
-              />
-            </div>
-            <div className="flex flex-wrap gap-3">
+      {/* Explore Your Path – Dark theme with black gloss finish */}
+      <div id="whats-your-interest" className="relative bg-black py-20 md:py-28 border-t border-slate-800">
+        {/* Glossy overlay effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-slate-950 opacity-100" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03)_0%,transparent_50%)]" />
+        
+        <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
+          {/* Section Header - Centered */}
+          <div className="text-center mb-16 md:mb-20">
+            <h2
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight uppercase"
+              style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: '0.05em' }}
+            >
+              EXPLORE YOUR PATH
+            </h2>
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8">
+              Explore our diverse range of programs designed to shape your future
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
               <button
                 onClick={() => setProgramFinderOpen(true)}
-                className="group relative px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium text-sm overflow-hidden transition-all duration-300 hover:border-primary"
+                className="group px-6 py-3 rounded-full border-2 border-slate-700 text-slate-300 font-semibold text-sm overflow-hidden transition-all duration-300 hover:border-red-600 hover:text-red-400 hover:bg-red-900/20"
               >
-                <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors">
+                <span className="relative z-10 flex items-center gap-2">
                   <Search className="w-4 h-4" />
-                  Search For Programs
+                  Search Programs
                 </span>
-                <span className="absolute inset-0 z-0 bg-primary transform scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300" />
               </button>
               <button
                 onClick={handleAdmissionsClick}
-                className="group relative px-5 py-2.5 rounded-lg bg-primary text-white font-medium text-sm overflow-hidden transition-all duration-300 hover:bg-primary/90"
+                className="group px-8 py-3 rounded-full bg-gradient-to-r from-red-700 to-red-800 text-white font-semibold text-sm overflow-hidden transition-all duration-300 hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-700/50"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   Apply Now
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
             </div>
           </div>
 
-          {/* DIPLOMA */}
-          <div className="mb-14">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 pb-2 border-b border-slate-200">
-              Diploma
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {interestCategories.diploma.map((category) => {
-                const IconComponent = ProgramIcons[category.icon];
-                return (
-                  <button
-                    key={category.name}
-                    onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                    className="group flex items-center gap-4 p-4 rounded-lg bg-slate-50/80 border border-slate-200/80 hover:border-slate-300 hover:bg-white hover:shadow-md transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-11 h-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-[#0a192f] group-hover:border-[#0a192f]/30 transition-colors">
-                      <IconComponent className="w-5 h-5" strokeWidth={1.75} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-[#0a192f] leading-tight">
-                      {category.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Split Layout: Stream Names Left, Courses Right */}
+          <div className="space-y-20">
+            {/* DIPLOMA */}
+            {interestCategories.diploma.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+                {/* Left: Stream Name */}
+                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
+                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
+                    DIPLOMA
+                  </h3>
+                </div>
+                
+                {/* Right: Courses */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                  {interestCategories.diploma.map((category, idx) => {
+                    const IconComponent = ProgramIcons[category.icon];
+                    return (
+                      <motion.button
+                        key={category.name}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: idx * 0.03 }}
+                        onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                        className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
+                      >
+                        {/* Animated gradient background - Maroon/Red */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        {/* Glossy shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        {/* Content */}
+                        <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
+                          <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
+                            <IconComponent className="w-7 h-7" strokeWidth={2.5} />
+                          </div>
+                          <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                            {category.name}
+                          </span>
+                        </div>
 
-          {/* ENGINEERING */}
-          <div className="mb-14">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 pb-2 border-b border-slate-200">
-              Engineering
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {interestCategories.engineering.map((category) => {
-                const IconComponent = ProgramIcons[category.icon];
-                return (
-                  <button
-                    key={category.name}
-                    onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                    className="group flex items-center gap-4 p-4 rounded-lg bg-slate-50/80 border border-slate-200/80 hover:border-slate-300 hover:bg-white hover:shadow-md transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-11 h-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-[#0a192f] group-hover:border-[#0a192f]/30 transition-colors">
-                      <IconComponent className="w-5 h-5" strokeWidth={1.75} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-[#0a192f] leading-tight">
-                      {category.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                        {/* Hover Arrow with glow */}
+                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
+                              <ArrowRight className="w-5 h-5 text-white relative z-10" />
+                            </div>
+                        </div>
 
-          {/* MANAGEMENT */}
-          <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 pb-2 border-b border-slate-200">
-              Management
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {interestCategories.management.map((category) => {
-                const IconComponent = ProgramIcons[category.icon];
-                return (
-                  <button
-                    key={category.name}
-                    onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                    className="group flex items-center gap-4 p-4 rounded-lg bg-slate-50/80 border border-slate-200/80 hover:border-slate-300 hover:bg-white hover:shadow-md transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-11 h-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-[#0a192f] group-hover:border-[#0a192f]/30 transition-colors">
-                      <IconComponent className="w-5 h-5" strokeWidth={1.75} />
+                        {/* Corner accent */}
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ENGINEERING */}
+            {(interestCategories.engineering.ug.length > 0 || interestCategories.engineering.pg.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+                {/* Left: Stream Name */}
+                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
+                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
+                    ENGINEERING
+                  </h3>
+                </div>
+                
+                {/* Right: Courses */}
+                <div className="space-y-8">
+                  {/* UG Courses with B.TECH */}
+                  {interestCategories.engineering.ug.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">B.TECH</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                        {interestCategories.engineering.ug.map((category, idx) => {
+                          const IconComponent = ProgramIcons[category.icon];
+                          return (
+                            <motion.button
+                              key={category.name}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: idx * 0.03 }}
+                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-black border border-slate-700/50 overflow-hidden transition-all duration-500 hover:border-red-700/60 hover:shadow-2xl hover:shadow-red-900/30 hover:-translate-y-2 hover:scale-[1.02]"
+                            >
+                              {/* Animated gradient background */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.15)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Glossy shine effect */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Content */}
+                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
+                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-red-800/30 via-red-700/20 to-red-800/10 border-2 border-red-700/40 flex items-center justify-center text-red-700 group-hover:from-red-700/50 group-hover:via-red-600/40 group-hover:to-red-800/20 group-hover:scale-110 group-hover:border-red-600/60 group-hover:shadow-lg group-hover:shadow-red-700/50 transition-all duration-500">
+                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                                  {category.name}
+                                </span>
+                              </div>
+
+                              {/* Hover Arrow with glow */}
+                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-red-700/30 blur-md rounded-full" />
+                                  <ArrowRight className="w-5 h-5 text-red-700 relative z-10" />
+                                </div>
+                              </div>
+
+                              {/* Corner accent */}
+                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-[#0a192f] leading-tight">
-                      {category.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                  )}
+
+                  {/* PG Courses with M.TECH */}
+                  {interestCategories.engineering.pg.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">M.TECH</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                        {interestCategories.engineering.pg.map((category, idx) => {
+                          const IconComponent = ProgramIcons[category.icon];
+                          return (
+                            <motion.button
+                              key={category.name}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: idx * 0.03 }}
+                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-black border border-slate-700/50 overflow-hidden transition-all duration-500 hover:border-red-700/60 hover:shadow-2xl hover:shadow-red-900/30 hover:-translate-y-2 hover:scale-[1.02]"
+                            >
+                              {/* Animated gradient background */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.15)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Glossy shine effect */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Content */}
+                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
+                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-red-800/30 via-red-700/20 to-red-800/10 border-2 border-red-700/40 flex items-center justify-center text-red-700 group-hover:from-red-700/50 group-hover:via-red-600/40 group-hover:to-red-800/20 group-hover:scale-110 group-hover:border-red-600/60 group-hover:shadow-lg group-hover:shadow-red-700/50 transition-all duration-500">
+                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                                  {category.name}
+                                </span>
+                              </div>
+
+                              {/* Hover Arrow with glow */}
+                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-red-700/30 blur-md rounded-full" />
+                                  <ArrowRight className="w-5 h-5 text-red-700 relative z-10" />
+                                </div>
+                              </div>
+
+                              {/* Corner accent */}
+                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* MANAGEMENT */}
+            {(interestCategories.management.ug.length > 0 || interestCategories.management.pg.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+                {/* Left: Stream Name */}
+                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
+                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
+                    MANAGEMENT
+                  </h3>
+                </div>
+                
+                {/* Right: Courses */}
+                <div className="space-y-8">
+                  {/* UG Courses */}
+                  {interestCategories.management.ug.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">UNDERGRADUATE</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                        {interestCategories.management.ug.map((category, idx) => {
+                          const IconComponent = ProgramIcons[category.icon];
+                          return (
+                            <motion.button
+                              key={category.name}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: idx * 0.03 }}
+                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
+                            >
+                              {/* Animated gradient background - Maroon/Red */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Glossy shine effect */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Content */}
+                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
+                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
+                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                                  {category.name}
+                                </span>
+                              </div>
+
+                              {/* Hover Arrow with glow */}
+                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
+                                  <ArrowRight className="w-5 h-5 text-white relative z-10" />
+                                </div>
+                              </div>
+
+                              {/* Corner accent */}
+                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PG Courses */}
+                  {interestCategories.management.pg.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">POSTGRADUATE</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                        {interestCategories.management.pg.map((category, idx) => {
+                          const IconComponent = ProgramIcons[category.icon];
+                          return (
+                            <motion.button
+                              key={category.name}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: idx * 0.03 }}
+                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
+                            >
+                              {/* Animated gradient background - Maroon/Red */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Glossy shine effect */}
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              
+                              {/* Content */}
+                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
+                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
+                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                                  {category.name}
+                                </span>
+                              </div>
+
+                              {/* Hover Arrow with glow */}
+                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
+                                  <ArrowRight className="w-5 h-5 text-white relative z-10" />
+                                </div>
+                              </div>
+
+                              {/* Corner accent */}
+                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -580,9 +901,11 @@ const HeroSection = () => {
               const filter = (list: { name: string; icon: keyof typeof ProgramIcons; href: string }[]) =>
                 list.filter((p) => !q || p.name.toLowerCase().includes(q));
               const diploma = filter(interestCategories.diploma);
-              const engineering = filter(interestCategories.engineering);
-              const management = filter(interestCategories.management);
-              const hasAny = diploma.length > 0 || engineering.length > 0 || management.length > 0;
+              const engineeringUG = filter(interestCategories.engineering.ug);
+              const engineeringPG = filter(interestCategories.engineering.pg);
+              const managementUG = filter(interestCategories.management.ug);
+              const managementPG = filter(interestCategories.management.pg);
+              const hasAny = diploma.length > 0 || engineeringUG.length > 0 || engineeringPG.length > 0 || managementUG.length > 0 || managementPG.length > 0;
               if (!hasAny) return <p className="text-slate-500 text-sm py-4">No programs match your search.</p>;
               return (
                 <>
@@ -610,52 +933,110 @@ const HeroSection = () => {
                       </ul>
                     </div>
                   )}
-                  {engineering.length > 0 && (
+                  {(engineeringUG.length > 0 || engineeringPG.length > 0) && (
                     <div>
                       <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Engineering</h4>
-                      <ul className="space-y-1.5">
-                        {engineering.map((category) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <li key={category.name}>
-                              <button
-                                type="button"
-                                onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
-                              >
-                                <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                  <IconComponent className="w-4 h-4" strokeWidth={1.75} />
-                                </div>
-                                <span className="font-medium text-slate-800">{category.name}</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                      {engineeringUG.length > 0 && (
+                        <>
+                          <h5 className="text-xs font-medium text-slate-400 mb-2 ml-1">B.TECH</h5>
+                          <ul className="space-y-1.5 mb-4">
+                            {engineeringUG.map((category) => {
+                              const IconComponent = ProgramIcons[category.icon];
+                              return (
+                                <li key={category.name}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
+                                  >
+                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    </div>
+                                    <span className="font-medium text-slate-800">{category.name}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </>
+                      )}
+                      {engineeringPG.length > 0 && (
+                        <>
+                          <h5 className="text-xs font-medium text-slate-400 mb-2 ml-1">M.TECH</h5>
+                          <ul className="space-y-1.5">
+                            {engineeringPG.map((category) => {
+                              const IconComponent = ProgramIcons[category.icon];
+                              return (
+                                <li key={category.name}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
+                                  >
+                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    </div>
+                                    <span className="font-medium text-slate-800">{category.name}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </>
+                      )}
                     </div>
                   )}
-                  {management.length > 0 && (
+                  {(managementUG.length > 0 || managementPG.length > 0) && (
                     <div>
                       <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Management</h4>
-                      <ul className="space-y-1.5">
-                        {management.map((category) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <li key={category.name}>
-                              <button
-                                type="button"
-                                onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
-                              >
-                                <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                  <IconComponent className="w-4 h-4" strokeWidth={1.75} />
-                                </div>
-                                <span className="font-medium text-slate-800">{category.name}</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                      {managementUG.length > 0 && (
+                        <>
+                          <h5 className="text-xs font-medium text-slate-400 mb-2 ml-1">Undergraduate</h5>
+                          <ul className="space-y-1.5 mb-4">
+                            {managementUG.map((category) => {
+                              const IconComponent = ProgramIcons[category.icon];
+                              return (
+                                <li key={category.name}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
+                                  >
+                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    </div>
+                                    <span className="font-medium text-slate-800">{category.name}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </>
+                      )}
+                      {managementPG.length > 0 && (
+                        <>
+                          <h5 className="text-xs font-medium text-slate-400 mb-2 ml-1">Postgraduate</h5>
+                          <ul className="space-y-1.5">
+                            {managementPG.map((category) => {
+                              const IconComponent = ProgramIcons[category.icon];
+                              return (
+                                <li key={category.name}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
+                                  >
+                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    </div>
+                                    <span className="font-medium text-slate-800">{category.name}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </>
+                      )}
                     </div>
                   )}
                 </>

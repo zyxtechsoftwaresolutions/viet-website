@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useInView } from 'framer-motion';
+import { departmentsAPI } from '@/lib/api';
 import cseImage from '@/assets/cse-department.jpg';
 import mechanicalImage from '@/assets/mechanical-department.jpg';
 import managementImage from '@/assets/management-department.jpg';
@@ -85,9 +86,80 @@ interface Programme {
 const DisciplinesSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
 
-  // All programmes with their stream and level information - using department-specific images
-  const programmes: Programme[] = [
+  // Map department name to icon
+  const getDepartmentIcon = (name: string): any => {
+    const normalizedName = name.toLowerCase();
+    if (normalizedName.includes('agriculture')) return Leaf;
+    if (normalizedName.includes('civil')) return Building2;
+    if (normalizedName.includes('computer') || normalizedName.includes('cse')) return Code;
+    if (normalizedName.includes('ece') || normalizedName.includes('electronics and communication')) return Radio;
+    if (normalizedName.includes('eee') || normalizedName.includes('electrical')) return Zap;
+    if (normalizedName.includes('mechanical')) return Wrench;
+    if (normalizedName.includes('data science') || normalizedName.includes('datascience') || normalizedName.includes('csd')) return Laptop;
+    if (normalizedName.includes('cyber') || normalizedName.includes('csc')) return Shield;
+    if (normalizedName.includes('machine learning') || normalizedName.includes('ai') || normalizedName.includes('csm')) return Brain;
+    if (normalizedName.includes('automobile') || normalizedName.includes('ame')) return Car;
+    if (normalizedName.includes('basic science') || normalizedName.includes('bs&h')) return Calculator;
+    if (normalizedName.includes('bba') || normalizedName.includes('mba')) return Briefcase;
+    if (normalizedName.includes('bca') || normalizedName.includes('mca')) return BookOpen;
+    return Code; // default
+  };
+
+  // Fetch departments and convert to programmes
+  useEffect(() => {
+    const fetchProgrammes = async () => {
+      try {
+        const departments = await departmentsAPI.getAll();
+        // Remove duplicates
+        const seen = new Set<string>();
+        const unique = departments.filter((dept) => {
+          const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        
+        const programmesList: Programme[] = unique.map((dept) => {
+          // Clean name (remove prefix)
+          const cleanName = dept.name.replace(/^(DIPLOMA|ENGINEERING|MANAGEMENT)\s*(UG|PG)?\s*-\s*/i, '').trim();
+          // Format level
+          let levelLabel = dept.level;
+          if (dept.stream === 'ENGINEERING') {
+            if (dept.level === 'UG') levelLabel = 'B.Tech UG';
+            else if (dept.level === 'PG') levelLabel = 'M.Tech PG';
+          } else if (dept.stream === 'MANAGEMENT') {
+            levelLabel = dept.level; // UG or PG
+          } else if (dept.stream === 'DIPLOMA') {
+            levelLabel = 'Diploma';
+          }
+          
+          return {
+            name: cleanName,
+            stream: dept.stream,
+            level: levelLabel,
+            image: dept.image || getDepartmentImage(cleanName),
+            icon: getDepartmentIcon(dept.name),
+          };
+        });
+        
+        // Sort alphabetically by name
+        programmesList.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        
+        setProgrammes(programmesList);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        // Fallback to empty array
+        setProgrammes([]);
+      }
+    };
+    
+    fetchProgrammes();
+  }, []);
+
+  // Fallback programmes (used only if API fails or returns empty)
+  const fallbackProgrammes: Programme[] = [
     // Diploma Programmes - each using getDepartmentImage for consistency
     { name: 'Agriculture Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Agriculture Engineering'), icon: Leaf },
     { name: 'Civil Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Civil Engineering'), icon: Building2 },
@@ -125,8 +197,11 @@ const DisciplinesSection = () => {
     { name: 'MCA', stream: 'MANAGEMENT', level: 'PG', image: getDepartmentImage('MCA'), icon: BookOpen },
   ];
 
+  // Use fetched programmes or fallback
+  const displayProgrammes = programmes.length > 0 ? programmes : fallbackProgrammes;
+  
   // Duplicate programmes for seamless infinite scrolling (like GITAM)
-  const duplicatedProgrammes = [...programmes, ...programmes];
+  const duplicatedProgrammes = [...displayProgrammes, ...displayProgrammes];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -185,7 +260,7 @@ const DisciplinesSection = () => {
             <div className="overflow-hidden">
               <div className="flex gap-6 animate-scroll">
                 {/* First set */}
-                {programmes.map((programme, index) => (
+                {displayProgrammes.map((programme, index) => (
                   <motion.div
                     key={`${programme.name}-${programme.level}-${index}`}
                     variants={cardVariants}
@@ -324,12 +399,12 @@ const DisciplinesSection = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-320px * ${programmes.length} - 24px * ${programmes.length}));
+            transform: translateX(calc(-320px * ${displayProgrammes.length} - 24px * ${displayProgrammes.length}));
           }
         }
         
         .animate-scroll {
-          animation: scroll ${programmes.length * 3}s linear infinite;
+          animation: scroll ${displayProgrammes.length * 3}s linear infinite;
           display: flex;
           width: fit-content;
           will-change: transform;

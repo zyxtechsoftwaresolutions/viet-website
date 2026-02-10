@@ -119,7 +119,7 @@ const Principal = () => {
               Principal's Message
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
-            <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85]">
+            <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify">
               {pageContent?.message ? (
                 <div
                   dangerouslySetInnerHTML={{ __html: pageContent.message }}

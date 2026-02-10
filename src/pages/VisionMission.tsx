@@ -108,7 +108,7 @@ const VisionMission = () => {
                 <h2 className="text-3xl md:text-4xl font-bold text-slate-800">Vision</h2>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border-l-4 border-blue-500">
-                <p className="text-lg text-slate-700 leading-relaxed">
+                <p className="text-lg text-slate-700 leading-relaxed text-justify">
                   To emerge as a <strong>"Centre for Excellence"</strong> offering Technical Education and Research opportunities of very high standards to students, develop the total personality of the individual, and instill high levels of discipline and strive to set global standards, making our students technologically superior and ethically strong, who in turn shall contribute to the advancement of society and humankind.
                 </p>
               </div>
@@ -127,7 +127,7 @@ const VisionMission = () => {
                 <h2 className="text-3xl md:text-4xl font-bold text-slate-800">Mission</h2>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 border-l-4 border-purple-500">
-                <p className="text-lg text-slate-700 leading-relaxed">
+                <p className="text-lg text-slate-700 leading-relaxed text-justify">
                   To dedicate and commit ourselves to achieve, sustain and foster unmatched excellence in Technical Education. To this end, we will pursue continuous development of infrastructure and enhance state-of-the-art equipment to provide our students a technologically up-to-date and intellectually inspiring environment of learning, research, creativity, innovation and professional activity and inculcate in them ethical and moral values.
                 </p>
               </div>
@@ -170,7 +170,7 @@ const VisionMission = () => {
                           <h3 className="text-xl font-bold text-slate-800 mb-4">
                             {goal.title}
                           </h3>
-                          <p className="text-slate-600 leading-relaxed">
+                          <p className="text-slate-600 leading-relaxed text-justify">
                             {goal.description}
                           </p>
                         </div>
