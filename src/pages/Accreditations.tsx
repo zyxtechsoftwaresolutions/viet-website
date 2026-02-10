@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, FileText, Download, ExternalLink, Shield, CheckCircle, Star, Building } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
@@ -5,8 +6,24 @@ import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { accreditationsAPI, type AccreditationItem } from '@/lib/api';
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  AUTONOMOUS: Building,
+  NAAC: Award,
+  UGC: Shield,
+  ISO: CheckCircle,
+  AICTE: Star,
+};
 
 const Accreditations = () => {
+  const [accreditations, setAccreditations] = useState<AccreditationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    accreditationsAPI.getAll().then(setAccreditations).catch(() => setAccreditations([])).finally(() => setLoading(false));
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -29,61 +46,19 @@ const Accreditations = () => {
     }
   };
 
-  const accreditations = [
-    {
-      name: "AUTONOMOUS",
-      logo: "/logo-viet.png",
-      description: "UGC Autonomous Status Confirmation",
-      href: "/UGC%20Autonomous%20Confirmation.pdf",
-      color: "from-slate-800 to-blue-950",
-      icon: Building
-    },
-    {
-      name: "NAAC A Grade",
-      logo: "/naac-A-logo.png",
-      description: "National Assessment and Accreditation Council",
-      href: "/VIET%20-%20NAAC%20(1)_organized.pdf",
-      color: "from-green-500 to-emerald-600",
-      icon: Award
-    },
-    {
-      name: "UGC Recognition",
-      logo: "/UGC-logo.png",
-      description: "University Grants Commission Recognition",
-      href: "/UGC_2F_VIET.pdf",
-      color: "from-purple-500 to-violet-600",
-      icon: Shield
-    },
-    {
-      name: "ISO 9001:2015",
-      logo: "/iso-logo.png",
-      description: "International Organization for Standardization",
-      href: "/ISO_Certificates.pdf",
-      color: "from-slate-800 to-blue-950",
-      icon: CheckCircle
-    },
-    {
-      name: "AICTE Approved",
-      logo: "/AICTE-Logo.png",
-      description: "All India Council for Technical Education",
-      href: "/accreditation",
-      color: "from-cyan-500 to-blue-600",
-      icon: Star
-    }
-  ];
+  const getHref = (acc: AccreditationItem) => {
+    if (acc.key === 'AICTE') return '/accreditation';
+    if (acc.pdf_url) return acc.pdf_url;
+    return '#';
+  };
 
-  const handleAccreditationClick = (href: string) => {
-    if (href.startsWith('#')) {
-      // Handle internal links (placeholder for now)
-      console.log(`Clicked on ${href}`);
-    } else if (href.startsWith('/')) {
-      // Handle PDF downloads and page navigation
-      if (href === '/accreditation') {
-        window.location.href = href;
-      } else {
-        // For PDF files, open in new tab
-        window.open(href, '_blank');
-      }
+  const handleAccreditationClick = (acc: AccreditationItem) => {
+    const href = getHref(acc);
+    if (href === '#') return;
+    if (href === '/accreditation') {
+      window.location.href = href;
+    } else {
+      window.open(href, '_blank');
     }
   };
 
@@ -148,46 +123,52 @@ const Accreditations = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {accreditations.map((accreditation, index) => {
-                  const IconComponent = accreditation.icon;
-                  return (
-                    <motion.div
-                      key={accreditation.name}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      className="group"
-                    >
-                      <Card 
-                        className={`h-full shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br ${accreditation.color} text-white cursor-pointer`}
-                        onClick={() => handleAccreditationClick(accreditation.href)}
+                {loading ? (
+                  <div className="col-span-full text-center py-8 text-slate-500">Loading accreditations…</div>
+                ) : (
+                  accreditations.map((accreditation, index) => {
+                    const IconComponent = ICON_MAP[accreditation.key] ?? Award;
+                    const href = getHref(accreditation);
+                    const isClickable = href !== '#';
+                    return (
+                      <motion.div
+                        key={accreditation.key}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={isClickable ? { scale: 1.05, y: -5 } : {}}
+                        className="group"
                       >
-                        <CardContent className="p-6 text-center">
-                          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-white/30 transition-colors">
-                            <img
-                              src={accreditation.logo}
-                              alt={accreditation.name}
-                              className="w-12 h-12 object-contain"
-                            />
-                          </div>
-                          <h3 className="text-xl font-bold mb-2">{accreditation.name}</h3>
-                          <p className="text-sm text-white/90 mb-4 leading-relaxed">
-                            {accreditation.description}
-                          </p>
-                          <div className="flex justify-center space-x-2">
-                            <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                              <IconComponent className="w-5 h-5 text-white" />
+                        <Card 
+                          className={`h-full shadow-lg transition-all duration-300 border-0 bg-gradient-to-br ${accreditation.color} text-white ${isClickable ? 'hover:shadow-2xl cursor-pointer' : ''}`}
+                          onClick={() => isClickable && handleAccreditationClick(accreditation)}
+                        >
+                          <CardContent className="p-6 text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-white/30 transition-colors">
+                              <img
+                                src={accreditation.logo}
+                                alt={accreditation.name}
+                                className="w-12 h-12 object-contain"
+                              />
                             </div>
-                            <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                              <ExternalLink className="w-5 h-5 text-white" />
+                            <h3 className="text-xl font-bold mb-2">{accreditation.name}</h3>
+                            <p className="text-sm text-white/90 mb-4 leading-relaxed">
+                              {accreditation.description}
+                            </p>
+                            <div className="flex justify-center space-x-2">
+                              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                                <IconComponent className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                                <ExternalLink className="w-5 h-5 text-white" />
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>

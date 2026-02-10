@@ -22,8 +22,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { heroVideosAPI } from '@/lib/api';
+import { uploadVideoToSupabase, uploadPosterToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
-import { Video, Upload } from 'lucide-react';
+import { Video } from 'lucide-react';
 
 interface HeroVideo {
   id: number;
@@ -55,8 +56,7 @@ const HeroVideos = () => {
   const [videoPreview, setVideoPreview] = useState<string>('');
   const [posterPreview, setPosterPreview] = useState<string>('');
 
-  // Backend serves uploads at origin root (no /api). Use full URL so image requests show in Network and work from any host.
-  const uploadsOrigin = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '');
+  const thumbUrl = (url: string) => url || '';
 
   useEffect(() => {
     fetchVideos();
@@ -94,8 +94,8 @@ const HeroVideos = () => {
     });
     setVideoFile(null);
     setPosterFile(null);
-    setVideoPreview(item.src ? (uploadsOrigin ? `${uploadsOrigin}${item.src}` : item.src) : '');
-    setPosterPreview(item.poster ? (uploadsOrigin ? `${uploadsOrigin}${item.poster}` : item.poster) : '');
+    setVideoPreview(thumbUrl(item.src) || '');
+    setPosterPreview(thumbUrl(item.poster || '') || '');
     setDialogOpen(true);
   };
 
@@ -130,20 +130,39 @@ const HeroVideos = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!videoFile && !selectedItem) {
+      if (!selectedItem && !videoFile) {
         toast.error('Please select a video file');
         return;
       }
 
+      let src: string | undefined;
+      let poster: string | null | undefined;
+
+      if (videoFile) {
+        toast.info('Uploading video to storage…');
+        src = await uploadVideoToSupabase(videoFile);
+      }
+      if (posterFile) {
+        poster = await uploadPosterToSupabase(posterFile);
+      }
+
       if (selectedItem) {
-        await heroVideosAPI.update(selectedItem.id, videoFile, posterFile, formData);
+        await heroVideosAPI.update(selectedItem.id, {
+          ...formData,
+          ...(src !== undefined && { src }),
+          ...(poster !== undefined && { poster }),
+        });
         toast.success('Hero video updated successfully');
       } else {
-        if (!videoFile) {
+        if (!src) {
           toast.error('Please select a video file');
           return;
         }
-        await heroVideosAPI.create(videoFile, posterFile, formData);
+        await heroVideosAPI.create({
+          src,
+          poster: poster ?? null,
+          ...formData,
+        });
         toast.success('Hero video added successfully');
       }
       setDialogOpen(false);
@@ -173,7 +192,7 @@ const HeroVideos = () => {
         <div className="flex items-center gap-2">
           {item.poster ? (
             <img
-              src={item.poster.startsWith('/') ? (uploadsOrigin ? `${uploadsOrigin}${item.poster}` : item.poster) : item.poster}
+              src={thumbUrl(item.poster)}
               alt={item.title}
               className="w-20 h-12 object-cover rounded"
             />

@@ -7,10 +7,11 @@ import { pagesAPI, transportRoutesAPI } from "@/lib/api";
 
 // Fallback data: bus no, driver, contact, capacity, image for hover
 const DEFAULT_ROUTES = [
-  { id: "01", name: "Route 1", from: "Dwaraka Nagar / NAD Kotha Road", to: "VIET Campus, Narava", stops: 8, time: "25 min", freq: "Morning & Evening", color: "from-indigo-500 to-blue-600", busNo: "AP 31 TB 1234", driverName: "K. Venkata Rao", driverContactNo: "+91 98765 43210", seatingCapacity: 45, image: "/footer bg/collegeimage.jpeg" },
-  { id: "02", name: "Route 2", from: "Gajuwaka / Kancharapalem", to: "VIET Campus, Narava", stops: 6, time: "20 min", freq: "Morning & Evening", color: "from-indigo-600 to-slate-700", busNo: "AP 31 TB 2345", driverName: "M. Siva Kumar", driverContactNo: "+91 98765 43211", seatingCapacity: 42, image: "/footer bg/fbg1.jpg" },
-  { id: "03", name: "Route 3", from: "MVP Colony / Siripuram", to: "VIET Campus, Narava", stops: 10, time: "30 min", freq: "Morning & Evening", color: "from-blue-500 to-indigo-600", busNo: "AP 31 TB 3456", driverName: "P. Ramesh", driverContactNo: "+91 98765 43212", seatingCapacity: 48, image: "/footer bg/fbg2.jpg" },
-  { id: "04", name: "Route 4", from: "Industrial Area / Parawada", to: "VIET Campus, Narava", stops: 7, time: "22 min", freq: "Morning & Evening", color: "from-slate-600 to-indigo-700", busNo: "AP 31 TB 4567", driverName: "S. Srinivas", driverContactNo: "+91 98765 43213", seatingCapacity: 44, image: "/footer bg/fbg3.jpg" },
+  // Use placeholder images (older public/footer bg assets were removed; admin can upload route images via panel)
+  { id: "01", name: "Route 1", from: "Dwaraka Nagar / NAD Kotha Road", to: "VIET Campus, Narava", stops: 8, time: "25 min", freq: "Morning & Evening", color: "from-indigo-500 to-blue-600", busNo: "AP 31 TB 1234", driverName: "K. Venkata Rao", driverContactNo: "+91 98765 43210", seatingCapacity: 45, image: "/placeholder.svg" },
+  { id: "02", name: "Route 2", from: "Gajuwaka / Kancharapalem", to: "VIET Campus, Narava", stops: 6, time: "20 min", freq: "Morning & Evening", color: "from-indigo-600 to-slate-700", busNo: "AP 31 TB 2345", driverName: "M. Siva Kumar", driverContactNo: "+91 98765 43211", seatingCapacity: 42, image: "/placeholder.svg" },
+  { id: "03", name: "Route 3", from: "MVP Colony / Siripuram", to: "VIET Campus, Narava", stops: 10, time: "30 min", freq: "Morning & Evening", color: "from-blue-500 to-indigo-600", busNo: "AP 31 TB 3456", driverName: "P. Ramesh", driverContactNo: "+91 98765 43212", seatingCapacity: 48, image: "/placeholder.svg" },
+  { id: "04", name: "Route 4", from: "Industrial Area / Parawada", to: "VIET Campus, Narava", stops: 7, time: "22 min", freq: "Morning & Evening", color: "from-slate-600 to-indigo-700", busNo: "AP 31 TB 4567", driverName: "S. Srinivas", driverContactNo: "+91 98765 43213", seatingCapacity: 44, image: "/placeholder.svg" },
 ];
 
 const DEFAULT_STATS = [

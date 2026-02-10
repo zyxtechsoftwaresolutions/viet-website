@@ -201,7 +201,7 @@ const DisciplinesSection = () => {
                           height={192}
                           loading="lazy"
                           decoding="async"
-                          fetchPriority="auto"
+                          fetchpriority="auto"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           style={{ 
                             imageRendering: 'auto',
@@ -265,7 +265,7 @@ const DisciplinesSection = () => {
                           height={192}
                           loading="lazy"
                           decoding="async"
-                          fetchPriority="auto"
+                          fetchpriority="auto"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           style={{ 
                             imageRendering: 'auto',

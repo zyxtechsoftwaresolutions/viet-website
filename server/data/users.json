@@ -4,7 +4,7 @@
       "id": 1,
       "username": "admin",
       "email": "admin@viet.edu.in",
-      "password": "$2a$10$LKwFOQbw6677mQ7hbemqoeYbMSQcov1Ebl52W7JJPb5/pn0hv4Yiq",
+      "password": "$2a$10$bmffmzF2mLprumAUzVhxDOJ9ndaZIcYFlLHTZjsdctnIqiz8dc1CW",
       "role": "admin",
       "createdAt": "2025-11-15T07:03:38.995Z"
     }

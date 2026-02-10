@@ -139,7 +139,7 @@ const RankedTopSection = () => {
                           height={64}
                           loading="lazy"
                           decoding="async"
-                          fetchPriority="auto"
+                          fetchpriority="auto"
                         />
                       ) : (
                         <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-white" />

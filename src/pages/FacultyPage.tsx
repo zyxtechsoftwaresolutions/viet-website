@@ -154,7 +154,8 @@ const FacultyPage = () => {
 
   const imgUrl = (path: string | undefined) => {
     if (!path) return '';
-    const base = API_BASE_URL.replace('/api', '');
+    if (path.startsWith('http')) return path;
+    const base = (API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
     return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
   };
 

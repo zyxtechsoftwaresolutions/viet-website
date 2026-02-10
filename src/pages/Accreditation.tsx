@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, FileText, Calendar, Download, ExternalLink, Shield, CheckCircle, Star } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
@@ -5,8 +6,16 @@ import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { aicteAffiliationLettersAPI, type AicteLetter } from '@/lib/api';
 
 const Accreditation = () => {
+  const [letters, setLetters] = useState<AicteLetter[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    aicteAffiliationLettersAPI.getAll().then(setLetters).catch(() => setLetters([])).finally(() => setLoading(false));
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -29,26 +38,9 @@ const Accreditation = () => {
     }
   };
 
-  const accreditationYears = [
-    { year: "2025-26", status: "Current", color: "from-green-500 to-emerald-600" },
-    { year: "2024-25", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2023-24", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2022-23", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2021-22", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2020-21", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2019-20", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2018-19", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2017-18", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2016-17", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2015-16", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2014-15", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2013-14", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2012-13", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2011-12", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2010-11", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2009-10", status: "Active", color: "from-blue-500 to-indigo-600" },
-    { year: "2008-09", status: "Active", color: "from-blue-500 to-indigo-600" }
-  ];
+  const handleLetterClick = (letter: AicteLetter) => {
+    if (letter.pdf_url) window.open(letter.pdf_url, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -139,45 +131,55 @@ const Accreditation = () => {
                 </p>
               </div>
 
-              {/* Affiliation Years Grid */}
+              {/* Affiliation Years Grid: latest = green, others = blue */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {accreditationYears.map((item, index) => (
-                  <motion.div
-                    key={item.year}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    className="group"
-                  >
-                    <Card className={`h-full shadow-lg hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br ${item.color} text-white cursor-pointer`}>
-                      <CardContent className="p-4 text-center">
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white/30 transition-colors">
-                          <FileText className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="text-lg font-bold mb-2">{item.year}</h3>
-                        <Badge 
-                          variant="secondary" 
-                          className={`text-xs px-2 py-1 ${
-                            item.status === 'Current' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
+                {loading ? (
+                  <div className="col-span-full text-center py-8 text-slate-500">Loading affiliation letters…</div>
+                ) : letters.length === 0 ? (
+                  <div className="col-span-full text-center py-8 text-slate-500">No year-wise letters added yet.</div>
+                ) : (
+                  letters.map((letter, index) => {
+                    const isLatest = letter.is_latest;
+                    const colorClass = isLatest ? 'from-green-500 to-emerald-600' : 'from-blue-500 to-indigo-600';
+                    const isClickable = !!letter.pdf_url;
+                    return (
+                      <motion.div
+                        key={letter.id}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={isClickable ? { scale: 1.05, y: -5 } : {}}
+                        className="group"
+                      >
+                        <Card
+                          className={`h-full shadow-lg transition-all duration-300 border-0 bg-gradient-to-br ${colorClass} text-white ${isClickable ? 'hover:shadow-2xl cursor-pointer' : ''}`}
+                          onClick={() => isClickable && handleLetterClick(letter)}
                         >
-                          {item.status}
-                        </Badge>
-                        <div className="mt-3 flex justify-center space-x-2">
-                          <button className="p-1 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
-                            <Download className="w-4 h-4 text-white" />
-                          </button>
-                          <button className="p-1 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
-                            <ExternalLink className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                          <CardContent className="p-4 text-center">
+                            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white/30 transition-colors">
+                              <FileText className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="text-lg font-bold mb-2">{letter.year}</h3>
+                            <Badge
+                              variant="secondary"
+                              className={`text-xs px-2 py-1 ${isLatest ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
+                            >
+                              {isLatest ? 'Current' : 'Active'}
+                            </Badge>
+                            <div className="mt-3 flex justify-center space-x-2">
+                              <div className="p-1 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                                <Download className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="p-1 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                                <ExternalLink className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>

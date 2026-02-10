@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { carouselAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
 
@@ -95,20 +96,22 @@ const Carousel = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!imageFile && !selectedItem) {
+      let src: string | undefined;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        src = await uploadToSupabase(imageFile, 'carousel', 'images');
+      } else if (selectedItem) {
+        src = selectedItem.src;
+      }
+      if (!src) {
         toast.error('Please select an image');
         return;
       }
-
       if (selectedItem) {
-        await carouselAPI.update(selectedItem.id, imageFile, formData.title, formData.subtitle);
+        await carouselAPI.update(selectedItem.id, { src, title: formData.title, subtitle: formData.subtitle });
         toast.success('Carousel image updated successfully');
       } else {
-        if (!imageFile) {
-          toast.error('Please select an image');
-          return;
-        }
-        await carouselAPI.create(imageFile, formData.title, formData.subtitle);
+        await carouselAPI.create({ src, title: formData.title, subtitle: formData.subtitle });
         toast.success('Carousel image added successfully');
       }
       setDialogOpen(false);

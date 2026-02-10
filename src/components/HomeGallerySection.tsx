@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { homeGalleryAPI } from '@/lib/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
 // Default gallery layout positions - exactly 8 images as per HTML structure
 const defaultGalleryLayout = [
   { id: 1, x1: 2, x2: 6, y1: 1, y2: 4, image: '/placeholder.svg' },
@@ -303,12 +301,10 @@ const HomeGallerySection: React.FC = () => {
                     <img
                       src={
                         item.image?.startsWith('http://') || item.image?.startsWith('https://')
-                          ? item.image // Supabase Storage URL - use directly
-                          : item.image?.startsWith('/uploads/')
-                            ? `${API_BASE_URL}${item.image}` // Legacy local path
-                            : item.image?.startsWith('/')
-                              ? item.image // Static asset
-                              : item.image || '/placeholder.svg'
+                          ? item.image
+                          : item.image?.startsWith('/')
+                            ? item.image
+                            : item.image || '/placeholder.svg'
                       }
                       alt={`Gallery image ${item.id}`}
                       data-rotation={-rotation}
@@ -316,7 +312,7 @@ const HomeGallerySection: React.FC = () => {
                       height={400}
                       loading="lazy"
                       decoding="async"
-                      fetchPriority="auto"
+                      fetchpriority="auto"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder.svg';

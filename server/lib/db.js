@@ -21,6 +21,7 @@ const SNAKE_MAP = {
   highestPackageLPA: 'highest_package_lpa', averagePackageLPA: 'average_package_lpa',
   totalOffers: 'total_offers', companiesVisited: 'companies_visited',
   videoLink: 'video_link', isActive: 'is_active',
+  pdfUrl: 'pdf_url', isLatest: 'is_latest', sortOrder: 'sort_order',
 };
 function toSnake(obj) {
   if (!obj || typeof obj !== 'object') return obj;
@@ -47,12 +48,25 @@ async function writeJsonFile(filename, data) {
 // ==================== USERS ====================
 export async function getUsers() {
   if (useJsonFallback) {
-    const d = await readJsonFile('users');
-    return d.users;
+    try {
+      const d = await readJsonFile('users');
+      return Array.isArray(d.users) ? d.users : [];
+    } catch (e) {
+      console.error('Failed to read users.json:', e.message);
+      return [];
+    }
   }
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabase.from('users').select('*');
+    if (error) {
+      console.error('Supabase users error:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.error('Supabase users query failed:', e.message);
+    return [];
+  }
 }
 
 export async function findUserByUsernameOrEmail(username) {
@@ -1017,4 +1031,167 @@ export async function upsertDepartmentPage(slug, item) {
     .single();
   if (error) throw error;
   return data ? { slug: data.slug, sections: data.sections, curriculum: data.curriculum } : null;
+}
+
+// ==================== ACCREDITATIONS (main page: AUTONOMOUS, NAAC, UGC, ISO, AICTE) ====================
+const DEFAULT_ACCREDITATIONS = [
+  { key: 'AUTONOMOUS', name: 'AUTONOMOUS', description: 'UGC Autonomous Status Confirmation', logo: '/logo-viet.png', pdfUrl: null, color: 'from-slate-800 to-blue-950', sortOrder: 1 },
+  { key: 'NAAC', name: 'NAAC A Grade', description: 'National Assessment and Accreditation Council', logo: '/naac-A-logo.png', pdfUrl: null, color: 'from-green-500 to-emerald-600', sortOrder: 2 },
+  { key: 'UGC', name: 'UGC Recognition', description: 'University Grants Commission Recognition', logo: '/UGC-logo.png', pdfUrl: null, color: 'from-purple-500 to-violet-600', sortOrder: 3 },
+  { key: 'ISO', name: 'ISO 9001:2015', description: 'International Organization for Standardization', logo: '/iso-logo.png', pdfUrl: null, color: 'from-slate-800 to-blue-950', sortOrder: 4 },
+  { key: 'AICTE', name: 'AICTE Approved', description: 'All India Council for Technical Education', logo: '/AICTE-Logo.png', pdfUrl: null, color: 'from-cyan-500 to-blue-600', sortOrder: 5 },
+];
+
+export async function getAccreditations() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('accreditations');
+      const items = Array.isArray(d.items) ? d.items : [];
+      if (items.length === 0) return DEFAULT_ACCREDITATIONS.map(a => ({ key: a.key, name: a.name, description: a.description, logo: a.logo, pdf_url: a.pdfUrl, color: a.color, sort_order: a.sortOrder }));
+      return items.map(a => ({ key: a.key, name: a.name, description: a.description, logo: a.logo, pdf_url: a.pdfUrl ?? a.pdf_url, color: a.color, sort_order: a.sort_order ?? a.sortOrder }));
+    } catch (e) {
+      return DEFAULT_ACCREDITATIONS.map(a => ({ ...a, pdf_url: a.pdfUrl }));
+    }
+  }
+  const { data, error } = await supabase.from('accreditations').select('*').order('sort_order');
+  if (error) throw error;
+  return (data || []).map(row => ({
+    key: row.key,
+    name: row.name,
+    description: row.description,
+    logo: row.logo,
+    pdf_url: row.pdf_url,
+    color: row.color,
+    sort_order: row.sort_order,
+  }));
+}
+
+export async function updateAccreditation(key, item) {
+  const payload = {};
+  if (item.name !== undefined) payload.name = item.name;
+  if (item.description !== undefined) payload.description = item.description;
+  if (item.logo !== undefined) payload.logo = item.logo;
+  if (item.pdf_url !== undefined) payload.pdf_url = item.pdf_url;
+  if (item.color !== undefined) payload.color = item.color;
+  if (item.sort_order !== undefined) payload.sort_order = item.sort_order;
+  payload.updated_at = new Date().toISOString();
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('accreditations');
+    const items = Array.isArray(d.items) && d.items.length > 0
+      ? d.items
+      : DEFAULT_ACCREDITATIONS.map(a => ({ key: a.key, name: a.name, description: a.description, logo: a.logo, pdf_url: a.pdfUrl, color: a.color, sort_order: a.sortOrder }));
+    const idx = items.findIndex(a => a.key === key);
+    if (idx === -1) return null;
+    items[idx] = { ...items[idx], ...payload, key };
+    d.items = items;
+    await writeJsonFile('accreditations', d);
+    return items[idx];
+  }
+  const { data, error } = await supabase.from('accreditations').update(payload).eq('key', key).select().single();
+  if (error) throw error;
+  return data ? { ...data, pdf_url: data.pdf_url } : null;
+}
+
+// ==================== AICTE AFFILIATION LETTERS (year-wise; one is_latest = green) ====================
+export async function getAicteAffiliationLetters() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('aicte-affiliation-letters');
+      const letters = Array.isArray(d.letters) ? d.letters : [];
+      // Latest first, then sort_order desc, then year desc
+      return letters.sort((a, b) => {
+        const la = a.is_latest ? 1 : 0;
+        const lb = b.is_latest ? 1 : 0;
+        if (lb !== la) return lb - la;
+        const soA = Number(a.sort_order ?? 0);
+        const soB = Number(b.sort_order ?? 0);
+        if (soB !== soA) return soB - soA;
+        return String(b.year ?? '').localeCompare(String(a.year ?? ''));
+      });
+    } catch (e) {
+      return [];
+    }
+  }
+  const { data, error } = await supabase
+    .from('aicte_affiliation_letters')
+    .select('*')
+    .order('is_latest', { ascending: false })
+    .order('sort_order', { ascending: false })
+    .order('year', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(row => ({
+    id: row.id,
+    year: row.year,
+    pdf_url: row.pdf_url,
+    is_latest: row.is_latest,
+    sort_order: row.sort_order,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }));
+}
+
+export async function createAicteAffiliationLetter(item) {
+  const payload = { year: item.year, pdf_url: item.pdf_url ?? null, is_latest: item.is_latest ?? false, sort_order: item.sort_order ?? 0 };
+  if (useJsonFallback) {
+    const d = await readJsonFile('aicte-affiliation-letters');
+    const letters = Array.isArray(d.letters) ? d.letters : [];
+    const newItem = { id: Date.now(), ...payload, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    letters.push(newItem);
+    d.letters = letters;
+    await writeJsonFile('aicte-affiliation-letters', d);
+    return newItem;
+  }
+  const { data, error } = await supabase.from('aicte_affiliation_letters').insert(toSnake(payload)).select().single();
+  if (error) throw error;
+  return data ? { ...data, pdf_url: data.pdf_url, is_latest: data.is_latest } : null;
+}
+
+export async function updateAicteAffiliationLetter(id, item) {
+  const payload = { updated_at: new Date().toISOString() };
+  if (item.year !== undefined) payload.year = item.year;
+  if (item.pdf_url !== undefined) payload.pdf_url = item.pdf_url;
+  if (item.sort_order !== undefined) payload.sort_order = item.sort_order;
+  if (item.is_latest === true) {
+    payload.is_latest = true;
+    // Unset others (so only one is latest)
+    if (useJsonFallback) {
+      const d = await readJsonFile('aicte-affiliation-letters');
+      const letters = Array.isArray(d.letters) ? d.letters : [];
+      letters.forEach(l => { l.is_latest = l.id === parseInt(id); });
+      const idx = letters.findIndex(l => l.id === parseInt(id));
+      if (idx !== -1) letters[idx] = { ...letters[idx], ...item, ...payload };
+      d.letters = letters;
+      await writeJsonFile('aicte-affiliation-letters', d);
+      return letters[idx];
+    }
+    await supabase.from('aicte_affiliation_letters').update({ is_latest: false });
+  } else if (item.is_latest !== undefined) {
+    payload.is_latest = item.is_latest;
+  }
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('aicte-affiliation-letters');
+    const letters = Array.isArray(d.letters) ? d.letters : [];
+    const idx = letters.findIndex(l => l.id === parseInt(id));
+    if (idx === -1) return null;
+    letters[idx] = { ...letters[idx], ...item, ...payload };
+    d.letters = letters;
+    await writeJsonFile('aicte-affiliation-letters', d);
+    return letters[idx];
+  }
+  const { data, error } = await supabase.from('aicte_affiliation_letters').update(payload).eq('id', id).select().single();
+  if (error) throw error;
+  return data ? { ...data, pdf_url: data.pdf_url, is_latest: data.is_latest } : null;
+}
+
+export async function deleteAicteAffiliationLetter(id) {
+  if (useJsonFallback) {
+    const d = await readJsonFile('aicte-affiliation-letters');
+    d.letters = (Array.isArray(d.letters) ? d.letters : []).filter(l => l.id !== parseInt(id));
+    await writeJsonFile('aicte-affiliation-letters', d);
+    return;
+  }
+  const { error } = await supabase.from('aicte_affiliation_letters').delete().eq('id', id);
+  if (error) throw error;
 }

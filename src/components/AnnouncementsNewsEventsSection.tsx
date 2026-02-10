@@ -95,12 +95,7 @@ const AnnouncementsNewsEventsSection = () => {
     return `${day} ${month}`;
   };
 
-  // Backend serves uploads at /uploads (proxied by Vite in dev). Use relative URLs for network flexibility.
-  // In dev: Vite proxy handles /uploads -> backend
-  // In prod: backend serves /uploads directly
-  const uploadsOrigin = import.meta.env.VITE_API_URL 
-    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-    : ''; // Empty string means use relative URLs
+  // Event images are full Supabase Storage URLs from DB; use as-is.
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -133,14 +128,14 @@ const AnnouncementsNewsEventsSection = () => {
     dateShort: toDateShort(e.date),
     time: e.time,
     location: e.location,
-    image: e.image ? (uploadsOrigin ? `${uploadsOrigin}${e.image}` : e.image) : null,
+    image: e.image || null,
     link: e.link,
   }));
   const latestEventCountdown = latestEvent ? (countdowns[latestEvent.id] || calculateCountdown(latestEvent.date, latestEvent.time || '00:00')) : null;
   const latestEventIsUpcoming = latestEventCountdown
     ? (latestEventCountdown.days > 0 || latestEventCountdown.hours > 0 || latestEventCountdown.minutes > 0 || latestEventCountdown.seconds > 0)
     : false;
-  const latestEventImageUrl = latestEvent?.image ? (uploadsOrigin ? `${uploadsOrigin}${latestEvent.image}` : latestEvent.image) : null;
+  const latestEventImageUrl = latestEvent?.image || null;
   const rightVisibleCount = Math.min(rightListCards.length, RIGHT_VISIBLE_CARDS) || 1;
   // Use margin on each card so spacing is reliable (no attached cards). Each card: margin 6px top + 6px bottom = 12px between cards.
   const rightGapTotal = rightVisibleCount * CARD_GAP_PX;
@@ -228,7 +223,7 @@ const AnnouncementsNewsEventsSection = () => {
                     height={450}
                     loading="lazy"
                     decoding="async"
-                    fetchPriority="high"
+                    fetchpriority="high"
                   />
                 </div>
               )}
@@ -342,7 +337,7 @@ const AnnouncementsNewsEventsSection = () => {
                                   height={300}
                                   loading="lazy"
                                   decoding="async"
-                                  fetchPriority="auto"
+                                  fetchpriority="auto"
                                 />
                               ) : (
                                 <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-muted-foreground">

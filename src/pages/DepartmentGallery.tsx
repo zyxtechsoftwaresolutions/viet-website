@@ -313,7 +313,7 @@ const DepartmentGallery: React.FC = () => {
                             className="w-full h-full object-cover"
                             loading={chunkIndex === 0 && i < 4 ? "eager" : "lazy"}
                             decoding="async"
-                            fetchPriority={chunkIndex === 0 && i < 4 ? "high" : "auto"}
+                            fetchpriority={chunkIndex === 0 && i < 4 ? "high" : "auto"}
                           />
                         </div>
                       );

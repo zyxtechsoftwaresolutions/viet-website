@@ -23,12 +23,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { eventsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { ImagePlus, X } from 'lucide-react';
 
-// Backend serves uploads at origin root; use full URL so images load and show in Network tab
-const UPLOADS_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '');
-const eventImageUrl = (path: string | undefined) => (path ? `${UPLOADS_BASE}${path}` : null);
+const eventImageUrl = (path: string | undefined) => (path && path.startsWith('http') ? path : path || null);
 
 interface Event {
   id: number;
@@ -129,11 +128,17 @@ const Events = () => {
 
   const handleSubmit = async () => {
     try {
+      let imageUrl: string | null = null;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        imageUrl = await uploadToSupabase(imageFile, 'events', 'images');
+      }
+      const payload = { ...formData, image: imageUrl ?? (selectedItem?.image ?? null) };
       if (selectedItem) {
-        await eventsAPI.update(selectedItem.id, formData, imageFile);
+        await eventsAPI.update(selectedItem.id, payload);
         toast.success('Event updated successfully');
       } else {
-        await eventsAPI.create(formData, imageFile);
+        await eventsAPI.create(payload);
         toast.success('Event created successfully');
       }
       setDialogOpen(false);
@@ -289,7 +294,7 @@ const Events = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/avif,image/gif"
                     className="hidden"
                     onChange={handleImageChange}
                   />

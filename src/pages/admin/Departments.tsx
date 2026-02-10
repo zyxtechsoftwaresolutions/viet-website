@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { departmentsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface Department {
@@ -103,15 +104,21 @@ const Departments = () => {
 
   const handleSubmit = async () => {
     try {
+      let imageUrl: string | null = null;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        imageUrl = await uploadToSupabase(imageFile, 'departments', 'images');
+      }
+      const payload = { ...formData, image: imageUrl ?? (selectedItem?.image ?? null) };
       if (selectedItem) {
-        await departmentsAPI.update(selectedItem.id, formData, imageFile);
+        await departmentsAPI.update(selectedItem.id, payload);
         toast.success('Department updated successfully');
       } else {
-        if (!imageFile) {
+        if (!imageUrl && !selectedItem?.image) {
           toast.error('Please select an image');
           return;
         }
-        await departmentsAPI.create(formData, imageFile);
+        await departmentsAPI.create(payload);
         toast.success('Department created successfully');
       }
       setDialogOpen(false);

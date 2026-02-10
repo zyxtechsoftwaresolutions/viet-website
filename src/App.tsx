@@ -68,8 +68,9 @@ const Gallery = lazy(() => import("./pages/admin/Gallery"));
 const VibeAtVietAdmin = lazy(() => import("./pages/admin/VibeAtVietAdmin"));
 const Recruiters = lazy(() => import("./pages/admin/Recruiters"));
 const PlacementSection = lazy(() => import("./pages/admin/PlacementSection"));
-const Pages = lazy(() => import("./pages/admin/Pages"));
+const Pages = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
 const TransportRoutes = lazy(() => import("./pages/admin/TransportRoutes"));
+const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 
 // Loading fallback component
@@ -163,6 +164,7 @@ const App = () => (
               <Route path="recruiters" element={<Recruiters />} />
               <Route path="placement-section" element={<PlacementSection />} />
               <Route path="transport-routes" element={<TransportRoutes />} />
+              <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="pages" element={<Pages />} />
             </Route>
             

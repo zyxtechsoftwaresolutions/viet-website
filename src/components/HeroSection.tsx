@@ -68,10 +68,7 @@ const HeroSection = () => {
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
 
-  // Backend serves uploads at origin root (no /api). Use full URL so video requests work from any host.
-  const uploadsOrigin = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '');
-
-  // Fetch hero videos from API
+  // Video/poster URLs from API are full Supabase Storage URLs; use as-is.
   useEffect(() => {
     const fetchVideos = async () => {
       try {
@@ -79,8 +76,8 @@ const HeroSection = () => {
         if (Array.isArray(videos) && videos.length > 0) {
           const slides = videos.map((video) => ({
             type: 'video' as const,
-            src: video.src.startsWith('/') ? (uploadsOrigin ? `${uploadsOrigin}${video.src}` : video.src) : video.src,
-            poster: video.poster ? (video.poster.startsWith('/') ? (uploadsOrigin ? `${uploadsOrigin}${video.poster}` : video.poster) : video.poster) : undefined,
+            src: video.src,
+            poster: video.poster || undefined,
             badge: video.badge || undefined,
             title: video.title || '',
             subtitle: video.subtitle || '',
@@ -102,7 +99,7 @@ const HeroSection = () => {
       }
     };
     fetchVideos();
-  }, [uploadsOrigin]);
+  }, []);
 
   // Auto-advance slides
   useEffect(() => {
@@ -287,7 +284,7 @@ const HeroSection = () => {
                     width={1920}
                     height={1080}
                     loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "auto"}
+                    fetchpriority={index === 0 ? "high" : "auto"}
                     decoding="async"
                   />
                 ) : (
@@ -335,7 +332,7 @@ const HeroSection = () => {
                   width={1920}
                   height={1080}
                   loading={index === 0 ? "eager" : "lazy"}
-                  fetchPriority={index === 0 ? "high" : "auto"}
+                  fetchpriority={index === 0 ? "high" : "auto"}
                   decoding="async"
                   onError={(e) => {
                     // Fallback to poster if GIF fails to load
@@ -458,7 +455,7 @@ const HeroSection = () => {
                 height={56}
                 loading="lazy"
                 decoding="async"
-                fetchPriority="auto"
+                fetchpriority="auto"
               />
             </div>
             <div className="flex flex-wrap gap-3">

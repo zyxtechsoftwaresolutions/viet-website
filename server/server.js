@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
@@ -8,9 +7,13 @@ import { dirname, join } from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import * as db from './lib/db.js';
-import { resolveFileUrl } from './lib/upload-helper.js';
 import { deleteFromStorage } from './lib/storage.js';
 import { supabase } from './lib/supabase.js';
+
+/** Validate that a URL is from Supabase Storage (backend only stores these). */
+function isValidStorageUrl(url) {
+  return url && typeof url === 'string' && url.trim().length > 0 && url.includes('supabase.co/storage');
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,16 +25,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 // Middleware
 // CORS configuration - allows requests from frontend domains
 const allowedOrigins = [
-  'http://localhost:5173', // Vite dev server
-  'http://localhost:3000', // Alternative dev port
+  'http://localhost:5173', // Vite default
+  'http://localhost:3000',
+  'http://localhost:8080', // Vite port in this project (vite.config.ts)
+  'http://127.0.0.1:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
   process.env.FRONTEND_URL, // Your Vercel URL (set in Render env vars)
-  // Add your Vercel domain here after deployment, e.g.:
-  // 'https://your-project.vercel.app',
-].filter(Boolean); // Remove undefined values
+].filter(Boolean);
 
-// Log allowed origins for debugging
+// Log allowed origins for debugging (must include 8080 when using Vite dev server)
 console.log('Allowed CORS origins:', allowedOrigins);
 console.log('FRONTEND_URL from env:', process.env.FRONTEND_URL);
+if (!allowedOrigins.some(o => o && o.includes('8080'))) {
+  console.warn('CORS: port 8080 not in allowed origins – add http://localhost:8080 if frontend runs on 8080');
+}
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -128,7 +136,9 @@ async function initializeData() {
       totalOffers: 250,
       companiesVisited: 53
     },
-    'placement-carousel': { images: [] }
+    'placement-carousel': { images: [] },
+    accreditations: { items: [] },
+    'aicte-affiliation-letters': { letters: [] }
   };
 
   for (const [file, defaultData] of Object.entries(dataFiles)) {
@@ -195,135 +205,6 @@ async function initializeData() {
   } catch (e) { /* db may not be ready */ }
 }
 
-// Configure multer for file uploads - using memory storage (no local disk writes)
-// All files are uploaded directly to Supabase Storage
-const storage = multer.memoryStorage();
-
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB limit (increased for videos)
-  fileFilter: (req, file, cb) => {
-    try {
-      // Check if this is a department asset upload (images) vs curriculum upload (PDF)
-      const url = req.url || req.originalUrl || '';
-      const isDepartmentAsset = url.includes('/department-pages') && url.includes('/asset');
-      const isCurriculumUpload = url.includes('/department-pages') && url.includes('/curriculum');
-      
-      // Check fieldname to determine allowed file types
-      if (file.fieldname === 'syllabus' || file.fieldname === 'syllabusFile' || (file.fieldname === 'file' && isCurriculumUpload)) {
-        // Allow PDF for syllabus uploads (department curriculum)
-        const allowedTypes = /pdf/;
-        const fileExt = file.originalname.toLowerCase().split('.').pop();
-        const extname = allowedTypes.test(fileExt);
-        const mimetype = file.mimetype === 'application/pdf' || file.mimetype === 'application/x-pdf' || /^application\/.*pdf/.test(file.mimetype) || file.mimetype === 'application/octet-stream';
-        if (extname || mimetype) {
-          return cb(null, true);
-        }
-        return cb(new Error(`Syllabus must be a PDF file. Received: ${file.originalname} (${file.mimetype})`));
-      }
-      
-      // If it's a department asset upload with fieldname 'file', allow images (including SVG)
-      if (file.fieldname === 'file' && isDepartmentAsset) {
-        // Allow images (including SVG) for department assets
-        const allowedImageTypes = /jpeg|jpg|png|gif|webp|svg/;
-        const fileExt = file.originalname.toLowerCase().split('.').pop();
-        const extname = allowedImageTypes.test(fileExt);
-        const mimetype = /^image\//.test(file.mimetype) || 
-                        /image\/(jpeg|jpg|png|gif|webp|svg|svg\+xml)/.test(file.mimetype) ||
-                        file.mimetype === 'image/svg+xml';
-        
-        if (extname || mimetype) {
-          console.log(`✓ Department asset file accepted: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(null, true);
-        } else {
-          console.error(`✗ Department asset file rejected: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(new Error(`Department assets must be image files (JPG, PNG, GIF, WebP, SVG)! Received: ${file.originalname} (${file.mimetype})`));
-        }
-      }
-      if (file.fieldname === 'resume') {
-        // Allow PDF and DOC files for resume field
-        const allowedResumeTypes = /pdf|doc|docx/;
-        const fileExt = file.originalname.toLowerCase().split('.').pop();
-        const extname = allowedResumeTypes.test(fileExt);
-        
-        // Very lenient MIME type check for resume files - accept if extension is valid OR if MIME type suggests document
-        const mimetype = 
-          file.mimetype === 'application/pdf' ||
-          file.mimetype === 'application/msword' ||
-          file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-          file.mimetype === 'application/octet-stream' ||
-          file.mimetype === 'application/x-pdf' ||
-          file.mimetype === 'application/vnd.ms-word' ||
-          /application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|octet-stream|x-pdf)/.test(file.mimetype) ||
-          /^application\/.*pdf/.test(file.mimetype) ||
-          /^application\/.*word/.test(file.mimetype) ||
-          /^application\/.*document/.test(file.mimetype);
-        
-        // Accept if extension is valid OR if MIME type suggests it's a document
-        // This is lenient because some browsers/systems send different MIME types
-        if (extname) {
-          console.log(`✓ Resume file accepted by extension: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(null, true);
-        } else if (mimetype) {
-          console.log(`✓ Resume file accepted by MIME type: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(null, true);
-        } else {
-          console.error(`✗ Resume file rejected: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(new Error(`Resume must be a PDF or DOC file! Received: ${file.originalname} (${file.mimetype})`));
-        }
-      }
-      if (file.fieldname === 'video' || file.fieldname === 'heroVideo') {
-        // Allow video files for hero videos
-        const allowedVideoTypes = /mp4|webm|mov|avi|mkv/;
-        const fileExt = file.originalname.toLowerCase().split('.').pop();
-        const extname = allowedVideoTypes.test(fileExt);
-        const mimetype = /^video\//.test(file.mimetype) || 
-                        /video\/(mp4|webm|quicktime|x-msvideo|x-matroska)/.test(file.mimetype) ||
-                        file.mimetype === 'application/octet-stream';
-        
-        if (extname || mimetype) {
-          console.log(`✓ Video file accepted: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(null, true);
-        } else {
-          console.error(`✗ Video file rejected: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(new Error(`Video must be MP4, WebM, MOV, AVI, or MKV file! Received: ${file.originalname} (${file.mimetype})`));
-        }
-      } else {
-        // Allow image files for other fields (image, logo, etc.)
-        const allowedImageTypes = /jpeg|jpg|png|gif|webp|svg/;
-        const fileExt = file.originalname.toLowerCase().split('.').pop();
-        const extname = allowedImageTypes.test(fileExt);
-        // More lenient MIME type check for images (including SVG)
-        const mimetype = /^image\//.test(file.mimetype) || 
-                        /image\/(jpeg|jpg|png|gif|webp|svg|svg\+xml)/.test(file.mimetype) ||
-                        file.mimetype === 'image/svg+xml';
-        
-        if (extname || mimetype) {
-          console.log(`✓ Image file accepted: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(null, true);
-        } else {
-          console.error(`✗ Image file rejected: ${file.originalname}, MIME: ${file.mimetype}, Ext: ${fileExt}`);
-          return cb(new Error(`Only image files are allowed! Received: ${file.originalname} (${file.mimetype})`));
-        }
-      }
-    } catch (error) {
-      console.error('Error in fileFilter:', error);
-      return cb(new Error(`File validation error: ${error.message}`));
-    }
-  }
-});
-
-// Middleware to parse multipart/form-data fields before multer processes file
-// This ensures req.body fields are available in multer callbacks
-app.use((req, res, next) => {
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    // Let multer handle it - it will parse both file and fields
-    next();
-  } else {
-    next();
-  }
-});
-
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -347,14 +228,28 @@ const authenticateToken = (req, res, next) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await db.findUserByUsernameOrEmail(username);
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
 
+    const user = await db.findUserByUsernameOrEmail(username);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    const hashed = user.password ?? user.password_hash;
+    if (!hashed || typeof hashed !== 'string') {
+      console.error('Login: user has no password (id=%s)', user.id);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    let validPassword = false;
+    try {
+      validPassword = await bcrypt.compare(String(password), hashed);
+    } catch (err) {
+      console.error('Login bcrypt error:', err.message);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -365,7 +260,7 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({
+    return res.json({
       token,
       user: {
         id: user.id,
@@ -375,7 +270,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Login error:', error?.stack || error);
+    return res.status(500).json({ error: 'Login failed' });
   }
 });
 
@@ -514,19 +410,13 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, (req, res, next) => {
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    return upload.single('image')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
-      next();
-    });
-  }
-  next();
-}, async (req, res) => {
+app.post('/api/events', authenticateToken, async (req, res) => {
   try {
-    const body = req.body;
-    let imagePath;
-    if (req.file) imagePath = await resolveFileUrl(req.file, 'events');
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    if (image && !isValidStorageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    }
     const newEvent = await db.createEvent({
       title: body.title || '',
       description: body.description || '',
@@ -534,7 +424,7 @@ app.post('/api/events', authenticateToken, (req, res, next) => {
       time: body.time || '',
       location: body.location || '',
       link: body.link || '',
-      image: imagePath || body.image
+      image: image || null
     });
     res.json(newEvent);
   } catch (error) {
@@ -542,21 +432,17 @@ app.post('/api/events', authenticateToken, (req, res, next) => {
   }
 });
 
-app.put('/api/events/:id', authenticateToken, (req, res, next) => {
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    return upload.single('image')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
-      next();
-    });
-  }
-  next();
-}, async (req, res) => {
+app.put('/api/events/:id', authenticateToken, async (req, res) => {
   try {
-    const body = req.body;
-    let imagePath;
-    if (req.file) imagePath = await resolveFileUrl(req.file, 'events');
+    const body = req.body || {};
     const updateData = { ...body, updatedAt: new Date().toISOString() };
-    if (imagePath !== undefined) updateData.image = imagePath;
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) {
+        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      }
+      updateData.image = image;
+    }
     const updated = await db.updateEvent(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Event not found' });
     res.json(updated);
@@ -585,19 +471,13 @@ app.get('/api/transport-routes', async (req, res) => {
   }
 });
 
-app.post('/api/transport-routes', authenticateToken, (req, res, next) => {
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    return upload.single('image')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
-      next();
-    });
-  }
-  next();
-}, async (req, res) => {
+app.post('/api/transport-routes', authenticateToken, async (req, res) => {
   try {
-    const body = req.body;
-    let imagePath;
-    if (req.file) imagePath = await resolveFileUrl(req.file, 'transport-routes');
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    if (image && !isValidStorageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    }
     const newRoute = await db.createTransportRoute({
       name: body.name || 'Route',
       from: body.from || '',
@@ -609,7 +489,7 @@ app.post('/api/transport-routes', authenticateToken, (req, res, next) => {
       driverName: body.driverName || '',
       driverContactNo: body.driverContactNo || '',
       seatingCapacity: parseInt(body.seatingCapacity, 10) || 0,
-      image: imagePath || body.image || null
+      image: image || null
     });
     res.json(newRoute);
   } catch (error) {
@@ -617,19 +497,9 @@ app.post('/api/transport-routes', authenticateToken, (req, res, next) => {
   }
 });
 
-app.put('/api/transport-routes/:id', authenticateToken, (req, res, next) => {
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    return upload.single('image')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
-      next();
-    });
-  }
-  next();
-}, async (req, res) => {
+app.put('/api/transport-routes/:id', authenticateToken, async (req, res) => {
   try {
-    const body = req.body;
-    let imagePath;
-    if (req.file) imagePath = await resolveFileUrl(req.file, 'transport-routes');
+    const body = req.body || {};
     const updateData = {
       name: body.name,
       from: body.from,
@@ -642,7 +512,13 @@ app.put('/api/transport-routes/:id', authenticateToken, (req, res, next) => {
       driverContactNo: body.driverContactNo,
       seatingCapacity: body.seatingCapacity !== undefined ? parseInt(body.seatingCapacity, 10) : undefined
     };
-    if (imagePath !== undefined) updateData.image = imagePath;
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) {
+        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      }
+      updateData.image = image;
+    }
     const updated = await db.updateTransportRoute(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Route not found' });
     res.json(updated);
@@ -673,14 +549,17 @@ app.get('/api/carousel', async (req, res) => {
   }
 });
 
-app.post('/api/carousel', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/carousel', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Image file required' });
-    const src = await resolveFileUrl(req.file, 'carousel');
+    const body = req.body || {};
+    const src = typeof body.src === 'string' ? body.src.trim() : '';
+    if (!src || !isValidStorageUrl(src)) {
+      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    }
     const newImage = await db.createCarouselItem({
       src,
-      title: req.body.title || '',
-      subtitle: req.body.subtitle || '',
+      title: body.title || '',
+      subtitle: body.subtitle || '',
       uploadType: 'carousel'
     });
     res.json(newImage);
@@ -689,10 +568,17 @@ app.post('/api/carousel', authenticateToken, upload.single('image'), async (req,
   }
 });
 
-app.put('/api/carousel/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/carousel/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body, updatedAt: new Date().toISOString() };
-    if (req.file) updateData.src = await resolveFileUrl(req.file, 'carousel');
+    const body = req.body || {};
+    const updateData = { ...body, updatedAt: new Date().toISOString() };
+    if (body.src !== undefined) {
+      const src = typeof body.src === 'string' ? body.src.trim() : '';
+      if (src && !isValidStorageUrl(src)) {
+        return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+      }
+      updateData.src = src;
+    }
     const updated = await db.updateCarouselItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Image not found' });
     res.json(updated);
@@ -721,21 +607,31 @@ app.get('/api/placement-carousel', async (req, res) => {
   }
 });
 
-app.post('/api/placement-carousel', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/placement-carousel', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Image file required' });
-    const src = await resolveFileUrl(req.file, 'placement-carousel');
-    const newImage = await db.createPlacementCarouselItem({ src, title: req.body.title || '', subtitle: req.body.subtitle || '' });
+    const body = req.body || {};
+    const src = typeof body.src === 'string' ? body.src.trim() : '';
+    if (!src || !isValidStorageUrl(src)) {
+      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    }
+    const newImage = await db.createPlacementCarouselItem({ src, title: body.title || '', subtitle: body.subtitle || '' });
     res.json(newImage);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.put('/api/placement-carousel/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/placement-carousel/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.file) updateData.src = await resolveFileUrl(req.file, 'placement-carousel');
+    const body = req.body || {};
+    const updateData = { ...body };
+    if (body.src !== undefined) {
+      const src = typeof body.src === 'string' ? body.src.trim() : '';
+      if (src && !isValidStorageUrl(src)) {
+        return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+      }
+      updateData.src = src;
+    }
     const updated = await db.updatePlacementCarouselItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Image not found' });
     res.json(updated);
@@ -766,22 +662,29 @@ app.get('/api/hero-videos', async (req, res) => {
   }
 });
 
-app.post('/api/hero-videos', authenticateToken, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'poster', maxCount: 1 }
-]), async (req, res) => {
+// Hero videos: backend only stores URLs. Admin uploads video/poster to Supabase Storage, then sends URLs here.
+app.post('/api/hero-videos', authenticateToken, async (req, res) => {
   try {
-    const videoFile = req.files?.['video']?.[0];
-    const posterFile = req.files?.['poster']?.[0];
-    if (!videoFile) return res.status(400).json({ error: 'Video file is required' });
-
+    const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
+    if (!src || typeof src !== 'string' || !src.trim()) {
+      return res.status(400).json({ error: 'Video URL (src) is required. Upload video to Supabase Storage first.' });
+    }
+    if (!isValidStorageUrl(src)) {
+      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    }
+    if (poster && typeof poster === 'string' && poster.trim() && !isValidStorageUrl(poster)) {
+      return res.status(400).json({ error: 'poster must be a valid Supabase Storage URL' });
+    }
     const existing = await db.getHeroVideos();
-    const src = await resolveFileUrl(videoFile, 'hero-videos');
-    const poster = posterFile ? await resolveFileUrl(posterFile, 'hero-videos') : null;
     const newVideo = await db.createHeroVideo({
-      src, poster, badge: req.body.badge || '', title: req.body.title || '',
-      subtitle: req.body.subtitle || '', buttonText: req.body.buttonText || 'Apply Now',
-      buttonLink: req.body.buttonLink || '', order: (existing?.length || 0)
+      src: src.trim(),
+      poster: poster && typeof poster === 'string' ? poster.trim() : null,
+      badge: badge || '',
+      title: title || '',
+      subtitle: subtitle || '',
+      buttonText: buttonText || 'Apply Now',
+      buttonLink: buttonLink || '',
+      order: (existing?.length || 0)
     });
     res.json(newVideo);
   } catch (error) {
@@ -789,16 +692,17 @@ app.post('/api/hero-videos', authenticateToken, upload.fields([
   }
 });
 
-app.put('/api/hero-videos/:id', authenticateToken, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'poster', maxCount: 1 }
-]), async (req, res) => {
+app.put('/api/hero-videos/:id', authenticateToken, async (req, res) => {
   try {
-    const videoFile = req.files?.['video']?.[0];
-    const posterFile = req.files?.['poster']?.[0];
-    const updateData = { ...req.body };
-    if (videoFile) updateData.src = await resolveFileUrl(videoFile, 'hero-videos');
-    if (posterFile) updateData.poster = await resolveFileUrl(posterFile, 'hero-videos');
+    const updateData = {};
+    const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
+    if (src !== undefined) updateData.src = typeof src === 'string' ? src.trim() : null;
+    if (poster !== undefined) updateData.poster = typeof poster === 'string' ? poster.trim() || null : undefined;
+    if (badge !== undefined) updateData.badge = badge;
+    if (title !== undefined) updateData.title = title;
+    if (subtitle !== undefined) updateData.subtitle = subtitle;
+    if (buttonText !== undefined) updateData.buttonText = buttonText;
+    if (buttonLink !== undefined) updateData.buttonLink = buttonLink;
     const updated = await db.updateHeroVideo(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Video not found' });
     res.json(updated);
@@ -827,20 +731,31 @@ app.get('/api/departments', async (req, res) => {
   }
 });
 
-app.post('/api/departments', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/departments', authenticateToken, async (req, res) => {
   try {
-    const image = req.file ? await resolveFileUrl(req.file, 'departments') : req.body.image;
-    const newDept = await db.createDepartment({ name: req.body.name, stream: req.body.stream, level: req.body.level, image });
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    if (image && !isValidStorageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    }
+    const newDept = await db.createDepartment({ name: body.name || '', stream: body.stream || '', level: body.level || '', image: image || null });
     res.json(newDept);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.put('/api/departments/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/departments/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.file) updateData.image = await resolveFileUrl(req.file, 'departments');
+    const body = req.body || {};
+    const updateData = { ...body };
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) {
+        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      }
+      updateData.image = image;
+    }
     const updated = await db.updateDepartment(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Department not found' });
     res.json(updated);
@@ -869,19 +784,17 @@ app.get('/api/faculty', async (req, res) => {
   }
 });
 
-app.post('/api/faculty', authenticateToken, (req, res, next) => {
-  upload.fields([{ name: 'image', maxCount: 1 }, { name: 'resume', maxCount: 1 }])(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message || 'File upload failed' });
-    next();
-  });
-}, async (req, res) => {
+app.post('/api/faculty', authenticateToken, async (req, res) => {
   try {
-    const image = req.files?.image?.[0] ? await resolveFileUrl(req.files.image[0], 'faculty') : (req.body.image || null);
-    const resume = req.files?.resume?.[0] ? await resolveFileUrl(req.files.resume[0], 'faculty') : (req.body.resume || null);
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    const resume = typeof body.resume === 'string' ? body.resume.trim() : null;
+    if (image && !isValidStorageUrl(image)) return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    if (resume && !isValidStorageUrl(resume)) return res.status(400).json({ error: 'resume must be a valid Supabase Storage URL' });
     const newFaculty = await db.createFaculty({
-      name: req.body.name || '', designation: req.body.designation || '', qualification: req.body.qualification || '',
-      email: req.body.email || '', phone: req.body.phone || '', experience: req.body.experience || '',
-      department: req.body.department || '', image, resume
+      name: body.name || '', designation: body.designation || '', qualification: body.qualification || '',
+      email: body.email || '', phone: body.phone || '', experience: body.experience || '',
+      department: body.department || '', image, resume
     });
     res.json(newFaculty);
   } catch (error) {
@@ -889,16 +802,20 @@ app.post('/api/faculty', authenticateToken, (req, res, next) => {
   }
 });
 
-app.put('/api/faculty/:id', authenticateToken, (req, res, next) => {
-  upload.fields([{ name: 'image', maxCount: 1 }, { name: 'resume', maxCount: 1 }])(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message || 'File upload failed' });
-    next();
-  });
-}, async (req, res) => {
+app.put('/api/faculty/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.files?.image?.[0]) updateData.image = await resolveFileUrl(req.files.image[0], 'faculty');
-    if (req.files?.resume?.[0]) updateData.resume = await resolveFileUrl(req.files.resume[0], 'faculty');
+    const body = req.body || {};
+    const updateData = { ...body };
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      updateData.image = image;
+    }
+    if (body.resume !== undefined) {
+      const resume = typeof body.resume === 'string' ? body.resume.trim() : null;
+      if (resume && !isValidStorageUrl(resume)) return res.status(400).json({ error: 'resume must be a valid Supabase Storage URL' });
+      updateData.resume = resume;
+    }
     const updated = await db.updateFaculty(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Faculty not found' });
     res.json(updated);
@@ -927,40 +844,17 @@ app.get('/api/hods', async (req, res) => {
   }
 });
 
-// Test endpoint to check if a file exists
-app.get('/api/test-file/*', async (req, res) => {
+app.post('/api/hods', authenticateToken, async (req, res) => {
   try {
-    // Extract path from wildcard route
-    const filePath = req.params[0] || req.path.replace('/api/test-file/', '');
-    const fullPath = join(__dirname, '..', 'public', filePath);
-    const exists = existsSync(fullPath);
-    res.json({
-      path: filePath,
-      fullPath: fullPath,
-      exists: exists,
-      url: `http://localhost:${PORT}${filePath.startsWith('/') ? filePath : '/' + filePath}`
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/hods', authenticateToken, (req, res, next) => {
-  upload.fields([{ name: 'image', maxCount: 1 }, { name: 'resume', maxCount: 1 }])(req, res, (err) => {
-    if (err) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ error: err.message || 'File upload failed' });
-    }
-    next();
-  });
-}, async (req, res) => {
-  try {
-    const image = req.files?.image?.[0] ? await resolveFileUrl(req.files.image[0], 'hods') : (req.body.image || null);
-    const resume = req.files?.resume?.[0] ? await resolveFileUrl(req.files.resume[0], 'hods') : (req.body.resume || null);
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    const resume = typeof body.resume === 'string' ? body.resume.trim() : null;
+    if (image && !isValidStorageUrl(image)) return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    if (resume && !isValidStorageUrl(resume)) return res.status(400).json({ error: 'resume must be a valid Supabase Storage URL' });
     const newHOD = await db.createHod({
-      name: req.body.name || '', designation: req.body.designation || '', qualification: req.body.qualification || '',
-      email: req.body.email || '', phone: req.body.phone || '', experience: req.body.experience || '',
-      department: req.body.department || '', image, resume
+      name: body.name || '', designation: body.designation || '', qualification: body.qualification || '',
+      email: body.email || '', phone: body.phone || '', experience: body.experience || '',
+      department: body.department || '', image, resume
     });
     res.json(newHOD);
   } catch (error) {
@@ -968,16 +862,20 @@ app.post('/api/hods', authenticateToken, (req, res, next) => {
   }
 });
 
-app.put('/api/hods/:id', authenticateToken, (req, res, next) => {
-  upload.fields([{ name: 'image', maxCount: 1 }, { name: 'resume', maxCount: 1 }])(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message || 'File upload failed' });
-    next();
-  });
-}, async (req, res) => {
+app.put('/api/hods/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.files?.image?.[0]) updateData.image = await resolveFileUrl(req.files.image[0], 'hods');
-    if (req.files?.resume?.[0]) updateData.resume = await resolveFileUrl(req.files.resume[0], 'hods');
+    const body = req.body || {};
+    const updateData = { ...body };
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      updateData.image = image;
+    }
+    if (body.resume !== undefined) {
+      const resume = typeof body.resume === 'string' ? body.resume.trim() : null;
+      if (resume && !isValidStorageUrl(resume)) return res.status(400).json({ error: 'resume must be a valid Supabase Storage URL' });
+      updateData.resume = resume;
+    }
     const updated = await db.updateHod(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'HOD not found' });
     res.json(updated);
@@ -1008,11 +906,14 @@ app.get('/api/gallery', async (req, res) => {
   }
 });
 
-app.post('/api/gallery', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/gallery', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Image file required' });
-    const src = await resolveFileUrl(req.file, 'gallery');
-    const newImage = await db.createGalleryItem({ src, alt: req.body.alt || 'Gallery image', department: req.body.department || '' });
+    const body = req.body || {};
+    const src = typeof body.src === 'string' ? body.src.trim() : '';
+    if (!src || !isValidStorageUrl(src)) {
+      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    }
+    const newImage = await db.createGalleryItem({ src, alt: body.alt || 'Gallery image', department: body.department || '' });
     res.json(newImage);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1067,21 +968,31 @@ app.get('/api/recruiters', async (req, res) => {
   }
 });
 
-app.post('/api/recruiters', authenticateToken, upload.single('logo'), async (req, res) => {
+app.post('/api/recruiters', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Logo file required' });
-    const logo = await resolveFileUrl(req.file, 'recruiters');
-    const newRecruiter = await db.createRecruiter({ name: req.body.name, logo, description: req.body.description || '' });
+    const body = req.body || {};
+    const logo = typeof body.logo === 'string' ? body.logo.trim() : '';
+    if (!logo || !isValidStorageUrl(logo)) {
+      return res.status(400).json({ error: 'logo must be a valid Supabase Storage URL' });
+    }
+    const newRecruiter = await db.createRecruiter({ name: body.name || '', logo, description: body.description || '' });
     res.json(newRecruiter);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.put('/api/recruiters/:id', authenticateToken, upload.single('logo'), async (req, res) => {
+app.put('/api/recruiters/:id', authenticateToken, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (req.file) updateData.logo = await resolveFileUrl(req.file, 'recruiters');
+    const body = req.body || {};
+    const updateData = { ...body };
+    if (body.logo !== undefined) {
+      const logo = typeof body.logo === 'string' ? body.logo.trim() : '';
+      if (logo && !isValidStorageUrl(logo)) {
+        return res.status(400).json({ error: 'logo must be a valid Supabase Storage URL' });
+      }
+      updateData.logo = logo;
+    }
     const updated = await db.updateRecruiter(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Recruiter not found' });
     res.json(updated);
@@ -1113,10 +1024,13 @@ app.get('/api/home-gallery', async (req, res) => {
   }
 });
 
-app.put('/api/home-gallery/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/home-gallery/:id', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Image file is required' });
-    const image = await resolveFileUrl(req.file, 'home-gallery');
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : '';
+    if (!image || !isValidStorageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    }
     const updated = await db.updateHomeGalleryItem(req.params.id, { image });
     if (!updated) return res.status(404).json({ error: 'Image not found' });
     res.json(updated);
@@ -1139,33 +1053,25 @@ app.get('/api/vibe-at-viet', async (req, res) => {
   }
 });
 
-app.post('/api/vibe-at-viet', authenticateToken, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
+// Vibe-at-viet: image and video are URLs only (admin uploads to Supabase Storage first). imageLink for external (e.g. Google Drive).
+app.post('/api/vibe-at-viet', authenticateToken, async (req, res) => {
   try {
-    const caption = req.body?.caption ?? '';
-    const position = req.body?.position !== undefined ? Math.max(1, Math.min(12, parseInt(req.body.position, 10) || 1)) : 1;
-    const imageFile = req.files?.image?.[0];
-    const imageLink = req.body?.imageLink?.trim() || null;
-    const videoFile = req.files?.video?.[0];
-    const videoLink = req.body?.videoLink?.trim() || null;
-    
-    // Require either image file or image link (Google Drive)
-    if (!imageFile && !imageLink) {
-      return res.status(400).json({ error: 'Image file or Google Drive link is required' });
+    const body = req.body || {};
+    const caption = body.caption ?? '';
+    const position = body.position !== undefined ? Math.max(1, Math.min(12, parseInt(body.position, 10) || 1)) : 1;
+    const image = (typeof body.image === 'string' ? body.image.trim() : null) || (body.imageLink?.trim() || null) || null;
+    const videoUrl = body.video?.trim() || null;
+    const videoLink = body.videoLink?.trim() || null;
+
+    if (!image) {
+      return res.status(400).json({ error: 'image or imageLink is required (Supabase Storage URL or external link)' });
+    }
+    if (image && !image.includes('supabase.co/storage') && !image.startsWith('http')) {
+      return res.status(400).json({ error: 'image must be a Supabase Storage URL or valid external URL' });
     }
 
-    // Use image link (Google Drive) if provided, otherwise upload file to Supabase
-    const image = imageLink || (imageFile ? await resolveFileUrl(imageFile, 'vibe-at-viet') : null);
-    
-    let video = null;
-    let videoLinkVal = null;
-    if (videoFile) {
-      video = await resolveFileUrl(videoFile, 'vibe-at-viet');
-    } else if (videoLink) {
-      videoLinkVal = videoLink;
-    }
-    
     const targetOrder = position - 1;
-    const item = await db.createVibeAtVietItem({ image, video, videoLink: videoLinkVal, caption, order: targetOrder });
+    const item = await db.createVibeAtVietItem({ image, video: videoUrl, videoLink: videoLink || null, caption, order: targetOrder });
     res.status(201).json(item);
   } catch (error) {
     console.error('Error creating vibe-at-viet item:', error);
@@ -1173,28 +1079,17 @@ app.post('/api/vibe-at-viet', authenticateToken, upload.fields([{ name: 'image',
   }
 });
 
-app.put('/api/vibe-at-viet/:id', authenticateToken, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
+app.put('/api/vibe-at-viet/:id', authenticateToken, async (req, res) => {
   try {
+    const body = req.body || {};
     const updateData = {};
-    
-    // Handle image update: file upload or Google Drive link
-    if (req.files?.image?.[0]) {
-      updateData.image = await resolveFileUrl(req.files.image[0], 'vibe-at-viet');
-    } else if (req.body?.imageLink !== undefined) {
-      // If imageLink is empty string, clear the image; otherwise use the link
-      updateData.image = req.body.imageLink?.trim() || null;
-    }
-    
-    // Handle video update: file upload or link
-    if (req.files?.video?.[0]) {
-      updateData.video = await resolveFileUrl(req.files.video[0], 'vibe-at-viet');
-    } else if (req.body?.videoLink !== undefined) {
-      updateData.videoLink = req.body.videoLink?.trim() || null;
-    }
-    
-    if (req.body?.caption !== undefined) updateData.caption = req.body.caption;
-    if (req.body?.order !== undefined) updateData.order = Math.max(0, Math.min(11, parseInt(req.body.order, 10) || 0));
-    
+    if (body.image !== undefined) updateData.image = typeof body.image === 'string' ? body.image.trim() || null : null;
+    if (body.imageLink !== undefined) updateData.image = body.imageLink?.trim() || null;
+    if (body.video !== undefined) updateData.video = body.video?.trim() || null;
+    if (body.videoLink !== undefined) updateData.videoLink = body.videoLink?.trim() || null;
+    if (body.caption !== undefined) updateData.caption = body.caption;
+    if (body.order !== undefined) updateData.order = Math.max(0, Math.min(11, parseInt(body.order, 10) || 0));
+
     const updated = await db.updateVibeAtVietItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Item not found' });
     res.json(updated);
@@ -1258,141 +1153,42 @@ app.post('/api/pages', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/pages/:id', authenticateToken, (req, res, next) => {
-  // Check if this is a multipart/form-data request
-  if (req.headers['content-type']?.includes('multipart/form-data')) {
-    // Use multer to handle file uploads
-    upload.any()(req, res, (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message || 'File upload failed' });
-      }
-      next();
-    });
-  } else {
-    next();
-  }
-}, async (req, res) => {
+app.put('/api/pages/:id', authenticateToken, async (req, res) => {
   try {
     const pageId = parseInt(req.params.id);
     const existingPage = await db.getPageById(pageId);
     if (!existingPage) return res.status(404).json({ error: 'Page not found' });
 
-    // Handle multipart/form-data (with file uploads)
-    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      // Parse the JSON data from formData
-      let pageData = {};
-      if (req.body.data) {
-        try {
-          pageData = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body.data;
-        } catch (parseError) {
-          return res.status(400).json({ error: 'Invalid JSON data: ' + parseError.message });
+    const currentContent = existingPage.content || {};
+    const newContent = req.body.content || {};
+
+    const cleanedContent = { ...currentContent };
+    Object.keys(cleanedContent).forEach(key => {
+      if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
+        if (!Object.prototype.hasOwnProperty.call(newContent, key) || newContent[key] === '' || newContent[key] == null) {
+          delete cleanedContent[key];
         }
       }
+    });
 
-      // Handle image uploads - process all image_* fields
-      const imageUpdates = {};
-      for (const file of req.files) {
-        const fieldMatch = file.fieldname.match(/^image_(.+)$/);
-        if (fieldMatch) {
-          const imageKey = fieldMatch[1];
-          imageUpdates[imageKey] = await resolveFileUrl(file, 'pages');
-          
+    const cleanedNewContent = {};
+    Object.keys(newContent).forEach(key => {
+      if (key.endsWith('_preview')) return;
+      if ((key.startsWith('image') || key === 'heroImage' || key === 'profileImage')) {
+        if (newContent[key] != null && newContent[key] !== '') {
+          cleanedNewContent[key] = newContent[key];
         }
+      } else {
+        cleanedNewContent[key] = newContent[key];
       }
+    });
 
-      // Merge content updates
-      const currentContent = existingPage.content || {};
-      const newContent = pageData.content || {};
-      
-      // Remove deleted image fields - if a field exists in current but not in new content, or is explicitly empty/null, remove it
-      const cleanedContent = { ...currentContent };
-      Object.keys(cleanedContent).forEach(key => {
-        // Check if this is an image field
-        if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
-          // If field is not in new content or is explicitly empty/null, remove it
-          if (!newContent.hasOwnProperty(key) || newContent[key] === '' || newContent[key] === null || newContent[key] === undefined) {
-            delete cleanedContent[key];
-          }
-        }
-      });
-      
-      // Clean newContent - remove null/empty image fields and preview fields BEFORE merging
-      const cleanedNewContent = {};
-      Object.keys(newContent).forEach(key => {
-        // Skip preview fields
-        if (key.endsWith('_preview')) {
-          return;
-        }
-        // Skip null/empty image fields
-        if ((key.startsWith('image') || key === 'heroImage' || key === 'profileImage')) {
-          if (newContent[key] !== null && newContent[key] !== '' && newContent[key] !== undefined) {
-            cleanedNewContent[key] = newContent[key];
-          }
-        } else {
-          // Keep non-image fields as-is
-          cleanedNewContent[key] = newContent[key];
-        }
-      });
-      
-      // Now merge with cleaned new content and image updates
-      const finalContent = {
-        ...cleanedContent,
-        ...cleanedNewContent,
-        ...imageUpdates
-      };
-      
-      var updatePayload = {
-        ...pageData,
-        content: finalContent,
-        updated_at: new Date().toISOString()
-      };
-    } else {
-      // Handle JSON-only updates (no file uploads)
-      const currentContent = existingPage.content || {};
-      const newContent = req.body.content || {};
-      
-      // Remove deleted image fields - if a field exists in current but not in new content, or is explicitly empty/null, remove it
-      const cleanedContent = { ...currentContent };
-      Object.keys(cleanedContent).forEach(key => {
-        // Check if this is an image field
-        if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
-          // If field is not in new content or is explicitly empty/null, remove it
-          if (!newContent.hasOwnProperty(key) || newContent[key] === '' || newContent[key] === null || newContent[key] === undefined) {
-            delete cleanedContent[key];
-          }
-        }
-      });
-      
-      // Clean newContent - remove null/empty image fields and preview fields BEFORE merging
-      const cleanedNewContent = {};
-      Object.keys(newContent).forEach(key => {
-        // Skip preview fields
-        if (key.endsWith('_preview')) {
-          return;
-        }
-        // Skip null/empty image fields
-        if ((key.startsWith('image') || key === 'heroImage' || key === 'profileImage')) {
-          if (newContent[key] !== null && newContent[key] !== '' && newContent[key] !== undefined) {
-            cleanedNewContent[key] = newContent[key];
-          }
-        } else {
-          // Keep non-image fields as-is
-          cleanedNewContent[key] = newContent[key];
-        }
-      });
-      
-      // Now merge with cleaned new content
-      const finalContent = {
-        ...cleanedContent,
-        ...cleanedNewContent
-      };
-      
-      var updatePayload = {
-        ...req.body,
-        content: finalContent,
-        updated_at: new Date().toISOString()
-      };
-    }
+    const finalContent = { ...cleanedContent, ...cleanedNewContent };
+    const updatePayload = {
+      ...req.body,
+      content: finalContent,
+      updated_at: new Date().toISOString()
+    };
 
     const updated = await db.updatePage(pageId, updatePayload);
     if (!updated) return res.status(500).json({ error: 'Failed to update page' });
@@ -1409,31 +1205,122 @@ app.delete('/api/pages/:id', authenticateToken, async (req, res) => {
     const page = await db.getPageById(pageId);
     if (!page) return res.status(404).json({ error: 'Page not found' });
 
-    // Delete associated images from Supabase Storage
     if (page.content && typeof page.content === 'object') {
       const imageKeys = ['heroImage', 'profileImage', 'image1', 'image2', 'image3'];
       for (const key of imageKeys) {
         const url = page.content[key];
-        if (url) {
-          // Only delete from Supabase Storage (all images should be in Supabase now)
-          if (url.includes('supabase') || url.startsWith('http')) {
-            await deleteFromStorage(url).catch(err => console.error('Error deleting from storage:', err));
-          } else if (url.startsWith('/uploads/')) {
-            // Legacy path - try to delete from Supabase Storage if it exists
-            // Extract folder and filename from path
-            const pathParts = url.replace(/^\/uploads\//, '').split('/');
-            if (pathParts.length >= 2) {
-              const folder = pathParts[0];
-              const filename = pathParts.slice(1).join('/');
-              await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
-            }
-          }
+        if (url && url.includes('supabase.co/storage')) {
+          await deleteFromStorage(url).catch(err => console.error('Error deleting from storage:', err));
         }
       }
     }
 
     await db.deletePage(pageId);
     res.json({ message: 'Page deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== ACCREDITATIONS (main page PDFs: AUTONOMOUS, NAAC, UGC, ISO, AICTE) ====================
+app.get('/api/accreditations', async (req, res) => {
+  try {
+    const list = await db.getAccreditations();
+    // Don't cache: admin may update PDFs and users should see changes immediately
+    res.set('Cache-Control', 'no-store');
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/accreditations/:key', authenticateToken, async (req, res) => {
+  try {
+    const key = req.params.key;
+    const body = req.body || {};
+    const pdfUrl = typeof body.pdf_url === 'string' ? body.pdf_url.trim() : (body.pdf_url === null ? null : undefined);
+    const updateData = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.logo !== undefined) updateData.logo = body.logo;
+    if (body.color !== undefined) updateData.color = body.color;
+    if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
+    if (pdfUrl !== undefined) updateData.pdf_url = pdfUrl;
+    if (pdfUrl && !isValidStorageUrl(pdfUrl)) {
+      return res.status(400).json({ error: 'pdf_url must be a valid Supabase Storage URL' });
+    }
+    const updated = await db.updateAccreditation(key, updateData);
+    if (!updated) return res.status(404).json({ error: 'Accreditation not found' });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== AICTE AFFILIATION LETTERS (year-wise; create, update, delete; one is_latest = green) ====================
+app.get('/api/aicte-affiliation-letters', async (req, res) => {
+  try {
+    const letters = await db.getAicteAffiliationLetters();
+    // Don't cache: latest flag should reflect instantly after admin changes
+    res.set('Cache-Control', 'no-store');
+    res.json(letters);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/aicte-affiliation-letters', authenticateToken, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const year = typeof body.year === 'string' ? body.year.trim() : '';
+    if (!year) return res.status(400).json({ error: 'year is required' });
+    const pdfUrl = typeof body.pdf_url === 'string' ? body.pdf_url.trim() : null;
+    if (pdfUrl && !isValidStorageUrl(pdfUrl)) {
+      return res.status(400).json({ error: 'pdf_url must be a valid Supabase Storage URL' });
+    }
+    const newLetter = await db.createAicteAffiliationLetter({
+      year,
+      pdf_url: pdfUrl,
+      is_latest: !!body.is_latest,
+      sort_order: body.sort_order ?? 0
+    });
+    res.json(newLetter);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const body = req.body || {};
+    const updateData = {};
+    if (body.year !== undefined) updateData.year = body.year;
+    if (body.pdf_url !== undefined) {
+      const pdfUrl = body.pdf_url === null ? null : (typeof body.pdf_url === 'string' ? body.pdf_url.trim() : undefined);
+      if (pdfUrl !== undefined && pdfUrl !== null && !isValidStorageUrl(pdfUrl)) {
+        return res.status(400).json({ error: 'pdf_url must be a valid Supabase Storage URL' });
+      }
+      updateData.pdf_url = pdfUrl;
+    }
+    if (body.is_latest !== undefined) updateData.is_latest = body.is_latest;
+    if (body.sort_order !== undefined) updateData.sort_order = body.sort_order;
+    const updated = await db.updateAicteAffiliationLetter(id, updateData);
+    if (!updated) return res.status(404).json({ error: 'Letter not found' });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, res) => {
+  try {
+    const letter = await db.getAicteAffiliationLetters().then(letters => letters.find(l => String(l.id) === String(req.params.id)));
+    if (letter && letter.pdf_url && letter.pdf_url.includes('supabase.co/storage')) {
+      await deleteFromStorage(letter.pdf_url).catch(() => {});
+    }
+    await db.deleteAicteAffiliationLetter(req.params.id);
+    res.json({ message: 'Letter deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1478,32 +1365,21 @@ app.put('/api/department-pages/:slug', authenticateToken, async (req, res) => {
   }
 });
 
-// Department page hero image upload
-app.post('/api/department-pages/:slug/hero-image', authenticateToken, upload.single('image'), async (req, res) => {
+// Department page hero image: accept image URL in JSON (admin uploads to Supabase first)
+app.post('/api/department-pages/:slug/hero-image', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Image file is required' });
+    const body = req.body || {};
+    const imageUrl = typeof body.image === 'string' ? body.image.trim() : '';
+    if (!imageUrl || !isValidStorageUrl(imageUrl)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
     }
     const slug = req.params.slug;
     const page = await db.getDepartmentPageBySlug(slug) || { slug, sections: {}, curriculum: { programs: [] } };
     const sections = page.sections || {};
     const hero = sections.hero || {};
-    const oldImage = hero.image;
-    if (oldImage) {
-      // Delete from Supabase Storage only
-      if (oldImage.includes('supabase') || oldImage.startsWith('http')) {
-        await deleteFromStorage(oldImage).catch(() => {});
-      } else if (oldImage.startsWith('/uploads/')) {
-        // Legacy path - try to delete from Supabase Storage
-        const pathParts = oldImage.replace(/^\/uploads\//, '').split('/');
-        if (pathParts.length >= 2) {
-          const folder = pathParts[0];
-          const filename = pathParts.slice(1).join('/');
-          await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
-        }
-      }
+    if (hero.image && hero.image.includes('supabase.co/storage')) {
+      await deleteFromStorage(hero.image).catch(() => {});
     }
-    const imageUrl = await resolveFileUrl(req.file, 'department-hero');
     const updatedSections = { ...sections, hero: { ...hero, image: imageUrl } };
     const updated = await db.upsertDepartmentPage(slug, { sections: updatedSections, curriculum: page.curriculum || { programs: [] } });
     res.json({ image: imageUrl, page: updated });
@@ -1512,43 +1388,41 @@ app.post('/api/department-pages/:slug/hero-image', authenticateToken, upload.sin
   }
 });
 
-// Department page asset upload (SVG icons, images for facilities, placements, etc.)
-app.post('/api/department-pages/:slug/asset', authenticateToken, upload.single('file'), async (req, res) => {
+// Department page asset: accept file URL in JSON (admin uploads to Supabase first)
+app.post('/api/department-pages/:slug/asset', authenticateToken, async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'File is required' });
+    const body = req.body || {};
+    const fileUrl = typeof body.url === 'string' ? body.url.trim() : '';
+    const filename = typeof body.filename === 'string' ? body.filename : 'asset';
+    if (!fileUrl || !isValidStorageUrl(fileUrl)) {
+      return res.status(400).json({ error: 'url must be a valid Supabase Storage URL' });
     }
-    const fileUrl = await resolveFileUrl(req.file, 'department-assets');
-    res.json({ url: fileUrl, filename: req.file.originalname || req.file.filename });
+    res.json({ url: fileUrl, filename });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Curriculum upload: program + regulation (existing = update file, new = add regulation)
-app.post('/api/department-pages/:slug/curriculum', authenticateToken, (req, res, next) => {
-  upload.single('syllabus')(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
-    next();
-  });
-}, async (req, res) => {
+// Curriculum: accept syllabus fileUrl in JSON (admin uploads PDF to Supabase first)
+app.post('/api/department-pages/:slug/curriculum', authenticateToken, async (req, res) => {
   try {
+    const body = req.body || {};
     const slug = req.params.slug;
     const page = await db.getDepartmentPageBySlug(slug) || { slug, sections: {}, curriculum: { programs: [] } };
     const curriculum = page.curriculum || { programs: [] };
     if (!curriculum.programs) curriculum.programs = [];
 
-    const programName = (req.body.program || '').trim();
-    const regulationName = (req.body.regulation || '').trim();
+    const programName = (body.program || '').trim();
+    const regulationName = (body.regulation || '').trim();
+    const fileUrl = typeof body.fileUrl === 'string' ? body.fileUrl.trim() : '';
+    const fileName = typeof body.fileName === 'string' ? body.fileName : 'syllabus.pdf';
+
     if (!programName || !regulationName) {
       return res.status(400).json({ error: 'Program and regulation are required' });
     }
-    if (!req.file) {
-      return res.status(400).json({ error: 'Syllabus PDF file is required' });
+    if (!fileUrl || !isValidStorageUrl(fileUrl)) {
+      return res.status(400).json({ error: 'fileUrl must be a valid Supabase Storage URL' });
     }
-
-    const fileUrl = await resolveFileUrl(req.file, 'syllabus');
-    const fileName = req.file.originalname || 'syllabus.pdf';
 
     let programEntry = curriculum.programs.find(p => p.name === programName);
     if (!programEntry) {
@@ -1559,19 +1433,8 @@ app.post('/api/department-pages/:slug/curriculum', authenticateToken, (req, res,
 
     const existingReg = programEntry.regulations.find(r => r.name === regulationName);
     if (existingReg) {
-      // Update file for existing regulation (delete old file from Supabase Storage)
-      if (existingReg.fileUrl) {
-        if (existingReg.fileUrl.includes('supabase') || existingReg.fileUrl.startsWith('http')) {
-          await deleteFromStorage(existingReg.fileUrl).catch(() => {});
-        } else if (existingReg.fileUrl.startsWith('/uploads/')) {
-          // Legacy path - try to delete from Supabase Storage
-          const pathParts = existingReg.fileUrl.replace(/^\/uploads\//, '').split('/');
-          if (pathParts.length >= 2) {
-            const folder = pathParts[0];
-            const filename = pathParts.slice(1).join('/');
-            await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
-          }
-        }
+      if (existingReg.fileUrl && existingReg.fileUrl.includes('supabase.co/storage')) {
+        await deleteFromStorage(existingReg.fileUrl).catch(() => {});
       }
       existingReg.fileUrl = fileUrl;
       existingReg.fileName = fileName;
@@ -1617,19 +1480,8 @@ app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authen
 
     const regulation = programEntry.regulations[regulationIndex];
     
-    // Delete the file from Supabase Storage
-    if (regulation.fileUrl) {
-      if (regulation.fileUrl.includes('supabase') || regulation.fileUrl.startsWith('http')) {
-        await deleteFromStorage(regulation.fileUrl).catch(() => {});
-      } else if (regulation.fileUrl.startsWith('/uploads/')) {
-        // Legacy path - try to delete from Supabase Storage
-        const pathParts = regulation.fileUrl.replace(/^\/uploads\//, '').split('/');
-        if (pathParts.length >= 2) {
-          const folder = pathParts[0];
-          const filename = pathParts.slice(1).join('/');
-          await deleteFromStorage(`${folder}/${filename}`).catch(() => {});
-        }
-      }
+    if (regulation.fileUrl && regulation.fileUrl.includes('supabase.co/storage')) {
+      await deleteFromStorage(regulation.fileUrl).catch(() => {});
     }
 
     // Remove the regulation from the array

@@ -438,7 +438,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   width={120}
                   height={48}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   decoding="async"
                 />
               </motion.div>
@@ -468,7 +468,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   width={100}
                   height={40}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   decoding="async"
                 />
               </motion.div>
@@ -623,7 +623,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                           width={120}
                           height={48}
                           loading="lazy"
-                          fetchPriority="auto"
+                          fetchpriority="auto"
                           decoding="async"
                           className="h-10 md:h-12 w-auto object-contain"
                         />

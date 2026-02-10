@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { facultyAPI, departmentsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface Faculty {
@@ -177,11 +178,26 @@ const Faculty = () => {
 
   const handleSubmit = async () => {
     try {
+      let imageUrl: string | null = null;
+      let resumeUrl: string | null = null;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        imageUrl = await uploadToSupabase(imageFile, 'faculty', 'images');
+      }
+      if (resumeFile) {
+        toast.info('Uploading resume…');
+        resumeUrl = await uploadToSupabase(resumeFile, 'faculty', 'images');
+      }
+      const payload = {
+        ...formData,
+        image: imageUrl ?? (selectedItem?.image ?? null),
+        resume: resumeUrl ?? (selectedItem?.resume ?? null),
+      };
       if (selectedItem) {
-        await facultyAPI.update(selectedItem.id, formData, imageFile, resumeFile);
+        await facultyAPI.update(selectedItem.id, payload);
         toast.success('Faculty updated successfully');
       } else {
-        await facultyAPI.create(formData, imageFile, resumeFile);
+        await facultyAPI.create(payload);
         toast.success('Faculty added successfully');
       }
       setDialogOpen(false);
@@ -209,7 +225,7 @@ const Faculty = () => {
       header: 'Image',
       render: (item: Faculty) => (
         <img
-          src={item.image ? (item.image.startsWith('/') ? `http://localhost:3001${item.image}` : `http://localhost:3001/${item.image}`) : '/placeholder.svg'}
+          src={item.image || '/placeholder.svg'}
           alt={item.name}
           className="w-16 h-16 object-cover rounded-full"
           onError={(e) => {

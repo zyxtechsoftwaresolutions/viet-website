@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/SearchBar';
-import { pagesAPI } from '@/lib/api';
+import { accreditationsAPI, pagesAPI } from '@/lib/api';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -38,6 +38,25 @@ const Header = () => {
   const [isUGSubmenuToggled, setIsUGSubmenuToggled] = useState(false);
   const [showPGSubmenu, setShowPGSubmenu] = useState(false);
   const [isPGSubmenuToggled, setIsPGSubmenuToggled] = useState(false);
+
+  // Open admin-managed accreditation PDF (falls back to /accreditations)
+  const openAccreditationPdf = async (key: 'AUTONOMOUS' | 'NAAC' | 'UGC' | 'ISO') => {
+    try {
+      const list = await accreditationsAPI.getAll();
+      const item = list.find((a) => a.key === key);
+      if (item?.pdf_url) {
+        window.open(item.pdf_url, '_blank');
+      } else {
+        navigate('/accreditations');
+      }
+    } catch {
+      navigate('/accreditations');
+    } finally {
+      setIsAboutDropdownOpen(false);
+      setShowStatusSubmenu(false);
+      setIsStatusSubmenuToggled(false);
+    }
+  };
   const [showManagementSubmenu, setShowManagementSubmenu] = useState(false);
   const [isManagementSubmenuToggled, setIsManagementSubmenuToggled] = useState(false);
   const [isExaminationsDropdownOpen, setIsExaminationsDropdownOpen] = useState(false);
@@ -1720,18 +1739,34 @@ const Header = () => {
                         }}
                       >
                         <div className="p-1">
-                          <a href="/UGC%20Autonomous%20Confirmation.pdf" target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200">
+                          <button
+                            type="button"
+                            onClick={() => openAccreditationPdf('AUTONOMOUS')}
+                            className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200"
+                          >
                             Autonomous
-                          </a>
-                          <a href="/VIET%20-%20NAAC%20(1)_organized.pdf" target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200">
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAccreditationPdf('NAAC')}
+                            className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200"
+                          >
                             NAAC
-                          </a>
-                          <a href="/UGC_2F_VIET.pdf" target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200">
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAccreditationPdf('UGC')}
+                            className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200"
+                          >
                             UGC 2F
-                          </a>
-                          <a href="/ISO_Certificates.pdf" target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200">
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAccreditationPdf('ISO')}
+                            className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200"
+                          >
                             ISO
-                          </a>
+                          </button>
                         </div>
                       </div>
                     )}

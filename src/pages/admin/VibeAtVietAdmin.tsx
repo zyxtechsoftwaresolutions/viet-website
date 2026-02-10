@@ -28,13 +28,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
+import { uploadVibeVideoToSupabase, uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { ImagePlus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { convertGoogleDriveLink, isGoogleDriveLink } from '@/lib/googleDriveUtils';
-
-const UPLOADS_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 
 const VibeAtVietAdmin = () => {
   const [items, setItems] = useState<VibeAtVietItem[]>([]);
@@ -55,12 +54,8 @@ const VibeAtVietAdmin = () => {
   const [itemToDelete, setItemToDelete] = useState<VibeAtVietItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const imageUrl = (path: string) => {
-    if (isGoogleDriveLink(path)) {
-      return convertGoogleDriveLink(path);
-    }
-    return path.startsWith('/uploads') ? `${UPLOADS_ORIGIN}${path}` : path;
-  };
+  const imageUrl = (path: string) =>
+    isGoogleDriveLink(path) ? convertGoogleDriveLink(path) : path;
 
   const fetchItems = async () => {
     try {
@@ -197,14 +192,24 @@ const VibeAtVietAdmin = () => {
       }
       setSubmitting(true);
       try {
+        let imageUrl: string | null = null;
+        if (imageInputType === 'file' && imageFile) {
+          toast.info('Uploading image…');
+          imageUrl = await uploadToSupabase(imageFile, 'vibe-at-viet', 'images');
+        }
+        let videoUrl: string | null = null;
+        if (videoInputType === 'file' && videoFile) {
+          toast.info('Uploading video…');
+          videoUrl = await uploadVibeVideoToSupabase(videoFile);
+        }
         await vibeAtVietAPI.update(editingItem.id, {
           caption: caption.trim(),
           order: gridPosition - 1,
-          ...(imageFile && { imageFile }),
-          ...(imageInputType === 'link' && imageLink.trim() && { imageLink: imageLink.trim() }),
-          ...(videoFile && { videoFile }),
-          ...(videoInputType === 'link' && videoLink.trim() && { videoLink: videoLink.trim() }),
-          ...(videoInputType === 'file' && !videoFile && { videoLink: null }), // Clear video if switching to file but no file selected
+          ...(imageUrl !== null && { image: imageUrl }),
+          ...(imageInputType === 'link' && { imageLink: imageLink.trim() || null }),
+          ...(videoUrl !== null && { video: videoUrl }),
+          ...(videoInputType === 'link' && { videoLink: videoLink.trim() || null }),
+          ...(videoInputType === 'file' && !videoFile && !videoUrl && { video: null, videoLink: null }),
         });
         toast.success('Item updated');
         setDialogOpen(false);
@@ -226,14 +231,24 @@ const VibeAtVietAdmin = () => {
       }
       setSubmitting(true);
       try {
-        await vibeAtVietAPI.create(
-          imageInputType === 'file' ? imageFile : null,
-          videoInputType === 'file' ? videoFile : null,
-          caption.trim(),
-          gridPosition,
-          videoInputType === 'link' ? videoLink.trim() : undefined,
-          imageInputType === 'link' ? imageLink.trim() : undefined
-        );
+        let imageUrl: string | null = null;
+        if (imageInputType === 'file' && imageFile) {
+          toast.info('Uploading image…');
+          imageUrl = await uploadToSupabase(imageFile, 'vibe-at-viet', 'images');
+        }
+        let videoUrl: string | null = null;
+        if (videoInputType === 'file' && videoFile) {
+          toast.info('Uploading video…');
+          videoUrl = await uploadVibeVideoToSupabase(videoFile);
+        }
+        await vibeAtVietAPI.create({
+          image: imageUrl ?? undefined,
+          imageLink: imageInputType === 'link' && imageLink.trim() ? imageLink.trim() : undefined,
+          video: videoUrl ?? undefined,
+          videoLink: videoInputType === 'link' && videoLink.trim() ? videoLink.trim() : undefined,
+          caption: caption.trim(),
+          position: gridPosition,
+        });
         toast.success('Photo added');
         setDialogOpen(false);
         fetchItems();

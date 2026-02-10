@@ -30,20 +30,15 @@ export async function uploadToStorage(fileBuffer, folder, filename, contentType)
 }
 
 /**
- * Delete file from Supabase Storage by URL or path
- * @param {string} urlOrPath - Full URL or storage path
+ * Delete file from Supabase Storage by full public URL (supports any bucket: images, videos, etc.)
+ * @param {string} urlOrPath - Full public URL (e.g. https://xxx.supabase.co/storage/v1/object/public/bucket/path)
  */
 export async function deleteFromStorage(urlOrPath) {
   if (!supabase || !urlOrPath) return;
 
-  // Extract path from URL if full URL is passed
-  let path = urlOrPath;
-  if (urlOrPath.includes('/storage/v1/object/public/')) {
-    const match = urlOrPath.match(new RegExp(`${UPLOADS_BUCKET}/(.+)`));
-    path = match ? match[1] : urlOrPath;
-  } else if (urlOrPath.startsWith('/uploads/')) {
-    path = urlOrPath.replace(/^\/uploads\//, '');
+  const m = urlOrPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+  if (m) {
+    const [, bucket, objectPath] = m;
+    await supabase.storage.from(bucket).remove([objectPath]);
   }
-
-  await supabase.storage.from(UPLOADS_BUCKET).remove([path]);
 }

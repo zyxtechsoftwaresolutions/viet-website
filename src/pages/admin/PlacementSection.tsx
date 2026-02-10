@@ -22,11 +22,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { placementSectionAPI, placementCarouselAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { Briefcase, Link2, ImagePlus, Edit, Trash2 } from 'lucide-react';
-
-const API_ORIGIN = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-const UPLOADS_ORIGIN = (API_ORIGIN.replace(/\/api\/?$/, '') || 'http://localhost:3001');
 
 interface PlacementSectionData {
   title: string;
@@ -121,7 +119,7 @@ const PlacementSection = () => {
     setSelectedImage(item);
     setImageForm({ title: item.title, subtitle: item.subtitle });
     setImageFile(null);
-    setImagePreview(item.src.startsWith('/') ? `${UPLOADS_ORIGIN}${item.src}` : item.src);
+    setImagePreview(item.src);
     setDialogOpen(true);
   };
 
@@ -137,15 +135,22 @@ const PlacementSection = () => {
 
   const handleSaveImage = async () => {
     try {
+      let src: string | undefined;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        src = await uploadToSupabase(imageFile, 'placement-carousel', 'images');
+      } else if (selectedImage) {
+        src = selectedImage.src;
+      }
+      if (!src) {
+        toast.error('Please select an image');
+        return;
+      }
       if (selectedImage) {
-        await placementCarouselAPI.update(selectedImage.id, imageFile, imageForm.title, imageForm.subtitle);
+        await placementCarouselAPI.update(selectedImage.id, { src, title: imageForm.title, subtitle: imageForm.subtitle });
         toast.success('Image updated');
       } else {
-        if (!imageFile) {
-          toast.error('Please select an image');
-          return;
-        }
-        await placementCarouselAPI.create(imageFile, imageForm.title, imageForm.subtitle);
+        await placementCarouselAPI.create({ src, title: imageForm.title, subtitle: imageForm.subtitle });
         toast.success('Image added');
       }
       setDialogOpen(false);
@@ -174,7 +179,7 @@ const PlacementSection = () => {
     }
   };
 
-  const imgUrl = (src: string) => (src.startsWith('/') ? `${UPLOADS_ORIGIN}${src}` : src);
+  const imgUrl = (src: string) => src;
 
   if (loading) {
     return (

@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { recruitersAPI, placementSectionAPI, placementCarouselAPI } from '@/lib/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-const UPLOADS_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 
 interface PlacementSectionConfig {
   title: string;
@@ -63,7 +62,7 @@ const PlacementExcellenceSection = () => {
           setRecruiters(
             data.map((r: any) => ({
               name: r.name,
-              logo: r.logo?.startsWith('/') ? `${API_BASE_URL}${r.logo}` : r.logo,
+              logo: r.logo || '',
             }))
           );
         } else {
@@ -82,7 +81,7 @@ const PlacementExcellenceSection = () => {
           setStudentCarousel(
             data.map((item: any) => ({
               id: item.id,
-              src: item.src?.startsWith('/') ? `${UPLOADS_ORIGIN}${item.src}` : item.src,
+              src: item.src || '',
               title: item.title || '',
               subtitle: item.subtitle || '',
             }))
@@ -302,7 +301,7 @@ const PlacementExcellenceSection = () => {
                       height={300}
                       loading="lazy"
                       decoding="async"
-                      fetchPriority="auto"
+                      fetchpriority="auto"
                     />
                   </div>
                 ))}

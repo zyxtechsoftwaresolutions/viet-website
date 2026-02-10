@@ -6,6 +6,8 @@ import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { pagesAPI } from '@/lib/api';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 const Chairman = () => {
   const [pageContent, setPageContent] = useState<any>(null);
 
@@ -22,13 +24,27 @@ const Chairman = () => {
     fetchPageContent();
   }, []);
 
-  const designation = pageContent?.profile?.designation || 'Chairman';
+  const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Chairman';
   const name = pageContent?.profile?.name || 'Sri G. Satyanarayana Garu';
   const qualification = pageContent?.profile?.qualification || 'M.Tech, MBA';
   const introText = pageContent?.hero?.description || 'Leadership that drives excellence in technical education.';
-  const heroImageUrl = pageContent?.heroImage
-    ? (pageContent.heroImage.startsWith('http') ? pageContent.heroImage : pageContent.heroImage)
-    : '/chairmanedit.jpeg';
+  const buttonText = pageContent?.hero?.buttonText || 'Read message';
+  const inspirationQuote = pageContent?.inspiration?.quote;
+  const inspirationAuthor = pageContent?.inspiration?.author;
+  const greetingsText = pageContent?.greetings?.text ?? 'Wish you all the best,';
+
+  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
+  const profileImageRaw =
+    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
+    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
+    null;
+  let heroImageUrl: string | null = null;
+  if (profileImageRaw) {
+    heroImageUrl = profileImageRaw.startsWith('http')
+      ? profileImageRaw
+      : `${(API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')}${profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`}`;
+  }
+  if (!heroImageUrl) heroImageUrl = '/chairmanedit.jpeg';
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -68,7 +84,7 @@ const Chairman = () => {
                 href="#message"
                 className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg"
               >
-                Read message
+                {buttonText}
               </a>
             </motion.div>
           </div>
@@ -133,10 +149,10 @@ const Chairman = () => {
               Inspiration
             </div>
             <blockquote className="text-xl md:text-2xl lg:text-3xl font-medium italic text-slate-800 leading-relaxed mb-6 font-poppins max-w-3xl mx-auto">
-              "Education is the manifestation of the perfection already in man. The ideal of all education, all training, should be this man-making."
+              {inspirationQuote ? `"${inspirationQuote}"` : '"Education is the manifestation of the perfection already in man. The ideal of all education, all training, should be this man-making."'}
             </blockquote>
             <cite className="text-base md:text-lg text-slate-600 font-poppins not-italic">
-              — Swami Vivekananda
+              {inspirationAuthor ? `— ${inspirationAuthor}` : '— Swami Vivekananda'}
             </cite>
           </motion.div>
         </div>
@@ -153,7 +169,7 @@ const Chairman = () => {
             className="text-center"
           >
             <p className="text-xl md:text-2xl font-semibold text-slate-800 mb-4 font-poppins">
-              Wish you all the best,
+              {greetingsText}
             </p>
             <p className="text-lg md:text-xl text-slate-700 font-poppins">
               {name}

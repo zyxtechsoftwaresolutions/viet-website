@@ -5,32 +5,11 @@ import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 
-// Helper function to resolve image URLs - supports Supabase Storage URLs, Google Drive links, and legacy paths
 const imageSrc = (path: string) => {
   if (!path) return '/placeholder.svg';
-  
-  // Convert Google Drive links to direct view links
-  if (isGoogleDriveLink(path)) {
-    return convertGoogleDriveLink(path);
-  }
-  
-  // If it's already a full URL (Supabase Storage or external), use it directly
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // Legacy local path - should not happen with Supabase-only storage, but handle gracefully
-  if (path.startsWith('/uploads/')) {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    return `${API_BASE_URL.replace(/\/api\/?$/, '')}${path}`;
-  }
-  
-  // Relative path starting with / - use as-is (for static assets like /placeholder.svg)
-  if (path.startsWith('/')) {
-    return path;
-  }
-  
-  // Fallback
+  if (isGoogleDriveLink(path)) return convertGoogleDriveLink(path);
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/')) return path;
   return path;
 };
 
@@ -57,26 +36,10 @@ const VibeAtViet = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Video source helper - supports Supabase Storage URLs and Google Drive links
   const videoSrc = (path: string) => {
     if (!path) return '';
-    
-    // Convert Google Drive links to direct download links for videos
-    if (isGoogleDriveLink(path)) {
-      return convertGoogleDriveToDownload(path);
-    }
-    
-    // If it's already a full URL (Supabase Storage or external), use it directly
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-    
-    // Legacy local path - should not happen with Supabase-only storage
-    if (path.startsWith('/uploads/')) {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      return `${API_BASE_URL.replace(/\/api\/?$/, '')}${path}`;
-    }
-    
+    if (isGoogleDriveLink(path)) return convertGoogleDriveToDownload(path);
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
     return path;
   };
 
@@ -220,7 +183,7 @@ const VibeAtViet = () => {
                             width={400}
                             height={400}
                             loading={slotIndex < 4 ? "eager" : "lazy"}
-                            fetchPriority={slotIndex < 4 ? "high" : "auto"}
+                            fetchpriority={slotIndex < 4 ? "high" : "auto"}
                             decoding="async"
                             style={{ zIndex: -1, opacity: 1 }}
                             onError={(e) => {

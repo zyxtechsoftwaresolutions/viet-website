@@ -29,6 +29,22 @@ VALUES ('uploads', 'uploads', true)
 ON CONFLICT (id) DO NOTHING;
 ```
 
+### Videos bucket (hero videos & Vibe@Viet)
+
+Admin uploads **videos** directly from the browser to Supabase Storage (no backend file handling). Create the `videos` bucket and policies:
+
+1. In Supabase Dashboard → **Storage**, create a bucket named **videos**, set it **Public**.
+2. Or run the migration: `supabase/migrations/002_videos_bucket.sql` in the SQL Editor (creates bucket + RLS policies for public read and anon upload).
+
+Then set **frontend** env vars so the admin app can upload (same project, anon key):
+
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Find the anon key in **Project Settings** → **API** → **anon public** key.
+
 ## 4. Configure Environment Variables
 
 1. Copy `.env.example` to `.env` (if you haven't already)
@@ -37,6 +53,10 @@ ON CONFLICT (id) DO NOTHING;
 ```env
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# For admin video uploads (browser → Supabase Storage directly)
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 Find these in Supabase Dashboard → **Project Settings** → **API**:

@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { transportRoutesAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { ImagePlus, X } from 'lucide-react';
 
@@ -141,21 +142,25 @@ const TransportRoutes = () => {
 
   const handleSubmit = async () => {
     try {
+      let imageUrl: string | null = null;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        imageUrl = await uploadToSupabase(imageFile, 'transport-routes', 'images');
+      }
+      const payload = {
+        ...formData,
+        name: formData.name || 'Route',
+        busNo: formData.busNo,
+        driverName: formData.driverName,
+        driverContactNo: formData.driverContactNo,
+        seatingCapacity: formData.seatingCapacity,
+        image: imageUrl ?? (selectedItem?.image ?? null),
+      };
       if (selectedItem) {
-        await transportRoutesAPI.update(selectedItem.id, formData, imageFile);
+        await transportRoutesAPI.update(selectedItem.id, payload);
         toast.success('Route updated successfully');
       } else {
-        await transportRoutesAPI.create(
-          {
-            ...formData,
-            name: formData.name || 'Route',
-            busNo: formData.busNo,
-            driverName: formData.driverName,
-            driverContactNo: formData.driverContactNo,
-            seatingCapacity: formData.seatingCapacity,
-          },
-          imageFile
-        );
+        await transportRoutesAPI.create(payload);
         toast.success('Route added successfully');
       }
       setDialogOpen(false);
@@ -373,7 +378,7 @@ const TransportRoutes = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/avif,image/gif"
                     className="hidden"
                     onChange={handleImageChange}
                   />

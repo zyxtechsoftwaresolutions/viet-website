@@ -13,6 +13,11 @@ import civilImage from '@/assets/civil-department.svg';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Only show resumes that are admin-uploaded (Supabase) or external links.
+// Old public-folder resumes were removed to keep the repo lightweight.
+const isValidResumeUrl = (url?: string) =>
+  !!url && (url.startsWith('http') || url.includes('supabase.co/storage'));
+
 // Faculty data structure
 interface FacultyMember {
   name: string;
@@ -815,7 +820,7 @@ const PROGRAMS_DATA: Program[] = [
                                         <span>{member.phone}</span>
                                       </div>
                                     )}
-                                    {member.resume && (
+                                    {isValidResumeUrl(member.resume) && (
                                       <button
                                         onClick={() => {
                                           if (member.resume?.endsWith('.pdf')) {
@@ -869,7 +874,7 @@ const PROGRAMS_DATA: Program[] = [
                                     {member.experience && (
                                       <p className="text-xs text-muted-foreground mb-2">Experience: {member.experience}</p>
                                     )}
-                                    {member.resume && (
+                                    {isValidResumeUrl(member.resume) && (
                                       <button
                                         onClick={() => {
                                           if (member.resume?.endsWith('.pdf')) {

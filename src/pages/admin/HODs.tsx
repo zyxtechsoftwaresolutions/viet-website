@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { hodsAPI, departmentsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface HOD {
@@ -154,9 +155,11 @@ const HODs = () => {
     setResumeFile(null);
     // Set preview with full URL if image exists
     if (item.image) {
-      const imageUrl = item.image.startsWith('/') 
-        ? `http://localhost:3001${item.image}` 
-        : `http://localhost:3001/${item.image}`;
+      const imageUrl = item.image.startsWith('http') 
+        ? item.image 
+        : item.image.startsWith('/') 
+            ? `http://localhost:3001${item.image}` 
+            : `http://localhost:3001/${item.image}`;
       setPreview(imageUrl);
     } else {
       setPreview('');
@@ -185,22 +188,31 @@ const HODs = () => {
 
   const handleSubmit = async () => {
     try {
+      let imageUrl: string | null = null;
+      let resumeUrl: string | null = null;
+      if (imageFile) {
+        toast.info('Uploading image…');
+        imageUrl = await uploadToSupabase(imageFile, 'hods', 'images');
+      }
+      if (resumeFile) {
+        toast.info('Uploading resume…');
+        resumeUrl = await uploadToSupabase(resumeFile, 'hods', 'images');
+      }
+      const payload = {
+        ...formData,
+        image: imageUrl ?? (selectedItem?.image ?? null),
+        resume: resumeUrl ?? (selectedItem?.resume ?? null),
+      };
       if (selectedItem) {
-        const updatedHOD = await hodsAPI.update(selectedItem.id, formData, imageFile, resumeFile);
-        console.log('HOD update response:', updatedHOD);
+        await hodsAPI.update(selectedItem.id, payload);
         toast.success('HOD updated successfully');
       } else {
-        const newHOD = await hodsAPI.create(formData, imageFile, resumeFile);
-        console.log('HOD create response:', newHOD);
+        await hodsAPI.create(payload);
         toast.success('HOD added successfully');
       }
       setDialogOpen(false);
-      // Small delay to ensure file write is complete before refetching
-      setTimeout(() => {
-        fetchHODs();
-      }, 100);
+      setTimeout(() => fetchHODs(), 100);
     } catch (error: any) {
-      console.error('Error saving HOD:', error);
       toast.error(error.message || 'Failed to save HOD');
     }
   };
@@ -223,9 +235,11 @@ const HODs = () => {
       header: 'Image',
       render: (item: HOD) => {
         const imageUrl = item.image 
-          ? (item.image.startsWith('/') 
-              ? `http://localhost:3001${item.image}` 
-              : `http://localhost:3001/${item.image}`)
+          ? (item.image.startsWith('http') 
+              ? item.image 
+              : item.image.startsWith('/') 
+                  ? `http://localhost:3001${item.image}` 
+                  : `http://localhost:3001/${item.image}`)
           : '/placeholder.svg';
         console.log(`HOD ${item.name} image URL:`, imageUrl, 'Original image path:', item.image);
         return (
@@ -291,7 +305,7 @@ const HODs = () => {
                 />
                 {preview && (
                   <img
-                    src={preview.startsWith('data:') ? preview : (preview.startsWith('/') ? `http://localhost:3001${preview}` : `http://localhost:3001/${preview}`)}
+                    src={preview.startsWith('data:') || preview.startsWith('http') ? preview : (preview.startsWith('/') ? `http://localhost:3001${preview}` : `http://localhost:3001/${preview}`)}
                     alt="Preview"
                     className="w-24 h-24 object-cover rounded-full mt-2"
                     onError={(e) => {

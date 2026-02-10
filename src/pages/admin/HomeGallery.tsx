@@ -11,10 +11,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { homeGalleryAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { Image } from 'lucide-react';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface HomeGalleryImage {
   id: number;
@@ -37,11 +36,7 @@ const HomeGallery = () => {
   const fetchImages = async () => {
     try {
       const data = await homeGalleryAPI.getAll();
-      console.log('Fetched gallery data:', data);
-      
-      // Handle case where API returns empty array or null
       if (!data || !Array.isArray(data) || data.length === 0) {
-        // Initialize with 8 placeholder images
         const placeholderImages = Array.from({ length: 8 }, (_, i) => ({
           id: i + 1,
           image: '/placeholder.svg',
@@ -50,8 +45,7 @@ const HomeGallery = () => {
         setImages(placeholderImages);
         return;
       }
-      
-      // Ensure we have exactly 8 images
+
       const sortedData = [...data].sort((a, b) => (a.order || 0) - (b.order || 0));
       while (sortedData.length < 8) {
         sortedData.push({
@@ -80,11 +74,7 @@ const HomeGallery = () => {
     setSelectedIndex(index);
     setImageFile(null);
     const image = images[index];
-    // Set preview to current image
-    const imageUrl = image.image.startsWith('/') 
-      ? (image.image.startsWith('/uploads') ? `${API_BASE_URL}${image.image}` : image.image)
-      : image.image;
-    setPreview(imageUrl);
+    setPreview(image.image);
     setDialogOpen(true);
   };
 
@@ -102,15 +92,15 @@ const HomeGallery = () => {
 
   const handleSubmit = async () => {
     if (selectedIndex === null) return;
-    
     try {
       const image = images[selectedIndex];
       if (!imageFile) {
         toast.error('Please select an image');
         return;
       }
-      
-      await homeGalleryAPI.update(image.id, imageFile);
+      toast.info('Uploading image…');
+      const imageUrl = await uploadToSupabase(imageFile, 'home-gallery', 'images');
+      await homeGalleryAPI.update(image.id, { image: imageUrl });
       toast.success('Image updated successfully');
       setDialogOpen(false);
       fetchImages();
@@ -152,11 +142,7 @@ const HomeGallery = () => {
             <div className="aspect-square bg-gray-100 flex items-center justify-center relative">
               {image.image && image.image !== '/placeholder.svg' ? (
                 <img
-                  src={image.image.startsWith('/uploads') 
-                    ? `${API_BASE_URL}${image.image}` 
-                    : image.image.startsWith('/') 
-                      ? image.image 
-                      : image.image}
+                  src={image.image}
                   alt={`Gallery image ${index + 1}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -223,11 +209,7 @@ const HomeGallery = () => {
                   <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
                     <p className="text-sm font-medium mb-2">Current Image:</p>
                     <img
-                      src={images[selectedIndex].image.startsWith('/uploads') 
-                        ? `${API_BASE_URL}${images[selectedIndex].image}` 
-                        : images[selectedIndex].image.startsWith('/') 
-                          ? images[selectedIndex].image 
-                          : images[selectedIndex].image}
+                      src={images[selectedIndex].image}
                       alt="Current"
                       className="w-full max-h-96 object-contain rounded bg-white"
                       onError={(e) => {

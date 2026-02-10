@@ -627,7 +627,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
                       height={128}
                       loading="lazy"
                       decoding="async"
-                      fetchPriority="auto"
+                      fetchpriority="auto"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         console.error('Failed to load gallery image:', image.src);

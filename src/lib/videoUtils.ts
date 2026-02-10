@@ -10,18 +10,10 @@ export interface VideoInfo {
   originalUrl: string;
 }
 
-/**
- * Detects if a video string is a URL or a file path
- */
+/** Detects if a video string is a full URL (not a relative path). */
 export function isVideoUrl(video: string | null | undefined): boolean {
   if (!video) return false;
-  // If it starts with /uploads/, it's a file path
-  if (video.startsWith('/uploads/')) return false;
-  // If it starts with http:// or https://, it's a URL
-  if (video.startsWith('http://') || video.startsWith('https://')) return true;
-  // If it starts with //, it's a protocol-relative URL
-  if (video.startsWith('//')) return true;
-  return false;
+  return video.startsWith('http://') || video.startsWith('https://') || video.startsWith('//');
 }
 
 /**

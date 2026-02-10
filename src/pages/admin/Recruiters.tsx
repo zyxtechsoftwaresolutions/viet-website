@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { recruitersAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface Recruiter {
@@ -95,15 +96,21 @@ const Recruiters = () => {
 
   const handleSubmit = async () => {
     try {
+      let logoUrl: string | undefined;
+      if (logoFile) {
+        toast.info('Uploading logo…');
+        logoUrl = await uploadToSupabase(logoFile, 'recruiters', 'images');
+      }
+      const logo = logoUrl ?? (selectedItem?.logo);
+      if (!logo) {
+        toast.error('Please select a logo');
+        return;
+      }
       if (selectedItem) {
-        await recruitersAPI.update(selectedItem.id, logoFile, formData.name, formData.description);
+        await recruitersAPI.update(selectedItem.id, { logo, name: formData.name, description: formData.description });
         toast.success('Recruiter updated successfully');
       } else {
-        if (!logoFile) {
-          toast.error('Please select a logo');
-          return;
-        }
-        await recruitersAPI.create(logoFile, formData.name, formData.description);
+        await recruitersAPI.create({ logo, name: formData.name, description: formData.description });
         toast.success('Recruiter added successfully');
       }
       setDialogOpen(false);

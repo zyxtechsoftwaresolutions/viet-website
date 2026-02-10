@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { galleryAPI, departmentsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
 interface GalleryImage {
@@ -129,7 +130,9 @@ const Gallery = () => {
         toast.error('Please select an image');
         return;
       }
-      await galleryAPI.create(imageFile, formData.alt, formData.department);
+      toast.info('Uploading image…');
+      const src = await uploadToSupabase(imageFile, 'gallery', 'images');
+      await galleryAPI.create({ src, alt: formData.alt, department: formData.department });
       toast.success('Gallery image added successfully');
       setDialogOpen(false);
       fetchImages();

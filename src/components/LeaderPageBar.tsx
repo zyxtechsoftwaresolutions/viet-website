@@ -175,7 +175,7 @@ const LeaderPageBar = ({ backHref = '/about' }: LeaderPageBarProps) => {
                   height={40}
                   loading="eager"
                   decoding="async"
-                  fetchPriority="high"
+                  fetchpriority="high"
                 />
               </button>
               <motion.button

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { departmentPagesAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -270,14 +271,13 @@ const DepartmentPages = () => {
     if (heroImageFile) {
       setUploadingHero(true);
       try {
-        const res = await departmentPagesAPI.uploadHeroImage(slug, heroImageFile);
-        const imageUrl = (res as { image?: string }).image;
-        if (imageUrl) {
-          sectionsToSave = {
-            ...sectionsToSave,
-            hero: { ...sectionsToSave.hero, image: imageUrl },
-          };
-        }
+        toast.info('Uploading hero image…');
+        const imageUrl = await uploadToSupabase(heroImageFile, 'department-hero', 'images');
+        await departmentPagesAPI.uploadHeroImage(slug, imageUrl);
+        sectionsToSave = {
+          ...sectionsToSave,
+          hero: { ...sectionsToSave.hero, image: imageUrl },
+        };
         setHeroImageFile(null);
       } catch (e: any) {
         toast.error(e.message || 'Hero image upload failed');
@@ -309,7 +309,9 @@ const DepartmentPages = () => {
     }
     setUploading(true);
     try {
-      await departmentPagesAPI.uploadSyllabus(slug, curriculumProgram.trim(), curriculumRegulation.trim(), curriculumFile);
+      toast.info('Uploading syllabus…');
+      const fileUrl = await uploadToSupabase(curriculumFile, 'syllabus', 'images');
+      await departmentPagesAPI.uploadSyllabus(slug, curriculumProgram.trim(), curriculumRegulation.trim(), fileUrl, curriculumFile.name);
       toast.success('Syllabus uploaded');
       setCurriculumRegulation('');
       setCurriculumFile(null);
@@ -476,8 +478,10 @@ const DepartmentPages = () => {
   };
   const handleWhyVietIconUpload = async (id: string, file: File) => {
     try {
-      const res = await departmentPagesAPI.uploadAsset(slug, file);
-      updateWhyVietCard(id, 'icon', (res as { url: string }).url);
+      toast.info('Uploading…');
+      const url = await uploadToSupabase(file, 'department-assets', 'images');
+      await departmentPagesAPI.uploadAsset(slug, url, file.name);
+      updateWhyVietCard(id, 'icon', url);
       toast.success('Icon uploaded');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');
@@ -508,8 +512,10 @@ const DepartmentPages = () => {
   };
   const addRecruiterImage = async (file: File) => {
     try {
-      const res = await departmentPagesAPI.uploadAsset(slug, file);
-      updateSection('placements', 'recruiterImages', [...recruiterImages, (res as { url: string }).url]);
+      toast.info('Uploading…');
+      const url = await uploadToSupabase(file, 'department-assets', 'images');
+      await departmentPagesAPI.uploadAsset(slug, url, file.name);
+      updateSection('placements', 'recruiterImages', [...recruiterImages, url]);
       toast.success('Recruiter image added');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');
@@ -529,8 +535,10 @@ const DepartmentPages = () => {
   };
   const handlePlacementImageUpload = async (id: string, file: File) => {
     try {
-      const res = await departmentPagesAPI.uploadAsset(slug, file);
-      updatePlacementCard(id, 'image', (res as { url: string }).url);
+      toast.info('Uploading…');
+      const url = await uploadToSupabase(file, 'department-assets', 'images');
+      await departmentPagesAPI.uploadAsset(slug, url, file.name);
+      updatePlacementCard(id, 'image', url);
       toast.success('Image uploaded');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');
@@ -595,8 +603,10 @@ const DepartmentPages = () => {
   };
   const handleIdeaCellIconUpload = async (id: string, file: File) => {
     try {
-      const res = await departmentPagesAPI.uploadAsset(slug, file);
-      updateIdeaCellPillar(id, 'icon', (res as { url: string }).url);
+      toast.info('Uploading…');
+      const url = await uploadToSupabase(file, 'department-assets', 'images');
+      await departmentPagesAPI.uploadAsset(slug, url, file.name);
+      updateIdeaCellPillar(id, 'icon', url);
       toast.success('Icon uploaded');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');

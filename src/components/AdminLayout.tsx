@@ -21,6 +21,7 @@ import {
   ScrollText,
   PlayCircle,
   Briefcase,
+  Award,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -56,6 +57,7 @@ const AdminLayout = () => {
     { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters' },
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section' },
     { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes' },
+    { icon: Award, label: 'Accreditations', path: '/admin/accreditations' },
     { icon: FileText, label: 'Pages', path: '/admin/pages' },
   ];
 

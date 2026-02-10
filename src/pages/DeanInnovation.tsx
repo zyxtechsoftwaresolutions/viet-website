@@ -24,19 +24,23 @@ const DeanInnovation = () => {
     fetchPageContent();
   }, []);
 
-  const profileImageRaw = pageContent?.profileImage || pageContent?.heroImage;
-  const profileImageSrc = profileImageRaw
-    ? profileImageRaw.startsWith('/')
-      ? `${API_BASE_URL}${profileImageRaw}`
-      : profileImageRaw.startsWith('http')
-        ? profileImageRaw
-        : `${API_BASE_URL}/${profileImageRaw}`
-    : null;
+  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
+  const profileImageRaw =
+    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
+    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
+    null;
+  let profileImageSrc: string | null = null;
+  if (profileImageRaw) {
+    profileImageSrc = profileImageRaw.startsWith('http')
+      ? profileImageRaw
+      : `${(API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')}${profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`}`;
+  }
 
-  const designation = pageContent?.profile?.designation || 'Dean Innovation & Student Projects';
+  const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Dean Innovation & Student Projects';
   const name = pageContent?.profile?.name || 'Dr. Ranga Rao Velamala';
   const qualification = pageContent?.profile?.qualification || 'Ph.D. (AU.), M.Tech. (IT.)';
   const introText = pageContent?.hero?.description || 'Driving innovation and fostering student creativity.';
+  const buttonText = pageContent?.hero?.buttonText || 'Read message';
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -75,7 +79,7 @@ const DeanInnovation = () => {
                 href="#message"
                 className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg"
               >
-                Read message
+                {buttonText}
               </a>
             </motion.div>
           </div>

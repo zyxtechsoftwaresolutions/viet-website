@@ -32,23 +32,30 @@ const Principal = () => {
     fetchPageContent();
   }, []);
 
-  const profileImageRaw = pageContent?.profileImage || pageContent?.heroImage;
+  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
+  const profileImageRaw =
+    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
+    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
+    null;
   let profileImageSrc: string | null = null;
-  if (profileImageRaw && typeof profileImageRaw === 'string') {
+  if (profileImageRaw) {
     if (profileImageRaw.startsWith('http')) {
       profileImageSrc = profileImageRaw;
     } else {
-      // Match admin panel image URL construction
-      const baseUrl = (API_BASE_URL || 'http://localhost:3001').replace('/api', '');
+      const baseUrl = (API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
       const cleanPath = profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`;
       profileImageSrc = `${baseUrl}${cleanPath}`;
     }
   }
 
-  const designation = pageContent?.profile?.designation || 'Principal';
+  const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Principal';
   const name = pageContent?.profile?.name || 'Prof. G Vidya Pradeep Varma';
   const qualification = pageContent?.profile?.qualification || 'M.Tech, Ph.D';
   const introText = pageContent?.hero?.description || 'Leadership in academic excellence and institutional development.';
+  const buttonText = pageContent?.hero?.buttonText || 'Read message';
+  const inspirationQuote = pageContent?.inspiration?.quote;
+  const inspirationAuthor = pageContent?.inspiration?.author;
+  const greetingsText = pageContent?.greetings?.text ?? 'Wish you all the best,';
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -88,7 +95,7 @@ const Principal = () => {
                 href="#message"
                 className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg"
               >
-                Read message
+                {buttonText}
               </a>
             </motion.div>
           </div>
@@ -153,10 +160,10 @@ const Principal = () => {
               Inspiration
             </div>
             <blockquote className="text-xl md:text-2xl lg:text-3xl font-medium italic text-slate-800 leading-relaxed mb-6 font-poppins max-w-3xl mx-auto">
-              "The purpose of education is to make good human beings with skill and expertise. Enlightened human beings can be created by teachers."
+              {inspirationQuote ? `"${inspirationQuote}"` : '"The purpose of education is to make good human beings with skill and expertise. Enlightened human beings can be created by teachers."'}
             </blockquote>
             <cite className="text-base md:text-lg text-slate-600 font-poppins not-italic">
-              — Dr. A.P.J. Abdul Kalam
+              {inspirationAuthor ? `— ${inspirationAuthor}` : '— Dr. A.P.J. Abdul Kalam'}
             </cite>
           </motion.div>
         </div>
@@ -173,7 +180,7 @@ const Principal = () => {
             className="text-center"
           >
             <p className="text-xl md:text-2xl font-semibold text-slate-800 mb-4 font-poppins">
-              Wish you all the best,
+              {greetingsText}
             </p>
             <p className="text-lg md:text-xl text-slate-700 font-poppins">
               {name}

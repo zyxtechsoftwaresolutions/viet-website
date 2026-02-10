@@ -51,7 +51,7 @@ const Footer = () => {
                   height={24}
                   loading="lazy"
                   decoding="async"
-                  fetchPriority="auto"
+                  fetchpriority="auto"
                 />
               </div>
               <div>
