@@ -52,6 +52,7 @@ const DynamicPage = lazy(() => import("./pages/DynamicPage"));
 const DynamicRouteHandler = lazy(() => import("./components/DynamicRouteHandler"));
 const FacultyPage = lazy(() => import("./pages/FacultyPage"));
 const DepartmentGallery = lazy(() => import("./pages/DepartmentGallery"));
+const GenericDepartmentPage = lazy(() => import("./pages/GenericDepartmentPage"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -143,7 +144,9 @@ const App = () => (
             <Route path="/campus-life" element={<CampusLife />} />
             <Route path="/faculty" element={<FacultyPage />} />
             <Route path="/department/:slug/gallery" element={<DepartmentGallery />} />
-            
+            {/* Generic department pages (Diploma, Engineering PG, Management) - same editable content as Engineering UG */}
+            <Route path="/programs/department/:slug" element={<GenericDepartmentPage />} />
+
             {/* Dynamic Pages Route - Must be after all specific routes */}
             <Route path="/page/:slug" element={<DynamicPage />} />
             

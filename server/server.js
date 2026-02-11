@@ -15,6 +15,16 @@ function isValidStorageUrl(url) {
   return url && typeof url === 'string' && url.trim().length > 0 && url.includes('supabase.co/storage');
 }
 
+/** Validate media URL: Supabase Storage or Google Drive file link (so Drive links can be used for hero/gallery). */
+function isValidMediaUrl(url) {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  if (url.includes('supabase.co/storage')) return true;
+  if (url.includes('drive.google.com')) {
+    return /\/file\/d\/[a-zA-Z0-9_-]+/.test(url) || /[?&]id=[a-zA-Z0-9_-]+/.test(url);
+  }
+  return false;
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -670,11 +680,11 @@ app.post('/api/hero-videos', authenticateToken, async (req, res) => {
     if (!src || typeof src !== 'string' || !src.trim()) {
       return res.status(400).json({ error: 'Video URL (src) is required. Upload video to Supabase Storage first.' });
     }
-    if (!isValidStorageUrl(src)) {
-      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    if (!isValidMediaUrl(src)) {
+      return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
     }
-    if (poster && typeof poster === 'string' && poster.trim() && !isValidStorageUrl(poster)) {
-      return res.status(400).json({ error: 'poster must be a valid Supabase Storage URL' });
+    if (poster && typeof poster === 'string' && poster.trim() && !isValidMediaUrl(poster)) {
+      return res.status(400).json({ error: 'poster must be a Supabase Storage URL or Google Drive file link' });
     }
     const existing = await db.getHeroVideos();
     const newVideo = await db.createHeroVideo({
@@ -697,8 +707,16 @@ app.put('/api/hero-videos/:id', authenticateToken, async (req, res) => {
   try {
     const updateData = {};
     const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
-    if (src !== undefined) updateData.src = typeof src === 'string' ? src.trim() : null;
-    if (poster !== undefined) updateData.poster = typeof poster === 'string' ? poster.trim() || null : undefined;
+    if (src !== undefined) {
+      const s = typeof src === 'string' ? src.trim() : null;
+      if (s && !isValidMediaUrl(s)) return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
+      updateData.src = s;
+    }
+    if (poster !== undefined) {
+      const p = typeof poster === 'string' ? poster.trim() || null : undefined;
+      if (p && !isValidMediaUrl(p)) return res.status(400).json({ error: 'poster must be a Supabase Storage URL or Google Drive file link' });
+      updateData.poster = p;
+    }
     if (badge !== undefined) updateData.badge = badge;
     if (title !== undefined) updateData.title = title;
     if (subtitle !== undefined) updateData.subtitle = subtitle;
@@ -937,8 +955,8 @@ app.post('/api/gallery', authenticateToken, async (req, res) => {
   try {
     const body = req.body || {};
     const src = typeof body.src === 'string' ? body.src.trim() : '';
-    if (!src || !isValidStorageUrl(src)) {
-      return res.status(400).json({ error: 'src must be a valid Supabase Storage URL' });
+    if (!src || !isValidMediaUrl(src)) {
+      return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
     }
     const newImage = await db.createGalleryItem({ src, alt: body.alt || 'Gallery image', department: body.department || '' });
     res.json(newImage);

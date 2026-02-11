@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { departmentPagesAPI } from '@/lib/api';
-import { uploadToSupabase } from '@/lib/storage';
+import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,16 +30,36 @@ import {
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 
 const DEPARTMENT_SLUGS = [
-  { value: 'cse', label: 'Computer Science & Engineering (CSE)' },
-  { value: 'cyber-security', label: 'CSE (Cyber Security)' },
-  { value: 'data-science', label: 'CSE (Data Science)' },
-  { value: 'aiml', label: 'CSE (AI & ML)' },
-  { value: 'ece', label: 'Electronics & Communication (ECE)' },
-  { value: 'eee', label: 'Electrical & Electronics (EEE)' },
-  { value: 'civil', label: 'Civil Engineering' },
-  { value: 'mechanical', label: 'Mechanical Engineering' },
-  { value: 'automobile', label: 'Automobile Engineering (AME)' },
-  { value: 'bsh', label: 'Basic Science & Humanities (BS&H)' },
+  // Engineering UG (existing)
+  { value: 'cse', label: 'ENGINEERING UG - Computer Science & Engineering (CSE)' },
+  { value: 'cyber-security', label: 'ENGINEERING UG - CSE (Cyber Security)' },
+  { value: 'data-science', label: 'ENGINEERING UG - CSE (Data Science)' },
+  { value: 'aiml', label: 'ENGINEERING UG - CSE (AI & ML)' },
+  { value: 'ece', label: 'ENGINEERING UG - Electronics & Communication (ECE)' },
+  { value: 'eee', label: 'ENGINEERING UG - Electrical & Electronics (EEE)' },
+  { value: 'civil', label: 'ENGINEERING UG - Civil Engineering' },
+  { value: 'mechanical', label: 'ENGINEERING UG - Mechanical Engineering' },
+  { value: 'automobile', label: 'ENGINEERING UG - Automobile Engineering (AME)' },
+  { value: 'bsh', label: 'ENGINEERING UG - Basic Science & Humanities (BS&H)' },
+  // Diploma
+  { value: 'diploma-agriculture', label: 'DIPLOMA - Agriculture Engineering' },
+  { value: 'diploma-civil', label: 'DIPLOMA - Civil Engineering' },
+  { value: 'diploma-cse', label: 'DIPLOMA - Computer Science Engineering' },
+  { value: 'diploma-ece', label: 'DIPLOMA - Electronics & Communications Engineering' },
+  { value: 'diploma-eee', label: 'DIPLOMA - Electrical & Electronics Engineering' },
+  { value: 'diploma-mechanical', label: 'DIPLOMA - Mechanical Engineering' },
+  // Engineering PG
+  { value: 'pg-cadcam', label: 'ENGINEERING PG - CAD/CAM' },
+  { value: 'pg-cse', label: 'ENGINEERING PG - Computer Science & Engineering (CSE)' },
+  { value: 'pg-power-systems', label: 'ENGINEERING PG - Power Systems' },
+  { value: 'pg-structural', label: 'ENGINEERING PG - Structural Engineering' },
+  { value: 'pg-thermal', label: 'ENGINEERING PG - Thermal Engineering' },
+  { value: 'pg-vlsi', label: 'ENGINEERING PG - VLSI & Embedded Systems' },
+  // Management
+  { value: 'management-bba', label: 'MANAGEMENT UG - BBA' },
+  { value: 'management-bca', label: 'MANAGEMENT UG - BCA' },
+  { value: 'management-mba', label: 'MANAGEMENT PG - MBA' },
+  { value: 'management-mca', label: 'MANAGEMENT PG - MCA' },
 ];
 
 type ProgramCard = { name: string; seats: string; fee: string };
@@ -58,7 +78,7 @@ type IdeaCellPillar = { id: string; icon: string; title: string; items: string[]
 type ClubCard = { id: string; category: string; title: string; subtitle: string };
 
 const defaultSections = () => ({
-  hero: { image: '', badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' },
+  hero: { image: '', video: '', badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' },
   overview: { title: '', content: '', whyChoose: '' },
   visionMission: { vision: '', mission: '' },
   hod: { message: '' },
@@ -89,6 +109,7 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     if (typeof out.hero === 'object' && !('buttonText' in out.hero)) (out.hero as any).buttonText = 'Apply Now';
     if (typeof out.hero === 'object' && !('buttonLink' in out.hero)) (out.hero as any).buttonLink = '';
     if (typeof out.hero === 'object' && !('image' in out.hero)) (out.hero as any).image = '';
+    if (typeof out.hero === 'object' && !('video' in out.hero)) (out.hero as any).video = '';
   }
   if (raw.overview) out.overview = { ...def.overview, ...raw.overview };
   if (raw.visionMission) out.visionMission = { ...def.visionMission, ...raw.visionMission };
@@ -228,6 +249,7 @@ const DepartmentPages = () => {
   const [curriculumFile, setCurriculumFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
+  const [heroVideoFile, setHeroVideoFile] = useState<File | null>(null);
   const [uploadingHero, setUploadingHero] = useState(false);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -283,6 +305,23 @@ const DepartmentPages = () => {
         setHeroImageFile(null);
       } catch (e: any) {
         toast.error(e.message || 'Hero image upload failed');
+        setUploadingHero(false);
+        return;
+      }
+      setUploadingHero(false);
+    }
+    if (heroVideoFile) {
+      setUploadingHero(true);
+      try {
+        toast.info('Uploading hero video…');
+        const videoUrl = await uploadVideoToSupabase(heroVideoFile, 'department-hero');
+        sectionsToSave = {
+          ...sectionsToSave,
+          hero: { ...sectionsToSave.hero, video: videoUrl },
+        };
+        setHeroVideoFile(null);
+      } catch (e: any) {
+        toast.error(e.message || 'Hero video upload failed');
         setUploadingHero(false);
         return;
       }
@@ -693,7 +732,7 @@ const DepartmentPages = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Hero Image</Label>
+                <Label>Hero Image (background when no video)</Label>
                 <div className="flex flex-wrap items-center gap-4">
                   {heroImageUrl && (
                     <div className="w-32 h-20 rounded-lg overflow-hidden border bg-muted">
@@ -711,6 +750,44 @@ const DepartmentPages = () => {
                       <span className="text-sm text-muted-foreground ml-2">{heroImageFile.name}</span>
                     )}
                   </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Hero Video (optional — file or link from Drive, YouTube, Instagram, Vimeo)</Label>
+                <p className="text-xs text-muted-foreground">Upload a video file or paste a link. Video takes priority over image when both are set.</p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => setHeroVideoFile(e.target.files?.[0] ?? null)}
+                      className="max-w-xs"
+                      placeholder="Upload video"
+                    />
+                    {heroVideoFile && (
+                      <span className="text-sm text-muted-foreground ml-2">{heroVideoFile.name}</span>
+                    )}
+                  </div>
+                  <span className="text-muted-foreground">or</span>
+                  <Input
+                    value={sections.hero?.video ?? ''}
+                    onChange={(e) => updateSection('hero', 'video', e.target.value)}
+                    placeholder="Paste link: Drive, YouTube, Instagram, Vimeo..."
+                    className="max-w-md"
+                  />
+                  {(sections.hero?.video || heroVideoFile) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateSection('hero', 'video', '');
+                        setHeroVideoFile(null);
+                      }}
+                    >
+                      Clear video
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -1485,7 +1562,7 @@ const DepartmentPages = () => {
 
       <div className="flex justify-end">
         <Button onClick={handleSaveSections} disabled={saving || uploadingHero}>
-          {uploadingHero ? 'Uploading image...' : saving ? 'Saving...' : 'Save all sections'}
+          {uploadingHero ? 'Uploading...' : saving ? 'Saving...' : 'Save all sections'}
         </Button>
       </div>
 

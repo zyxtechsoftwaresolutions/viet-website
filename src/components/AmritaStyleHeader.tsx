@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Plus, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const AmritaStyleHeader = () => {
   const navigate = useNavigate();
@@ -169,22 +178,25 @@ const AmritaStyleHeader = () => {
     };
   }, [isMenuOpen]);
 
-  // Top ribbon quick links
+  // Top ribbon quick links (SCHOOLS removed per request)
   const topRibbonLeftLinks = [
     { name: 'INTERNATIONAL', href: '#international' },
     { name: 'ALUMNI', href: '#alumni' },
     { name: 'FACULTY', href: '#faculty' },
-    { name: 'SCHOOLS', href: '#schools' },
     { name: 'CAMPUS LIFE', href: '/campus-life' },
   ];
 
-  const topRibbonRightLinks = [
+  const topRibbonRightLinksBeforeLogin = [
     { name: 'PRAGNA', href: 'https://pragna.info/' },
     { name: 'HAPPENINGS', href: '#happenings' },
     { name: 'BLOG', href: '#blog' },
     { name: 'JOBS', href: '#jobs' },
     { name: 'CONTACT', href: '#contact' },
   ];
+
+  const ECAP_URL = 'https://webprosindia.com/viet/Default.aspx?ReturnUrl=%2fviet';
+  const CAMU_STAFF_URL = 'https://camu.in/';
+  const CAMU_STUDENT_URL = 'https://www.mycamu.co.in/#/';
 
   // Main navigation: mega-menu tabs (id) + link-only tabs (href) beside them
   const mainNavItems: { name: string; id?: string; href?: string }[] = [
@@ -206,7 +218,6 @@ const AmritaStyleHeader = () => {
     { name: 'Directions', href: '/page/directions' },
     { name: 'Exam Cell', href: '/examinations/ug-pg' },
     { name: 'Gallery', href: '/gallery' },
-    { name: 'VIET Memoir', href: '/page/diet-memoir' },
     { name: 'NAAC', href: '/naac' },
     { name: 'Online Payment', href: '/page/online-payment' },
     { name: 'Contact us', href: '#contact' },
@@ -499,7 +510,7 @@ const AmritaStyleHeader = () => {
                   </div>
                   {/* Right Links */}
                   <div className="flex items-center gap-3 lg:gap-5 ml-auto">
-                    {topRibbonRightLinks.map((link) => (
+                    {topRibbonRightLinksBeforeLogin.map((link) => (
                       <button
                         key={link.name}
                         onClick={() => handleNavigation(link.href)}
@@ -509,6 +520,34 @@ const AmritaStyleHeader = () => {
                         {link.name}
                       </button>
                     ))}
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="hover:text-yellow-300 transition-colors font-medium tracking-wider text-[11px] lg:text-xs uppercase flex items-center gap-1"
+                          style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                        >
+                          LOGIN
+                          <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[180px] bg-white text-gray-900 border-gray-200 z-[10000]">
+                        <DropdownMenuItem asChild>
+                          <a href={ECAP_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>ECAP</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>CAMU</DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="min-w-[160px] z-[10000]">
+                            <DropdownMenuItem asChild>
+                              <a href={CAMU_STUDENT_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>Student login</a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a href={CAMU_STAFF_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>Staff login</a>
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>

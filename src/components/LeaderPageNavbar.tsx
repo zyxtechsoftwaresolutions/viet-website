@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowLeft, Plus, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface LeaderPageNavbarProps {
   backHref?: string;
@@ -22,46 +31,46 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
   // Ref to track if we're programmatically setting stream/level (prevents useEffect override)
   const isProgrammaticSelection = useRef(false);
 
-  // Program Data Structure
+  // Program Data Structure — Diploma, Engineering PG, Management use /programs/department/:slug (editable in Admin → Department Pages)
   const programData = {
     diploma: [
-      { name: 'Agriculture Engineering', href: '/agricultural-engineering', description: 'Learn modern farming techniques, irrigation systems, and agricultural machinery for sustainable agriculture.' },
-      { name: 'Civil Engineering', href: '/civil-engineering', description: 'Foundation in construction, surveying, and infrastructure development for building projects.' },
-      { name: 'Computer Science Engineering', href: '/computer-engineering', description: 'Core programming, hardware fundamentals, and software development skills for IT careers.' },
-      { name: 'Electronics & Communications Engineering', href: '/electronics-communications-engineering', description: 'Study electronic circuits, communication systems, and signal processing technologies.' },
-      { name: 'Electrical & Electronics Engineering', href: '/electrical-electronics-engineering', description: 'Master electrical systems, power generation, and electronic device applications.' },
-      { name: 'Mechanical Engineering', href: '/mechanical-engineering', description: 'Design and manufacturing of machines, thermal systems, and mechanical components.' }
+      { name: 'Agriculture Engineering', href: '/programs/department/diploma-agriculture', description: 'Learn modern farming techniques, irrigation systems, and agricultural machinery for sustainable agriculture.' },
+      { name: 'Civil Engineering', href: '/programs/department/diploma-civil', description: 'Foundation in construction, surveying, and infrastructure development for building projects.' },
+      { name: 'Computer Science Engineering', href: '/programs/department/diploma-cse', description: 'Core programming, hardware fundamentals, and software development skills for IT careers.' },
+      { name: 'Electronics & Communications Engineering', href: '/programs/department/diploma-ece', description: 'Study electronic circuits, communication systems, and signal processing technologies.' },
+      { name: 'Electrical & Electronics Engineering', href: '/programs/department/diploma-eee', description: 'Master electrical systems, power generation, and electronic device applications.' },
+      { name: 'Mechanical Engineering', href: '/programs/department/diploma-mechanical', description: 'Design and manufacturing of machines, thermal systems, and mechanical components.' }
     ],
     engineering: {
       ug: [
-        { name: 'Automobile Engineering (AME)', href: '/automobile-engineering', description: 'Design, develop, and manufacture automobiles including cars, trucks, and motorcycles with focus on modern automotive technologies.' },
-        { name: 'Basic Science & Humanities (BS&H)', href: '/bs-h', description: 'Strong foundation in physics, chemistry, mathematics, and communication skills essential for all engineering disciplines.' },
-        { name: 'Civil Engineering (CIV)', href: '/civil-engineering-ug', description: 'Plan, design, and construct infrastructure projects including buildings, bridges, roads, and water systems.' },
+        { name: 'Automobile Engineering (AME)', href: '/programs/engineering/ug/ame', description: 'Design, develop, and manufacture automobiles including cars, trucks, and motorcycles with focus on modern automotive technologies.' },
+        { name: 'Basic Science & Humanities (BS&H)', href: '/programs/engineering/ug/bsh', description: 'Strong foundation in physics, chemistry, mathematics, and communication skills essential for all engineering disciplines.' },
+        { name: 'Civil Engineering (CIVIL)', href: '/programs/engineering/ug/civil', description: 'Plan, design, and construct infrastructure projects including buildings, bridges, roads, and water systems.' },
         { name: 'Computer Science & Engineering (CSE)', href: '/programs/engineering/ug/cse', description: 'Comprehensive study of programming, algorithms, databases, and software development for the digital age.' },
         { name: 'CSE - Data Science (CSD)', href: '/programs/engineering/ug/data-science', description: 'Specialize in big data analytics, machine learning, and data-driven decision making for business intelligence.' },
         { name: 'CSE - Cyber Security (CSC)', href: '/programs/engineering/ug/cyber-security', description: 'Protect digital assets with expertise in network security, ethical hacking, and information security management.' },
         { name: 'CSE - AI & Machine Learning (CSM)', href: '/programs/engineering/ug/aiml', description: 'Build intelligent systems using artificial intelligence, deep learning, and neural network technologies.' },
-        { name: 'Electronics & Communication Engineering (ECE)', href: '/electronics-communications-engineering-ug', description: 'Design electronic systems, communication networks, and embedded systems for modern technology applications.' },
-        { name: 'Electrical & Electronics Engineering (EEE)', href: '/electrical-electronics-engineering-ug', description: 'Master power systems, electrical machines, and renewable energy technologies for sustainable power solutions.' },
-        { name: 'Mechanical Engineering (Mech)', href: '/mechanical-engineering-ug', description: 'Design and analyze mechanical systems, thermal equipment, and manufacturing processes for industry applications.' }
+        { name: 'Electronics & Communication Engineering (ECE)', href: '/programs/engineering/ug/ece', description: 'Design electronic systems, communication networks, and embedded systems for modern technology applications.' },
+        { name: 'Electrical & Electronics Engineering (EEE)', href: '/programs/engineering/ug/eee', description: 'Master power systems, electrical machines, and renewable energy technologies for sustainable power solutions.' },
+        { name: 'Mechanical Engineering (Mech)', href: '/programs/engineering/ug/mechanical', description: 'Design and analyze mechanical systems, thermal equipment, and manufacturing processes for industry applications.' }
       ],
       pg: [
-        { name: 'CAD/CAM', href: '/mtech', description: 'Advanced computer-aided design and manufacturing techniques for precision engineering and automation.' },
-        { name: 'Computer Science & Engineering (CSE)', href: '/mtech', description: 'Advanced research in algorithms, distributed systems, and cutting-edge software technologies.' },
-        { name: 'Power Systems', href: '/mtech', description: 'Specialize in power generation, transmission, distribution, and smart grid technologies.' },
-        { name: 'Structural Engineering', href: '/mtech', description: 'Advanced analysis and design of complex structures including high-rise buildings and bridges.' },
-        { name: 'Thermal Engineering', href: '/mtech', description: 'Study heat transfer, thermodynamics, and energy systems for efficient thermal management.' },
-        { name: 'VLSI & Embedded Systems', href: '/mtech', description: 'Design integrated circuits and embedded systems for electronics and semiconductor industry.' }
+        { name: 'CAD/CAM', href: '/programs/department/pg-cadcam', description: 'Advanced computer-aided design and manufacturing techniques for precision engineering and automation.' },
+        { name: 'Computer Science & Engineering (CSE)', href: '/programs/department/pg-cse', description: 'Advanced research in algorithms, distributed systems, and cutting-edge software technologies.' },
+        { name: 'Power Systems', href: '/programs/department/pg-power-systems', description: 'Specialize in power generation, transmission, distribution, and smart grid technologies.' },
+        { name: 'Structural Engineering', href: '/programs/department/pg-structural', description: 'Advanced analysis and design of complex structures including high-rise buildings and bridges.' },
+        { name: 'Thermal Engineering', href: '/programs/department/pg-thermal', description: 'Study heat transfer, thermodynamics, and energy systems for efficient thermal management.' },
+        { name: 'VLSI & Embedded Systems', href: '/programs/department/pg-vlsi', description: 'Design integrated circuits and embedded systems for electronics and semiconductor industry.' }
       ]
     },
     management: {
       ug: [
-        { name: 'BBA (Bachelor of Business Administration)', href: '/bba', description: 'Develop business acumen, leadership skills, and management expertise for corporate careers.' },
-        { name: 'BCA (Bachelor of Computer Applications)', href: '/bca', description: 'Build strong programming and IT skills for software development and application design.' }
+        { name: 'BBA (Bachelor of Business Administration)', href: '/programs/department/management-bba', description: 'Develop business acumen, leadership skills, and management expertise for corporate careers.' },
+        { name: 'BCA (Bachelor of Computer Applications)', href: '/programs/department/management-bca', description: 'Build strong programming and IT skills for software development and application design.' }
       ],
       pg: [
-        { name: 'MBA (Master of Business Administration)', href: '/mba', description: 'Advanced management education with specializations in marketing, finance, HR, and operations.' },
-        { name: 'MCA (Master of Computer Applications)', href: '/mca', description: 'Advanced software development, system design, and IT project management for tech leadership.' }
+        { name: 'MBA (Master of Business Administration)', href: '/programs/department/management-mba', description: 'Advanced management education with specializations in marketing, finance, HR, and operations.' },
+        { name: 'MCA (Master of Computer Applications)', href: '/programs/department/management-mca', description: 'Advanced software development, system design, and IT project management for tech leadership.' }
       ]
     }
   };
@@ -227,22 +236,25 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     };
   }, [isMenuOpen]);
 
-  // Top ribbon quick links
+  // Top ribbon quick links (SCHOOLS removed per request)
   const topRibbonLeftLinks = [
     { name: 'INTERNATIONAL', href: '#international' },
     { name: 'ALUMNI', href: '#alumni' },
     { name: 'FACULTY', href: '/faculty' },
-    { name: 'SCHOOLS', href: '#schools' },
     { name: 'CAMPUS LIFE', href: '/campus-life' },
   ];
 
-  const topRibbonRightLinks = [
+  const topRibbonRightLinksBeforeLogin = [
     { name: 'PRAGNA', href: 'https://pragna.info/' },
     { name: 'HAPPENINGS', href: '#happenings' },
     { name: 'BLOG', href: '#blog' },
     { name: 'JOBS', href: '#jobs' },
     { name: 'CONTACT', href: '#contact' },
   ];
+
+  const ECAP_URL = 'https://webprosindia.com/viet/Default.aspx?ReturnUrl=%2fviet';
+  const CAMU_STAFF_URL = 'https://camu.in/';
+  const CAMU_STUDENT_URL = 'https://www.mycamu.co.in/#/';
 
   // Main navigation: mega-menu tabs (id) + link-only tabs (href) beside them
   const mainNavItems: { name: string; id?: string; href?: string }[] = [
@@ -264,7 +276,6 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     { name: 'Directions', href: '/page/directions' },
     { name: 'Exam Cell', href: '/examinations/ug-pg' },
     { name: 'Gallery', href: '/gallery' },
-    { name: 'VIET Memoir', href: '/page/diet-memoir' },
     { name: 'NAAC', href: '/naac' },
     { name: 'Online Payment', href: '/page/online-payment' },
     { name: 'Contact us', href: '#contact' },
@@ -538,7 +549,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               {isHomePage && (
                 <motion.button
                   className={cn(
-                    "flex items-center justify-center w-full px-4 py-2.5 rounded-full font-bold text-xl md:text-2xl lg:text-3xl transition-all duration-300 border-2 border-orange-600 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-700 shadow-md hover:shadow-lg"
+                    "flex items-center justify-center w-full px-4 py-2.5 rounded-full font-bold text-xl md:text-2xl lg:text-3xl transition-all duration-300 border-2 border-white bg-orange-500 text-white hover:bg-orange-600 hover:border-white shadow-md hover:shadow-lg"
                   )}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -579,7 +590,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                     ))}
                   </div>
                   <div className="flex items-center gap-3 lg:gap-5 ml-auto">
-                    {topRibbonRightLinks.map((link) => (
+                    {topRibbonRightLinksBeforeLogin.map((link) => (
                       <button
                         key={link.name}
                         onClick={() => handleNavigation(link.href)}
@@ -589,6 +600,34 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                         {link.name}
                       </button>
                     ))}
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="hover:text-yellow-300 transition-colors font-medium tracking-wider text-[11px] lg:text-xs uppercase flex items-center gap-1"
+                          style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                        >
+                          LOGIN
+                          <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[180px] bg-white text-gray-900 border-gray-200 z-[10000]">
+                        <DropdownMenuItem asChild>
+                          <a href={ECAP_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>ECAP</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>CAMU</DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="min-w-[160px] z-[10000]">
+                            <DropdownMenuItem asChild>
+                              <a href={CAMU_STUDENT_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>Student login</a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a href={CAMU_STAFF_URL} target="_self" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>Staff login</a>
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>

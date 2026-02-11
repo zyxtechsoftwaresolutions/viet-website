@@ -466,9 +466,10 @@ export async function deletePlacementCarouselItem(id) {
 export async function getHeroVideos() {
   if (useJsonFallback) {
     const d = await readJsonFile('hero-videos');
-    return d.videos;
+    const list = Array.isArray(d.videos) ? d.videos : [];
+    return list.slice().sort((a, b) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
   }
-  const { data, error } = await supabase.from('hero_videos').select('*').order('order');
+  const { data, error } = await supabase.from('hero_videos').select('*').order('order', { ascending: true });
   if (error) throw error;
   return (data || []).map(row => ({
     ...row,
@@ -497,8 +498,11 @@ export async function createHeroVideo(item) {
   };
   if (useJsonFallback) {
     const d = await readJsonFile('hero-videos');
-    const newItem = { id: Date.now(), ...item, src: dbItem.src, poster: dbItem.poster };
-    d.videos.push(newItem);
+    const list = Array.isArray(d.videos) ? d.videos : [];
+    const order = item.order != null ? Number(item.order) : list.length;
+    const newItem = { id: Date.now(), ...item, src: dbItem.src, poster: dbItem.poster, order };
+    list.push(newItem);
+    d.videos = list;
     await writeJsonFile('hero-videos', d);
     return newItem;
   }

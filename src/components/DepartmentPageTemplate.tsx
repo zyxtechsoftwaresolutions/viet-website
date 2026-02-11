@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { facultyAPI, hodsAPI, galleryAPI, departmentPagesAPI } from '@/lib/api';
+import { convertGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
+import { getVideoEmbedUrl, isVideoUrl } from '@/lib/videoUtils';
 import {
   X,
   ChevronLeft,
@@ -86,6 +88,71 @@ function renderContent(content: string | undefined) {
 function commaList(text: string | undefined): string[] {
   if (!text || !text.trim()) return [];
   return text.split(',,,').map((s) => s.trim()).filter(Boolean);
+}
+
+// CSE-family: CSE, CSD, CSC, CSM — HODs are per-department; faculty are shared across all four.
+const CSE_FAMILY_SLUGS = ['cse', 'data-science', 'cyber-security', 'aiml'] as const;
+
+function isCSEOnly(department: string): boolean {
+  const d = (department || '').toLowerCase();
+  return (
+    (d.includes('computer science and engineering (cse)') ||
+      d === 'cse' ||
+      (d.includes('computer science') && d.includes('(cse)') && !d.includes('cyber') && !d.includes('datascience') && !d.includes('machinelearning'))) &&
+    !d.includes('(csc)') && !d.includes('(csd)') && !d.includes('(csm)')
+  );
+}
+
+function isCSDOnly(department: string): boolean {
+  const d = (department || '').toLowerCase();
+  return (
+    d.includes('cse datascience (csd)') ||
+    d.includes('datascience (csd)') ||
+    (d.includes('data science') && d.includes('(csd)')) ||
+    d === 'csd'
+  );
+}
+
+function isCSCOnly(department: string): boolean {
+  const d = (department || '').toLowerCase();
+  return (
+    d.includes('cse cybersecurity (csc)') ||
+    d.includes('cybersecurity (csc)') ||
+    (d.includes('cyber') && d.includes('(csc)')) ||
+    d === 'csc'
+  );
+}
+
+function isCSMOnly(department: string): boolean {
+  const d = (department || '').toLowerCase();
+  return (
+    d.includes('cse machinelearning (csm)') ||
+    d.includes('machinelearning (csm)') ||
+    (d.includes('machine learning') && d.includes('(csm)')) ||
+    (d.includes('aiml') && d.includes('(csm)')) ||
+    d === 'csm'
+  );
+}
+
+/** True if department is one of CSE, CSD, CSC, CSM (shared faculty pool). */
+function isCSEFamilyDepartment(department: string): boolean {
+  return isCSEOnly(department) || isCSDOnly(department) || isCSCOnly(department) || isCSMOnly(department);
+}
+
+/** Returns a filter that matches only the HOD for the given CSE-family slug. */
+function getHodFilterForSlug(slug: string): (department: string) => boolean {
+  switch (slug) {
+    case 'cse':
+      return isCSEOnly;
+    case 'data-science':
+      return isCSDOnly;
+    case 'cyber-security':
+      return isCSCOnly;
+    case 'aiml':
+      return isCSMOnly;
+    default:
+      return () => false;
+  }
 }
 
 // Adaptive grid layout based on number of images (1-10)
@@ -258,10 +325,11 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         const filter = galleryFilter ?? (() => true);
         const filtered = all.filter((img: any) => filter(img));
         if (filtered.length) {
-          const mappedImages = filtered.map((img: any) => ({
-            src: (img.src || '').startsWith('/') ? `${API_BASE}${img.src}` : `${API_BASE}/${img.src}`,
-            alt: img.alt || 'Gallery',
-          }));
+          const mappedImages = filtered.map((img: any) => {
+            const raw = (img.src || '').trim();
+            const src = raw.startsWith('http') ? convertGoogleDriveLink(raw) : (raw.startsWith('/') ? `${API_BASE}${raw}` : `${API_BASE}/${raw}`);
+            return { src, alt: img.alt || 'Gallery' };
+          });
           setAllGalleryImages(mappedImages);
           // Show only first 10 images in the preview
           setGalleryImages(mappedImages.slice(0, 10));
@@ -271,9 +339,18 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     const loadFaculty = async () => {
       try {
         const [f, h] = await Promise.all([facultyAPI.getAll(), hodsAPI.getAll()]);
-        const deptFilter = facultyFilter ?? (() => true);
-        setFaculty(f.filter((x: any) => deptFilter(x.department || '')));
-        setHods(h.filter((x: any) => deptFilter(x.department || '')));
+        const isCSEFamily = CSE_FAMILY_SLUGS.includes(slug as any);
+        if (isCSEFamily) {
+          // HODs: only this page's department (CSE / CSD / CSC / CSM)
+          const hodFilter = getHodFilterForSlug(slug);
+          setHods(h.filter((x: any) => hodFilter(x.department || '')));
+          // Faculty: shared across CSE, CSD, CSC, CSM — show anyone in any of these four
+          setFaculty(f.filter((x: any) => isCSEFamilyDepartment(x.department || '')));
+        } else {
+          const deptFilter = facultyFilter ?? (() => true);
+          setFaculty(f.filter((x: any) => deptFilter(x.department || '')));
+          setHods(h.filter((x: any) => deptFilter(x.department || '')));
+        }
       } catch (_) {}
     };
     loadGallery();
@@ -334,7 +411,19 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const s = deptPage?.sections ?? {};
   const hero = s.hero ?? {};
   const heroImage = hero.image;
-  const heroImageUrl = heroImage ? (heroImage.startsWith('http') ? heroImage : `${API_BASE}${heroImage}`) : null;
+  const heroImageUrl = heroImage ? (heroImage.startsWith('http') ? convertGoogleDriveLink(heroImage) : `${API_BASE}${heroImage}`) : null;
+  const heroVideoRaw = (hero as { video?: string }).video?.trim() || '';
+  const heroVideoInfo = heroVideoRaw && isVideoUrl(heroVideoRaw) ? getVideoEmbedUrl(heroVideoRaw) : null;
+  const heroVideoIsEmbed = heroVideoInfo && ['youtube', 'instagram', 'vimeo'].includes(heroVideoInfo.platform);
+  const heroVideoEmbedUrl = heroVideoIsEmbed ? heroVideoInfo!.embedUrl : null;
+  const heroVideoDirectUrl = (() => {
+    if (!heroVideoRaw) return null;
+    if (heroVideoInfo && heroVideoIsEmbed) return null;
+    if (isVideoUrl(heroVideoRaw)) {
+      return heroVideoRaw.includes('drive.google.com') ? convertGoogleDriveToDownload(heroVideoRaw) : heroVideoRaw;
+    }
+    return heroVideoRaw.startsWith('/') ? `${API_BASE}${heroVideoRaw}` : `${API_BASE}/${heroVideoRaw}`;
+  })();
   const admissionLink = s.admission?.link || DEFAULT_ADMISSIONS_URL;
 
   const curriculumPrograms = deptPage?.curriculum?.programs ?? [];
@@ -351,20 +440,65 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const whyChooseList = commaList(s.overview?.whyChoose);
   const missionList = commaList(s.visionMission?.mission);
 
+  // Faculty list includes HODs first, then faculty; dedupe by name so same person appears once
+  const facultyWithHods = useMemo(() => {
+    const seen = new Set<string>();
+    const result: any[] = [];
+    for (const h of hods) {
+      const key = (h.name || '').trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push({ ...h, _listKey: `hod-${h.id}` });
+    }
+    for (const f of faculty) {
+      const key = (f.name || '').trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push({ ...f, _listKey: `faculty-${f.id}` });
+    }
+    return result;
+  }, [hods, faculty]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref={backHref} />
 
       {/* Hero */}
       <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-28 md:pt-32 pb-14 md:pb-18 flex items-end text-white"
+        className="relative min-h-[65vh] md:min-h-[72vh] pt-28 md:pt-32 pb-14 md:pb-18 flex items-end text-white overflow-hidden"
         style={
-          heroImageUrl
+          !heroVideoEmbedUrl && !heroVideoDirectUrl && heroImageUrl
             ? { background: `linear-gradient(160deg, rgba(15,23,42,0.85) 0%, rgba(30,58,95,0.8) 45%, rgba(15,23,42,0.85) 100%), url(${heroImageUrl}) center/cover` }
-            : { background: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)' }
+            : !heroVideoEmbedUrl && !heroVideoDirectUrl
+            ? { background: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)' }
+            : undefined
         }
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden />
+        {heroVideoEmbedUrl && (
+          <div className="absolute inset-0 z-0">
+            <iframe
+              src={heroVideoEmbedUrl}
+              title="Department hero video"
+              className="absolute top-1/2 left-1/2 w-[100vmax] h-[56.25vmax] min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover pointer-events-none"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        )}
+        {heroVideoDirectUrl && !heroVideoEmbedUrl && (
+          <div className="absolute inset-0 z-0">
+            <video
+              src={heroVideoDirectUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={heroImageUrl || undefined}
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-transparent z-[1]" aria-hidden />
         <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
           {(hero.badge || hero.title || hero.subtitle) && (
             <>
@@ -875,10 +1009,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       <section id="faculty" ref={(el) => { sectionRefs.current['faculty'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Faculty" title="Faculty" accent="emerald" />
-          {faculty.length > 0 ? (
+          {facultyWithHods.length > 0 ? (
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {faculty.map((f: any) => (
-                <div key={f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
+              {facultyWithHods.map((f: any) => (
+                <div key={f._listKey ?? f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
                   <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
                     {f.image ? (
                       <img
@@ -1494,8 +1628,8 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                 );
               })()}
 
-              {/* View More Button - Show if there are more than 10 images */}
-              {allGalleryImages.length > 10 && (
+              {/* View More / View Gallery - open full department gallery (all photos). Show when any images; "View More" if >10 */}
+              {allGalleryImages.length > 0 && (
                 <div className="flex justify-start mt-4 md:mt-6">
                   <button
                     onClick={() => {
@@ -1508,7 +1642,9 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                     <span className="w-10 h-10 rounded-full bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors duration-300">
                       <ArrowRight className="w-5 h-5 text-white" />
                     </span>
-                    <span className="group-hover:underline underline-offset-4">View More</span>
+                    <span className="group-hover:underline underline-offset-4">
+                      {allGalleryImages.length > 10 ? 'View More' : 'View Gallery'}
+                    </span>
                   </button>
                 </div>
               )}

@@ -21,6 +21,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { heroVideosAPI, departmentsAPI } from '@/lib/api';
+import { convertGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 import NewsAnnouncementsSection from '@/components/NewsAnnouncementsSection';
 import ScrollingTicker from '@/components/ScrollingTicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -67,6 +68,8 @@ const HeroSection = () => {
   const [loading, setLoading] = useState(true);
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
+  type ExploreStream = 'diploma' | 'btech' | 'mtech' | 'management';
+  const [exploreStream, setExploreStream] = useState<ExploreStream>('diploma');
   const [interestCategories, setInterestCategories] = useState<{
     diploma: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
     engineering: {
@@ -200,23 +203,24 @@ const HeroSection = () => {
       } catch (error) {
         console.error('Error fetching departments:', error);
         // Fallback to empty arrays
-        setInterestCategories({ diploma: [], engineering: [], management: [] });
+        setInterestCategories({ diploma: [], engineering: { ug: [], pg: [] }, management: { ug: [], pg: [] } });
       }
     };
     
     fetchDepartments();
   }, []);
 
-  // Video/poster URLs from API are full Supabase Storage URLs; use as-is.
+  // Video/poster URLs from API are full Supabase Storage URLs; use as-is. Sort by order so first added = first, new = last.
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         const videos = await heroVideosAPI.getAll();
         if (Array.isArray(videos) && videos.length > 0) {
-          const slides = videos.map((video) => ({
+          const sorted = videos.slice().sort((a: any, b: any) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
+          const slides = sorted.map((video) => ({
             type: 'video' as const,
-            src: video.src,
-            poster: video.poster || undefined,
+            src: convertGoogleDriveToDownload(video.src),
+            poster: video.poster ? convertGoogleDriveLink(video.poster) : undefined,
             badge: video.badge || undefined,
             title: video.title || '',
             subtitle: video.subtitle || '',
@@ -274,63 +278,37 @@ const HeroSection = () => {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
-  // Play current hero video immediately when intro ends (avoids black gap)
-  // Load deferred video sources when slide becomes active
+  // When slide changes: pause every other video, then play the current one. All videos have real src from mount.
   useEffect(() => {
     const onIntroComplete = () => {
       const video = videoRefs.current[currentSlide];
-      if (video) {
-        // Load deferred video source if present
-        const deferredSource = video.querySelector('source[data-src]');
-        if (deferredSource) {
-          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
-          deferredSource.removeAttribute('data-src');
-          video.load();
-        }
-        video.play().catch(() => {});
-      }
+      if (video) video.play().catch(() => {});
     };
-    
-    // Load deferred video source when slide becomes active
-    const loadCurrentVideo = () => {
-      const video = videoRefs.current[currentSlide];
-      if (video) {
-        const deferredSource = video.querySelector('source[data-src]');
-        if (deferredSource) {
-          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
-          deferredSource.removeAttribute('data-src');
-          video.load();
+
+    const pauseOtherVideos = () => {
+      videoRefs.current.forEach((el, i) => {
+        if (el && i !== currentSlide) {
+          el.pause();
+          el.currentTime = 0;
         }
-        if (video.paused) {
-          video.play().catch(() => {});
-        }
-      }
+      });
     };
-    
-    // Preload next video (one ahead) for smoother transitions
-    const preloadNextVideo = () => {
-      const nextIndex = (currentSlide + 1) % heroSlides.length;
-      const nextVideo = videoRefs.current[nextIndex];
-      if (nextVideo && nextIndex !== currentSlide) {
-        const deferredSource = nextVideo.querySelector('source[data-src]');
-        if (deferredSource) {
-          // Only preload metadata, not full video
-          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
-          deferredSource.removeAttribute('data-src');
-          nextVideo.preload = 'metadata';
-          nextVideo.load();
-        }
+
+    pauseOtherVideos();
+    const video = videoRefs.current[currentSlide];
+    if (video) {
+      const play = () => video.play().catch(() => {});
+      if (video.readyState >= 2) {
+        play();
+      } else {
+        video.addEventListener('canplay', play, { once: true });
+        video.addEventListener('loadeddata', play, { once: true });
+        video.addEventListener('error', () => {}, { once: true });
       }
-    };
-    
+    }
+
     window.addEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
-    loadCurrentVideo();
-    // Delay preload to avoid blocking initial load
-    setTimeout(preloadNextVideo, 2000);
-    
-    return () => {
-      window.removeEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
-    };
+    return () => window.removeEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
   }, [currentSlide, heroSlides.length]);
 
   const scrollToSection = (id: string) => {
@@ -394,39 +372,20 @@ const HeroSection = () => {
                   />
                 ) : (
                   <video
-                    ref={(el) => { 
-                      videoRefs.current[index] = el;
-                      // Load deferred video sources when video element is ready
-                      if (el && index > 0) {
-                        const deferredSource = el.querySelector('source[data-src]');
-                        if (deferredSource && index === currentSlide) {
-                          deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
-                          deferredSource.removeAttribute('data-src');
-                          el.load();
-                        }
-                      }
-                    }}
+                    ref={(el) => { videoRefs.current[index] = el; }}
                     className="w-full h-full object-cover bg-black"
                     autoPlay={index === currentSlide}
                     muted
                     loop
                     playsInline
-                    preload={index === 0 ? "metadata" : "none"}
+                    preload="metadata"
                     width={1920}
                     height={1080}
                     onError={() =>
                       setUnsupportedVideoSlides((prev) => new Set(prev).add(index))
                     }
                   >
-                    {/* Only load first video source eagerly, defer others until slide becomes active */}
-                    {index === 0 ? (
-                      <>
-                        <source src={slide.src} type="video/mp4" />
-                        <source src={slide.src.replace('.mp4', '.webm')} type="video/webm" />
-                      </>
-                    ) : (
-                      <source data-src={slide.src} type="video/mp4" data-deferred="true" />
-                    )}
+                    <source src={slide.src} type="video/mp4" />
                   </video>
                 )
               ) : (
@@ -540,344 +499,226 @@ const HeroSection = () => {
       {/* News & Announcements - below hero, above EXPLORE YOUR PATH */}
       <NewsAnnouncementsSection />
 
-      {/* Explore Your Path – Dark theme with black gloss finish */}
-      <div id="whats-your-interest" className="relative bg-black py-20 md:py-28 border-t border-slate-800">
-        {/* Glossy overlay effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-slate-950 opacity-100" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03)_0%,transparent_50%)]" />
-        
+      {/* Explore Your Path – fixed height (Management size), course list scrolls when more items */}
+      <div id="whats-your-interest" className="relative overflow-hidden py-12 md:py-14 border-t border-slate-800 h-[520px] md:h-[560px]">
+        {/* Background video - public/bgvideoexp.mp4 */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden
+        >
+          <source src="/bgvideoexp.mp4" type="video/mp4" />
+        </video>
+        {/* Lighter overlay so video is clearly visible */}
+        <div className="absolute inset-0 bg-black/35" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30" aria-hidden />
+
         <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
-          {/* Section Header - Centered */}
-          <div className="text-center mb-16 md:mb-20">
-            <h2
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight uppercase"
-              style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: '0.05em' }}
-            >
-              EXPLORE YOUR PATH
-            </h2>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8">
-              Explore our diverse range of programs designed to shape your future
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button
-                onClick={() => setProgramFinderOpen(true)}
-                className="group px-6 py-3 rounded-full border-2 border-slate-700 text-slate-300 font-semibold text-sm overflow-hidden transition-all duration-300 hover:border-red-600 hover:text-red-400 hover:bg-red-900/20"
+          {/* Left: Section name | Right: Toggle + courses */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            {/* LEFT – Section name */}
+            <div className="lg:col-span-4 lg:sticky lg:top-24">
+              <h2
+                className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight uppercase text-left"
+                style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: '0.05em' }}
               >
-                <span className="relative z-10 flex items-center gap-2">
+                EXPLORE YOUR PATH
+              </h2>
+              <p className="text-base md:text-lg text-slate-300 max-w-md text-left">
+                Explore our diverse range of programs designed to shape your future
+              </p>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <button
+                  onClick={() => setProgramFinderOpen(true)}
+                  className="px-4 py-2 rounded-full border border-white/40 text-white font-medium text-sm hover:bg-white/15 transition-colors flex items-center gap-2"
+                >
                   <Search className="w-4 h-4" />
                   Search Programs
-                </span>
-              </button>
-              <button
-                onClick={handleAdmissionsClick}
-                className="group px-8 py-3 rounded-full bg-gradient-to-r from-red-700 to-red-800 text-white font-semibold text-sm overflow-hidden transition-all duration-300 hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-700/50"
-              >
-                <span className="relative z-10 flex items-center gap-2">
+                </button>
+                <button
+                  onClick={handleAdmissionsClick}
+                  className="px-5 py-2 rounded-full bg-red-600 text-white font-semibold text-sm hover:bg-red-500 transition-colors flex items-center gap-2"
+                >
                   Apply Now
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </button>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Split Layout: Stream Names Left, Courses Right */}
-          <div className="space-y-20">
-            {/* DIPLOMA */}
-            {interestCategories.diploma.length > 0 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-                {/* Left: Stream Name */}
-                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
-                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
-                    DIPLOMA
-                  </h3>
-                </div>
-                
-                {/* Right: Courses */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
-                  {interestCategories.diploma.map((category, idx) => {
-                    const IconComponent = ProgramIcons[category.icon];
-                    return (
-                      <motion.button
-                        key={category.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: idx * 0.03 }}
-                        onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                        className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
+            {/* RIGHT – Toggle + course listings */}
+            <div className="lg:col-span-8">
+              {/* Android 16–style toggle: Diploma | B.Tech | M.Tech | Management */}
+              <div className="flex justify-start lg:justify-end mb-6">
+                <div className="inline-flex p-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-lg">
+                  <div className="relative flex rounded-full" style={{ minWidth: 400 }}>
+                    <motion.div
+                      className="absolute top-1 bottom-1 rounded-full bg-white/95 shadow-md"
+                      initial={false}
+                      animate={{
+                        width: 'calc(25% - 4px)',
+                        left: exploreStream === 'diploma' ? 4 : exploreStream === 'btech' ? 'calc(25% + 2px)' : exploreStream === 'mtech' ? 'calc(50% + 2px)' : 'calc(75% + 2px)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      style={{ top: 4, bottom: 4 }}
+                    />
+                    {(['diploma', 'btech', 'mtech', 'management'] as const).map((stream) => (
+                      <button
+                        key={stream}
+                        type="button"
+                        onClick={() => setExploreStream(stream)}
+                        className={`relative z-10 flex-1 min-w-0 px-3 py-2.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap overflow-hidden text-ellipsis ${
+                          exploreStream === stream ? 'text-slate-900' : 'text-white/90 hover:text-white'
+                        }`}
                       >
-                        {/* Animated gradient background - Maroon/Red */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        
-                        {/* Glossy shine effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        
-                        {/* Content */}
-                        <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
-                          <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
-                            <IconComponent className="w-7 h-7" strokeWidth={2.5} />
-                          </div>
-                          <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
-                            {category.name}
-                          </span>
-                        </div>
+                        {stream === 'diploma' ? 'Diploma' : stream === 'btech' ? 'B.Tech' : stream === 'mtech' ? 'M.Tech' : 'Management'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                        {/* Hover Arrow with glow */}
-                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
-                              <ArrowRight className="w-5 h-5 text-white relative z-10" />
+              {/* Course listings – fixed height, scroll when Diploma/Engineering have more cards */}
+              <div className="h-[320px] md:h-[360px] overflow-y-auto overflow-x-hidden pr-1">
+            {exploreStream === 'diploma' && interestCategories.diploma.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {interestCategories.diploma.map((category, idx) => {
+                  const IconComponent = ProgramIcons[category.icon];
+                  return (
+                    <motion.button
+                      key={category.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: idx * 0.02 }}
+                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                    >
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
+                        <IconComponent className="w-6 h-6" strokeWidth={2} />
+                      </div>
+                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
+                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+
+            {exploreStream === 'btech' && interestCategories.engineering.ug.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {interestCategories.engineering.ug.map((category, idx) => {
+                  const IconComponent = ProgramIcons[category.icon];
+                  return (
+                    <motion.button
+                      key={category.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: idx * 0.02 }}
+                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                    >
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
+                        <IconComponent className="w-6 h-6" strokeWidth={2} />
+                      </div>
+                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
+                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+
+            {exploreStream === 'mtech' && interestCategories.engineering.pg.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {interestCategories.engineering.pg.map((category, idx) => {
+                  const IconComponent = ProgramIcons[category.icon];
+                  return (
+                    <motion.button
+                      key={category.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: idx * 0.02 }}
+                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                    >
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
+                        <IconComponent className="w-6 h-6" strokeWidth={2} />
+                      </div>
+                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
+                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
+
+            {exploreStream === 'management' && (interestCategories.management.ug.length > 0 || interestCategories.management.pg.length > 0) && (
+              <div className="space-y-6">
+                {interestCategories.management.ug.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Undergraduate</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {interestCategories.management.ug.map((category, idx) => {
+                        const IconComponent = ProgramIcons[category.icon];
+                        return (
+                          <motion.button
+                            key={category.name}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, delay: idx * 0.02 }}
+                            onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                            className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                          >
+                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
+                              <IconComponent className="w-6 h-6" strokeWidth={2} />
                             </div>
-                        </div>
-
-                        {/* Corner accent */}
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                            <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
+                            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {interestCategories.management.pg.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 mt-4">Postgraduate</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {interestCategories.management.pg.map((category, idx) => {
+                        const IconComponent = ProgramIcons[category.icon];
+                        return (
+                          <motion.button
+                            key={category.name}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, delay: idx * 0.02 }}
+                            onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
+                            className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
+                          >
+                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
+                              <IconComponent className="w-6 h-6" strokeWidth={2} />
+                            </div>
+                            <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
+                            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ENGINEERING */}
-            {(interestCategories.engineering.ug.length > 0 || interestCategories.engineering.pg.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-                {/* Left: Stream Name */}
-                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
-                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
-                    ENGINEERING
-                  </h3>
-                </div>
-                
-                {/* Right: Courses */}
-                <div className="space-y-8">
-                  {/* UG Courses with B.TECH */}
-                  {interestCategories.engineering.ug.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">B.TECH</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
-                        {interestCategories.engineering.ug.map((category, idx) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <motion.button
-                              key={category.name}
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: idx * 0.03 }}
-                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-black border border-slate-700/50 overflow-hidden transition-all duration-500 hover:border-red-700/60 hover:shadow-2xl hover:shadow-red-900/30 hover:-translate-y-2 hover:scale-[1.02]"
-                            >
-                              {/* Animated gradient background */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.15)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Glossy shine effect */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Content */}
-                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
-                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-red-800/30 via-red-700/20 to-red-800/10 border-2 border-red-700/40 flex items-center justify-center text-red-700 group-hover:from-red-700/50 group-hover:via-red-600/40 group-hover:to-red-800/20 group-hover:scale-110 group-hover:border-red-600/60 group-hover:shadow-lg group-hover:shadow-red-700/50 transition-all duration-500">
-                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
-                                </div>
-                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
-                                  {category.name}
-                                </span>
-                              </div>
-
-                              {/* Hover Arrow with glow */}
-                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-red-700/30 blur-md rounded-full" />
-                                  <ArrowRight className="w-5 h-5 text-red-700 relative z-10" />
-                                </div>
-                              </div>
-
-                              {/* Corner accent */}
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PG Courses with M.TECH */}
-                  {interestCategories.engineering.pg.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">M.TECH</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
-                        {interestCategories.engineering.pg.map((category, idx) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <motion.button
-                              key={category.name}
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: idx * 0.03 }}
-                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-black border border-slate-700/50 overflow-hidden transition-all duration-500 hover:border-red-700/60 hover:shadow-2xl hover:shadow-red-900/30 hover:-translate-y-2 hover:scale-[1.02]"
-                            >
-                              {/* Animated gradient background */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.15)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Glossy shine effect */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Content */}
-                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
-                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-red-800/30 via-red-700/20 to-red-800/10 border-2 border-red-700/40 flex items-center justify-center text-red-700 group-hover:from-red-700/50 group-hover:via-red-600/40 group-hover:to-red-800/20 group-hover:scale-110 group-hover:border-red-600/60 group-hover:shadow-lg group-hover:shadow-red-700/50 transition-all duration-500">
-                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
-                                </div>
-                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
-                                  {category.name}
-                                </span>
-                              </div>
-
-                              {/* Hover Arrow with glow */}
-                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-red-700/30 blur-md rounded-full" />
-                                  <ArrowRight className="w-5 h-5 text-red-700 relative z-10" />
-                                </div>
-                              </div>
-
-                              {/* Corner accent */}
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {((exploreStream === 'diploma' && interestCategories.diploma.length === 0) ||
+              (exploreStream === 'btech' && interestCategories.engineering.ug.length === 0) ||
+              (exploreStream === 'mtech' && interestCategories.engineering.pg.length === 0) ||
+              (exploreStream === 'management' && interestCategories.management.ug.length === 0 && interestCategories.management.pg.length === 0)) && (
+              <p className="text-slate-400 text-sm py-8">No programs in this category at the moment.</p>
             )}
-
-            {/* MANAGEMENT */}
-            {(interestCategories.management.ug.length > 0 || interestCategories.management.pg.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-                {/* Left: Stream Name */}
-                <div className="flex items-center lg:items-start lg:sticky lg:top-24">
-                  <h3 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase tracking-tight leading-none">
-                    MANAGEMENT
-                  </h3>
-                </div>
-                
-                {/* Right: Courses */}
-                <div className="space-y-8">
-                  {/* UG Courses */}
-                  {interestCategories.management.ug.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">UNDERGRADUATE</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
-                        {interestCategories.management.ug.map((category, idx) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <motion.button
-                              key={category.name}
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: idx * 0.03 }}
-                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
-                            >
-                              {/* Animated gradient background - Maroon/Red */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Glossy shine effect */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Content */}
-                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
-                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
-                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
-                                </div>
-                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
-                                  {category.name}
-                                </span>
-                              </div>
-
-                              {/* Hover Arrow with glow */}
-                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
-                                  <ArrowRight className="w-5 h-5 text-white relative z-10" />
-                                </div>
-                              </div>
-
-                              {/* Corner accent */}
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PG Courses */}
-                  {interestCategories.management.pg.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">POSTGRADUATE</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
-                        {interestCategories.management.pg.map((category, idx) => {
-                          const IconComponent = ProgramIcons[category.icon];
-                          return (
-                            <motion.button
-                              key={category.name}
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: idx * 0.03 }}
-                              onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                              className="group relative h-36 rounded-2xl bg-gradient-to-br from-red-950/90 via-red-900/80 to-red-950 border border-red-800/50 overflow-hidden transition-all duration-500 hover:border-red-700/70 hover:shadow-2xl hover:shadow-red-900/50 hover:-translate-y-2 hover:scale-[1.02]"
-                            >
-                              {/* Animated gradient background - Maroon/Red */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-red-900/30 via-red-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,0,0,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Glossy shine effect */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Content */}
-                              <div className="relative h-full flex flex-col items-center justify-center p-5 text-center z-10">
-                                <div className="mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 via-white/10 to-white/5 border-2 border-white/30 flex items-center justify-center text-white group-hover:from-white/30 group-hover:via-white/20 group-hover:to-white/10 group-hover:scale-110 group-hover:border-white/50 group-hover:shadow-lg group-hover:shadow-white/30 transition-all duration-500">
-                                  <IconComponent className="w-7 h-7" strokeWidth={2.5} />
-                                </div>
-                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight line-clamp-2">
-                                  {category.name}
-                                </span>
-                              </div>
-
-                              {/* Hover Arrow with glow */}
-                              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-1">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-white/30 blur-md rounded-full" />
-                                  <ArrowRight className="w-5 h-5 text-white relative z-10" />
-                                </div>
-                              </div>
-
-                              {/* Corner accent */}
-                              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-700/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

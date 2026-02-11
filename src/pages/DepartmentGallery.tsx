@@ -5,6 +5,8 @@ import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { galleryAPI } from '@/lib/api';
+import { getDepartmentPageConfig, getDepartmentDisplayName } from '@/lib/departmentPageConfig';
+import { convertGoogleDriveLink } from '@/lib/googleDriveUtils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -133,8 +135,10 @@ const DepartmentGallery: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
 
-  // Get gallery filter function based on slug (same logic as department pages)
-  const getGalleryFilter = (slug: string) => {
+  // Get gallery filter: use shared config for Diploma/PG/Management slugs, else built-in Engineering UG filters
+  const getGalleryFilter = (s: string) => {
+    const config = getDepartmentPageConfig(s);
+    if (config) return config.galleryFilter;
     const filters: Record<string, (img: { department?: string }) => boolean> = {
       'cse': (img: { department?: string }) => {
         const d = (img.department || '').toLowerCase();
@@ -177,11 +181,22 @@ const DepartmentGallery: React.FC = () => {
         return d.includes('aiml') || d.includes('artificial intelligence') || d.includes('machine learning');
       },
     };
-    return filters[slug || ''] || (() => false);
+    return filters[s || ''] || (() => false);
   };
 
-  // Get department display name
-  const getDepartmentName = (slug: string) => {
+  // Back link to department page: generic (diploma/pg/management) use /programs/department/:slug; Engineering UG use /programs/engineering/ug/:slug
+  const getGalleryBackHref = (s: string) => {
+    const config = getDepartmentPageConfig(s);
+    if (config) return `/programs/department/${s}`;
+    const ugSlugs = ['cse', 'ece', 'eee', 'mechanical', 'civil', 'ame', 'bsh', 'cyber-security', 'data-science', 'aiml'];
+    if (ugSlugs.includes(s || '')) return `/programs/engineering/ug/${s}`;
+    return `/programs/department/${s || ''}`;
+  };
+
+  // Get department display name: use shared config for generic slugs, else built-in names
+  const getDepartmentName = (s: string) => {
+    const fromConfig = getDepartmentDisplayName(s);
+    if (fromConfig !== 'Gallery') return fromConfig;
     const names: Record<string, string> = {
       'cse': 'Computer Science and Engineering',
       'ece': 'Electronics and Communications Engineering',
@@ -194,7 +209,7 @@ const DepartmentGallery: React.FC = () => {
       'data-science': 'Data Science',
       'aiml': 'Artificial Intelligence and Machine Learning',
     };
-    return names[slug || ''] || 'Gallery';
+    return names[s || ''] || 'Gallery';
   };
 
   useEffect(() => {
@@ -207,10 +222,11 @@ const DepartmentGallery: React.FC = () => {
         const filtered = all.filter((img: any) => filter(img));
         
         if (filtered.length) {
-          const mappedImages = filtered.map((img: any) => ({
-            src: (img.src || '').startsWith('/') ? `${API_BASE}${img.src}` : `${API_BASE}/${img.src}`,
-            alt: img.alt || 'Gallery',
-          }));
+          const mappedImages = filtered.map((img: any) => {
+            const raw = (img.src || '').trim();
+            const src = raw.startsWith('http') ? convertGoogleDriveLink(raw) : (raw.startsWith('/') ? `${API_BASE}${raw}` : `${API_BASE}/${raw}`);
+            return { src, alt: img.alt || 'Gallery' };
+          });
           setGalleryImages(mappedImages);
           setDepartmentName(getDepartmentName(slug));
         } else {
@@ -262,31 +278,35 @@ const DepartmentGallery: React.FC = () => {
     <div className="min-h-screen bg-white">
       <LeaderPageNavbar />
       
-      <div className="pt-24 pb-20">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          {/* Header */}
-          <div className="mb-8 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </Button>
-            <div>
-              <h1 
-                className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0a192f]"
-                style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.12em' }}
-              >
-                {departmentName || 'Gallery'}
-              </h1>
-              <p className="text-slate-600 mt-2">
-                {galleryImages.length} {galleryImages.length === 1 ? 'image' : 'images'}
-              </p>
-            </div>
-          </div>
+      {/* Hero Section - mandatory */}
+      <section
+        className="relative min-h-[40vh] md:min-h-[45vh] pt-28 md:pt-32 pb-12 md:pb-16 flex items-end text-white overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)' }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden />
+        <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10 w-full">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(slug ? getGalleryBackHref(slug) : -1)}
+            className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10 mb-6 -ml-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to department
+          </Button>
+          <h1
+            className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-2"
+            style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.02em' }}
+          >
+            {departmentName || 'Gallery'}
+          </h1>
+          <p className="text-white/80 text-base md:text-lg">
+            {galleryImages.length} {galleryImages.length === 1 ? 'image' : 'images'}
+          </p>
+        </div>
+      </section>
 
+      <div className="py-12 md:py-16">
+        <div className="container mx-auto px-4 md:px-10 lg:px-12">
           {/* Gallery Grid - Adaptive Layout */}
           {galleryImages.length > 0 ? (
             <div className="space-y-8">

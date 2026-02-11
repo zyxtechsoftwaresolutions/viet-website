@@ -292,6 +292,11 @@ const FacultyPage = () => {
                         {f.qualification}
                       </p>
                     )}
+                    {f.experience && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        Experience: {f.experience}
+                      </p>
+                    )}
                   </div>
                 </motion.article>
               ))}

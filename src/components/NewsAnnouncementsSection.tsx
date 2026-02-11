@@ -74,13 +74,6 @@ const NewsAnnouncementsSection = () => {
             >
               News & Announcements
             </h2>
-            <a
-              href="#happenings"
-              className="inline-flex items-center gap-1.5 text-[#0a192f] font-medium text-sm hover:underline underline-offset-4"
-            >
-              View all
-              <ChevronRight className="w-4 h-4" />
-            </a>
           </div>
 
           {loading ? (
@@ -115,27 +108,49 @@ const NewsAnnouncementsSection = () => {
                         {(news.length > VISIBLE_ROWS ? [1, 2] : [1]).map((copy) => (
                           <table key={copy} className="w-full text-left border-collapse" style={{ height: news.length * ROW_HEIGHT_PX }}>
                             <tbody>
-                              {news.map((item) => (
+                              {news.map((item) => {
+                                const hasLink = item.link && item.link.trim() !== '';
+                                const isExternal = hasLink && /^https?:\/\//i.test(item.link!);
+                                return (
                                 <tr key={`${copy}-${item.id}`} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
                                   <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[100px]">{formatDate(item.date)}</td>
                                   <td className="px-4 py-2">
-                                    <a
-                                      href={item.link || '#happenings'}
-                                      className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-sm"
-                                    >
-                                      {item.title}
-                                    </a>
+                                    {hasLink ? (
+                                      <a
+                                        href={item.link}
+                                        target={isExternal ? '_blank' : undefined}
+                                        rel={isExternal ? 'noopener noreferrer' : undefined}
+                                        className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-sm"
+                                      >
+                                        {item.title}
+                                      </a>
+                                    ) : (
+                                      <span className="font-medium text-slate-800 line-clamp-2 text-sm">
+                                        {item.title}
+                                      </span>
+                                    )}
                                     {item.description && (
                                       <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.description.slice(0, 50)}…</p>
                                     )}
                                   </td>
                                   <td className="px-2 py-2 w-8">
-                                    <a href={item.link || '#happenings'} className="inline-flex text-slate-400 hover:text-slate-700" aria-label="Read more">
-                                      <ChevronRight className="w-4 h-4" />
-                                    </a>
+                                    {hasLink ? (
+                                      <a
+                                        href={item.link}
+                                        target={isExternal ? '_blank' : undefined}
+                                        rel={isExternal ? 'noopener noreferrer' : undefined}
+                                        className="inline-flex text-slate-400 hover:text-slate-700"
+                                        aria-label="Read more"
+                                      >
+                                        <ChevronRight className="w-4 h-4" />
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex text-slate-300" aria-hidden><ChevronRight className="w-4 h-4" /></span>
+                                    )}
                                   </td>
                                 </tr>
-                              ))}
+                                );
+                              })}
                             </tbody>
                           </table>
                         ))}

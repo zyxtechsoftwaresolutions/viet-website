@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useInView } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { departmentsAPI } from '@/lib/api';
+import { getProgrammeHref } from '@/lib/departmentPageConfig';
 import cseImage from '@/assets/cse-department.jpg';
 import mechanicalImage from '@/assets/mechanical-department.jpg';
 import managementImage from '@/assets/management-department.jpg';
@@ -260,13 +262,17 @@ const DisciplinesSection = () => {
             <div className="overflow-hidden">
               <div className="flex gap-6 animate-scroll">
                 {/* First set */}
-                {displayProgrammes.map((programme, index) => (
+                {displayProgrammes.map((programme, index) => {
+                  const href = getProgrammeHref(programme.stream, programme.level, programme.name);
+                  const CardWrapper = href !== '#' ? Link : 'div';
+                  return (
                   <motion.div
                     key={`${programme.name}-${programme.level}-${index}`}
                     variants={cardVariants}
                     className="flex-shrink-0 w-80 group"
                   >
-                    <div className="relative h-96 rounded-2xl overflow-hidden bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                    <CardWrapper {...(href !== '#' ? { to: href } : {})} className="block">
+                    <div className="relative h-96 rounded-2xl overflow-hidden bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
                       {/* Image Container with lazy loading */}
                       <div className="relative h-3/5 overflow-hidden bg-muted">
                         <img
@@ -320,17 +326,22 @@ const DisciplinesSection = () => {
                         </div>
                       </div>
                     </div>
+                    </CardWrapper>
                   </motion.div>
-                ))}
+                );})}
                 
                 {/* Duplicated set for seamless loop */}
-                {duplicatedProgrammes.map((programme, index) => (
+                {duplicatedProgrammes.map((programme, index) => {
+                  const href = getProgrammeHref(programme.stream, programme.level, programme.name);
+                  const CardWrapper = href !== '#' ? Link : 'div';
+                  return (
                   <motion.div
                     key={`dup-${programme.name}-${programme.level}-${index}`}
                     variants={cardVariants}
                     className="flex-shrink-0 w-80 group"
                   >
-                    <div className="relative h-96 rounded-2xl overflow-hidden bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                    <CardWrapper {...(href !== '#' ? { to: href } : {})} className="block">
+                    <div className="relative h-96 rounded-2xl overflow-hidden bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
                       {/* Image Container with lazy loading */}
                       <div className="relative h-3/5 overflow-hidden bg-muted">
                         <img
@@ -384,8 +395,9 @@ const DisciplinesSection = () => {
                         </div>
                       </div>
                     </div>
+                    </CardWrapper>
                   </motion.div>
-                ))}
+                );})}
               </div>
             </div>
           </div>
