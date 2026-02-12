@@ -47,6 +47,7 @@ const Hostel = lazy(() => import("./pages/Hostel"));
 const NSSPage = lazy(() => import("./pages/NSS"));
 const Sports = lazy(() => import("./pages/Sports"));
 const Cafeteria = lazy(() => import("./pages/Cafeteria"));
+const FacilityPage = lazy(() => import("./pages/FacilityPage"));
 const CampusLife = lazy(() => import("./pages/CampusLife"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const DynamicPage = lazy(() => import("./pages/DynamicPage"));
@@ -75,6 +76,7 @@ const AboutUsAdmin = lazy(() => import("./pages/admin/AboutUsAdmin"));
 const TransportRoutes = lazy(() => import("./pages/admin/TransportRoutes"));
 const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
+const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 
 // Loading fallback component
@@ -144,6 +146,7 @@ const App = () => (
             <Route path="/facilities/nss" element={<NSSPage />} />
             <Route path="/facilities/sports" element={<Sports />} />
             <Route path="/facilities/cafeteria" element={<Cafeteria />} />
+            <Route path="/facilities/:slug" element={<FacilityPage />} />
             <Route path="/campus-life" element={<CampusLife />} />
             <Route path="/faculty" element={<FacultyPage />} />
             <Route path="/department/:slug/gallery" element={<DepartmentGallery />} />
@@ -172,6 +175,7 @@ const App = () => (
               <Route path="recruiters" element={<Recruiters />} />
               <Route path="placement-section" element={<PlacementSection />} />
               <Route path="transport-routes" element={<TransportRoutes />} />
+              <Route path="facilities" element={<FacilitiesAdmin />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />

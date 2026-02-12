@@ -86,11 +86,6 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
                       /ph\s*\.?\s*d/i.test(originalQual) ||
                       /ph\s*\.?\s*d/i.test(qual);
         
-        if (hasPhd) {
-          console.log(`✓ Ph.D detected: ${f.name} - Qualification: "${f.qualification}"`);
-        } else {
-          console.log(`✗ Ph.D NOT detected: ${f.name} - Qualification: "${f.qualification}"`);
-        }
         return hasPhd;
       }).length;
       
@@ -103,8 +98,6 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
       const industryExperience = uniqueFaculty.filter(f => {
         return f.experience && f.experience.trim() !== '';
       }).length;
-
-      console.log('Calculated Stats:', { total, phdHolders, mtechFaculty, industryExperience, uniqueFaculty: uniqueFaculty.map(f => ({ name: f.name, qualification: f.qualification })) });
 
       setFacultyStats({
         total,
@@ -120,9 +113,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
           facultyAPI.getAll(),
           hodsAPI.getAll()
         ]);
-        console.log('All faculty fetched:', allFaculty);
-        console.log('All HODs fetched:', allHODs);
-        
+
         // Filter faculty for Computer Science departments (both UG and Diploma)
         const cseFaculty = allFaculty.filter((f: FacultyMember) => {
           const dept = (f.department || '').toLowerCase().trim();
@@ -136,13 +127,9 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
             dept === 'computer science and engineering (cse)' ||
             dept.includes('computer science and engineering')
           );
-          if (matches) {
-            console.log(`Faculty "${f.name}" matched department "${f.department}"`);
-          }
           return matches;
         });
-        console.log('Filtered CSE faculty:', cseFaculty);
-        
+
         // Filter HODs for Computer Science departments
         const cseHODs = allHODs.filter((h: FacultyMember) => {
           const dept = (h.department || '').toLowerCase().trim();

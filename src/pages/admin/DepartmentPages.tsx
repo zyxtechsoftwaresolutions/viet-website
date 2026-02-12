@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { departmentPagesAPI } from '@/lib/api';
+import { departmentPagesAPI, facultyAPI } from '@/lib/api';
 import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { FileText, Upload, Trash2, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,7 +90,7 @@ const defaultSections = () => ({
   programOverview: { peos: '', psos: '', posText: '', posBadges: [] as string[] },
   facilities: { cards: [] as FacilityCard[] },
   whyViet: { cards: [] as WhyVietCard[] },
-  faculty: { content: '' },
+  faculty: { content: '', facultyIds: [] as number[] },
   projects: { stats: [{ label: 'Completed', value: '50+' }, { label: 'Industry', value: '25+' }, { label: 'Research', value: '15+' }, { label: 'Award winning', value: '10+' }] as ProjectStat[], cards: [] as ProjectCard[] },
   placements: { stats: [{ label: 'Placement rate', value: '95%' }, { label: 'Companies', value: '50+' }, { label: 'Highest package', value: '₹8.5L' }, { label: 'Average package', value: '₹4.2L' }] as PlacementStat[], recruiterImages: [] as string[], cards: [] as PlacementCard[] },
   rd: { title: 'R&D Lab', stats: [{ label: 'Papers', value: '25+' }, { label: 'Ph.D Faculty', value: '8' }, { label: 'Ongoing', value: '5' }, { label: 'Patents', value: '3' }] as RDStat[], researchAreas: [] as string[], cards: [] as RDProjectCard[] },
@@ -222,8 +223,14 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     }
   }
 
-  ['faculty', 'gallery', 'alumni'].forEach((k) => {
-    if (raw[k]?.content !== undefined) (out as any)[k] = { content: raw[k].content };
+  if (raw.faculty) {
+    out.faculty = {
+      content: raw.faculty.content ?? def.faculty.content,
+      facultyIds: Array.isArray(raw.faculty.facultyIds) ? raw.faculty.facultyIds : (def.faculty.facultyIds || []),
+    };
+  }
+  ['gallery', 'alumni'].forEach((k) => {
+    if (raw[k]?.content !== undefined) (out as any)[k] = { ...(out as any)[k], content: raw[k].content };
   });
 
   return out;
@@ -255,10 +262,19 @@ const DepartmentPages = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [regulationToDelete, setRegulationToDelete] = useState<{ program: string; regulation: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [allFaculty, setAllFaculty] = useState<Array<{ id: number; name: string; designation?: string }>>([]);
+  const [facultySearchQuery, setFacultySearchQuery] = useState('');
 
   useEffect(() => {
     loadPage();
   }, [slug]);
+
+  useEffect(() => {
+    facultyAPI.getAll().then((data) => {
+      const list = Array.isArray(data) ? data : [];
+      setAllFaculty(list.map((f: any) => ({ id: f.id, name: f.name, designation: f.designation })));
+    }).catch(() => setAllFaculty([]));
+  }, []);
 
   const loadPage = async () => {
     setLoading(true);
@@ -283,6 +299,14 @@ const DepartmentPages = () => {
         [field]: value,
       },
     }));
+  };
+
+  const toggleFacultyForDept = (facultyId: number) => {
+    const ids = sections.faculty?.facultyIds ?? [];
+    const set = new Set(ids);
+    if (set.has(facultyId)) set.delete(facultyId);
+    else set.add(facultyId);
+    updateSection('faculty', 'facultyIds', Array.from(set).sort((a, b) => a - b));
   };
 
   const prepareSectionsForSave = () => {
@@ -1543,7 +1567,61 @@ const DepartmentPages = () => {
         </TabsContent>
 
         <TabsContent value="more" className="space-y-4">
-          {['faculty', 'gallery', 'alumni'].map((key) => (
+          <Card>
+            <CardHeader>
+              <CardTitle>Faculty</CardTitle>
+              <CardDescription>Select which faculty members to show on this department page. Add faculty in Admin → Faculty first.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Additional content (optional)</Label>
+                <Textarea
+                  value={sections.faculty?.content ?? ''}
+                  onChange={(e) => updateSection('faculty', 'content', e.target.value)}
+                  rows={2}
+                  placeholder="Optional intro text above faculty cards"
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">Faculty to display</Label>
+                {allFaculty.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No faculty added yet. Add faculty in Admin → Faculty first.</p>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search by name or designation..."
+                      value={facultySearchQuery}
+                      onChange={(e) => setFacultySearchQuery(e.target.value)}
+                      className="mb-3"
+                    />
+                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2">
+                      {allFaculty
+                        .filter((f) => {
+                          const q = facultySearchQuery.trim().toLowerCase();
+                          if (!q) return true;
+                          const name = (f.name || '').toLowerCase();
+                          const designation = (f.designation || '').toLowerCase();
+                          return name.includes(q) || designation.includes(q);
+                        })
+                        .map((f) => (
+                      <div key={f.id} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`faculty-${f.id}`}
+                          checked={(sections.faculty?.facultyIds ?? []).includes(f.id)}
+                          onCheckedChange={() => toggleFacultyForDept(f.id)}
+                        />
+                        <label htmlFor={`faculty-${f.id}`} className="text-sm cursor-pointer flex-1">
+                          {f.name} {f.designation ? `(${f.designation})` : ''}
+                        </label>
+                      </div>
+                    ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          {['gallery', 'alumni'].map((key) => (
             <Card key={key}>
               <CardHeader>
                 <CardTitle className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</CardTitle>

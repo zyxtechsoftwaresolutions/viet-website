@@ -1,4 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,13 +31,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -36,7 +39,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react';
-import { facultyAPI, departmentsAPI } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { facultyAPI, facultySettingsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
@@ -55,17 +65,96 @@ interface Faculty {
   sortOrder?: number;
 }
 
-interface Department {
-  id: number;
-  name: string;
-  stream: string;
-  level: string;
-  image: string;
+function SortableFacultyRow({
+  item,
+  index,
+  sortBy,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onEdit,
+  onDelete,
+}: {
+  item: Faculty;
+  index: number;
+  sortBy: string;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: (i: number) => void;
+  onMoveDown: (i: number) => void;
+  onEdit: (item: Faculty) => void;
+  onDelete: (item: Faculty) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = transform ? { transform: CSS.Transform.toString(transform), transition } : undefined;
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? 'opacity-50 bg-muted' : ''}
+    >
+      <TableCell>
+        <div className="flex flex-col items-center gap-1">
+          {sortBy === 'custom' ? (
+            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none p-1">
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
+          ) : (
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          )}
+          <div className="flex flex-col gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onMoveUp(index)}
+              disabled={!canMoveUp || sortBy !== 'custom'}
+              title={sortBy !== 'custom' ? 'Switch to Custom order to reorder' : 'Move up'}
+            >
+              <ChevronUp className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onMoveDown(index)}
+              disabled={!canMoveDown || sortBy !== 'custom'}
+              title={sortBy !== 'custom' ? 'Switch to Custom order to reorder' : 'Move down'}
+            >
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <img
+          src={item.image || '/placeholder.svg'}
+          alt={item.name}
+          className="w-16 h-16 object-cover rounded-full"
+          onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+        />
+      </TableCell>
+      <TableCell>{item.name}</TableCell>
+      <TableCell>{item.designation}</TableCell>
+      <TableCell>{item.qualification}</TableCell>
+      <TableCell>{item.experience || '—'}</TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => onDelete(item)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 }
 
 const Faculty = () => {
   const [faculty, setFaculty] = useState<Faculty[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -77,21 +166,19 @@ const Faculty = () => {
     email: '',
     phone: '',
     experience: '',
-    department: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
+  const [sortBy, setSortBy] = useState<'custom' | 'experience' | 'designation' | 'designation-experience'>('custom');
+  const [customOrder, setCustomOrder] = useState<Faculty[]>([]);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const fetchFaculty = async () => {
     try {
       const data = await facultyAPI.getAll();
-      console.log('Fetched faculty:', data);
       if (Array.isArray(data)) {
         setFaculty(data);
-        if (data.length === 0) {
-          console.log('No faculty found in database');
-        }
       } else {
         console.error('Faculty API returned non-array data:', data);
         setFaculty([]);
@@ -105,31 +192,107 @@ const Faculty = () => {
     }
   };
 
-  const fetchDepartments = async () => {
+  const fetchFacultySettings = async () => {
     try {
-      const data = await departmentsAPI.getAll();
-      console.log('Fetched departments:', data);
-      if (Array.isArray(data)) {
-        setDepartments(data);
-        if (data.length === 0) {
-          toast.warning('No departments found. Please add departments first in the Departments section.');
-        }
-      } else {
-        console.error('Departments API returned non-array data:', data);
-        setDepartments([]);
+      const settings = await facultySettingsAPI.get();
+      const sb = settings?.sort_by;
+      if (['custom', 'default', 'experience', 'designation', 'designation-experience'].includes(sb)) {
+        setSortBy(sb === 'default' ? 'custom' : sb);
       }
-    } catch (error: any) {
-      console.error('Error fetching departments:', error);
-      toast.error(error.message || 'Failed to fetch departments');
-      setDepartments([]);
+    } catch {
+      // Use default
     }
   };
 
   useEffect(() => {
     fetchFaculty();
-    fetchDepartments();
+    fetchFacultySettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Keep customOrder in sync with faculty when in custom mode (sorted by sort_order)
+  useEffect(() => {
+    if (sortBy === 'custom' && faculty.length > 0) {
+      const ordered = [...faculty].sort((a, b) => {
+        const soA = a.sort_order ?? a.sortOrder ?? 0;
+        const soB = b.sort_order ?? b.sortOrder ?? 0;
+        return soB - soA;
+      });
+      setCustomOrder(ordered);
+    }
+  }, [faculty, sortBy]);
+
+  const handleSortByChange = async (value: 'custom' | 'experience' | 'designation' | 'designation-experience') => {
+    setSortBy(value);
+    try {
+      await facultySettingsAPI.update({ sort_by: value });
+      toast.success('Faculty sort order updated on website');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save sort preference');
+    }
+  };
+
+  // Parse experience string to extract years (e.g. "13 years" -> 13, "10+ years" -> 10)
+  const parseExperienceYears = (exp: string | undefined): number => {
+    if (!exp || !exp.trim()) return 0;
+    const match = exp.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  // Designation hierarchy (higher number = more senior)
+  const getDesignationRank = (des: string | undefined): number => {
+    const d = (des || '').toLowerCase();
+    if (d.includes('principal')) return 100;
+    if (d.includes('hod') || d.includes('head of department')) return 90;
+    if (d.includes('professor') && !d.includes('assistant') && !d.includes('associate')) return 80;
+    if (d.includes('associate professor')) return 70;
+    if (d.includes('assistant professor')) return 60;
+    if (d.includes('lecturer') || d.includes('senior lecturer')) return 50;
+    if (d.includes('guest') || d.includes('visiting')) return 40;
+    return 30;
+  };
+
+  const sortedFaculty = useMemo(() => {
+    const list = [...faculty];
+    if (sortBy === 'default') {
+      return list.sort((a, b) => {
+        const soA = a.sort_order ?? a.sortOrder ?? 0;
+        const soB = b.sort_order ?? b.sortOrder ?? 0;
+        if (soB !== soA) return soB - soA;
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
+    }
+    if (sortBy === 'experience') {
+      return list.sort((a, b) => {
+        const expA = parseExperienceYears(a.experience);
+        const expB = parseExperienceYears(b.experience);
+        if (expB !== expA) return expB - expA;
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
+    }
+    if (sortBy === 'designation') {
+      return list.sort((a, b) => {
+        const rankA = getDesignationRank(a.designation);
+        const rankB = getDesignationRank(b.designation);
+        if (rankB !== rankA) return rankB - rankA;
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
+    }
+    if (sortBy === 'designation-experience') {
+      return list.sort((a, b) => {
+        const rankA = getDesignationRank(a.designation);
+        const rankB = getDesignationRank(b.designation);
+        if (rankB !== rankA) return rankB - rankA;
+        const expA = parseExperienceYears(a.experience);
+        const expB = parseExperienceYears(b.experience);
+        if (expB !== expA) return expB - expA;
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
+    }
+    return list;
+  }, [faculty, sortBy]);
+
+  const displayList = sortBy === 'custom' ? customOrder : sortedFaculty;
 
   const handleAdd = () => {
     setSelectedItem(null);
@@ -140,13 +303,10 @@ const Faculty = () => {
       email: '',
       phone: '',
       experience: '',
-      department: '',
     });
     setImageFile(null);
     setResumeFile(null);
     setPreview('');
-    // Refetch departments when opening the dialog to ensure we have the latest list
-    fetchDepartments();
     setDialogOpen(true);
   };
 
@@ -159,13 +319,10 @@ const Faculty = () => {
       email: item.email || '',
       phone: item.phone || '',
       experience: item.experience || '',
-      department: item.department || '',
     });
     setImageFile(null);
     setResumeFile(null);
     setPreview(item.image || '');
-    // Refetch departments when opening the dialog to ensure we have the latest list
-    fetchDepartments();
     setDialogOpen(true);
   };
 
@@ -229,50 +386,53 @@ const Faculty = () => {
     }
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (index === 0) return;
-    const newFaculty = [...faculty];
-    // Swap items in array
-    [newFaculty[index - 1], newFaculty[index]] = [newFaculty[index], newFaculty[index - 1]];
-    
-    // Reassign sort_order based on new positions (higher number = higher priority)
-    // Start from a high number and decrement to ensure unique values
+  const handleSaveCustomOrder = async () => {
+    const list = sortBy === 'custom' ? customOrder : sortedFaculty;
     const baseSortOrder = 10000;
-    const orderUpdates = newFaculty.map((item, idx) => ({
+    const orderUpdates = list.map((item, idx) => ({
       id: item.id,
       sortOrder: baseSortOrder - idx,
     }));
-    
+    setSavingOrder(true);
     try {
       await facultyAPI.reorder(orderUpdates);
-      toast.success('Order updated successfully');
+      toast.success('Custom order saved. Faculty page will show this order.');
       fetchFaculty();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update order');
+      toast.error(error.message || 'Failed to save order');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
-  const handleMoveDown = async (index: number) => {
-    if (index === faculty.length - 1) return;
-    const newFaculty = [...faculty];
-    // Swap items in array
-    [newFaculty[index], newFaculty[index + 1]] = [newFaculty[index + 1], newFaculty[index]];
-    
-    // Reassign sort_order based on new positions (higher number = higher priority)
-    const baseSortOrder = 10000;
-    const orderUpdates = newFaculty.map((item, idx) => ({
-      id: item.id,
-      sortOrder: baseSortOrder - idx,
-    }));
-    
-    try {
-      await facultyAPI.reorder(orderUpdates);
-      toast.success('Order updated successfully');
-      fetchFaculty();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update order');
-    }
+  const handleMoveUp = (index: number) => {
+    if (index === 0 || sortBy !== 'custom') return;
+    const list = [...customOrder];
+    [list[index - 1], list[index]] = [list[index], list[index - 1]];
+    setCustomOrder(list);
   };
+
+  const handleMoveDown = (index: number) => {
+    if (index === customOrder.length - 1 || sortBy !== 'custom') return;
+    const list = [...customOrder];
+    [list[index], list[index + 1]] = [list[index + 1], list[index]];
+    setCustomOrder(list);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = customOrder.findIndex((f) => f.id === active.id);
+    const newIndex = customOrder.findIndex((f) => f.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    setCustomOrder(arrayMove(customOrder, oldIndex, newIndex));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   if (loading) {
     return <div>Loading...</div>;
@@ -286,33 +446,83 @@ const Faculty = () => {
       </div>
 
       <div className="space-y-4">
-        <Button onClick={handleAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Faculty
-        </Button>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button onClick={handleAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Faculty
+          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort by (applies to website Faculty page):</span>
+            <Select value={sortBy} onValueChange={(v: 'custom' | 'experience' | 'designation' | 'designation-experience') => handleSortByChange(v)}>
+              <SelectTrigger className="w-[260px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="custom">Custom order (drag to reorder)</SelectItem>
+                <SelectItem value="experience">Experience (highest first)</SelectItem>
+                <SelectItem value="designation">Designation (senior first)</SelectItem>
+                <SelectItem value="designation-experience">Designation & Experience (senior first)</SelectItem>
+              </SelectContent>
+            </Select>
+            {sortBy === 'custom' && (
+              <Button
+                variant="outline"
+                onClick={handleSaveCustomOrder}
+                disabled={savingOrder || displayList.length === 0}
+              >
+                {savingOrder ? 'Saving…' : 'Save order'}
+              </Button>
+            )}
+          </div>
+        </div>
 
         <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Designation</TableHead>
-                <TableHead>Qualification</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {faculty.length === 0 ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No faculty members available
-                  </TableCell>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Image</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Designation</TableHead>
+                  <TableHead>Qualification</TableHead>
+                  <TableHead>Experience</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                faculty.map((item, index) => (
+              </TableHeader>
+              <TableBody>
+                {displayList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No faculty members available
+                    </TableCell>
+                  </TableRow>
+                ) : sortBy === 'custom' ? (
+                  <SortableContext
+                    items={displayList.map((f) => f.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {displayList.map((item, index) => (
+                      <SortableFacultyRow
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        sortBy={sortBy}
+                        canMoveUp={index > 0}
+                        canMoveDown={index < displayList.length - 1}
+                        onMoveUp={handleMoveUp}
+                        onMoveDown={handleMoveDown}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </SortableContext>
+                ) : (
+                displayList.map((item, index) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex flex-col items-center gap-1">
@@ -322,8 +532,8 @@ const Faculty = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => handleMoveUp(index)}
-                            disabled={index === 0}
+                            disabled
+                            title="Switch to Custom order to reorder"
                           >
                             <ChevronUp className="h-3 w-3" />
                           </Button>
@@ -331,8 +541,8 @@ const Faculty = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => handleMoveDown(index)}
-                            disabled={index === faculty.length - 1}
+                            disabled
+                            title="Switch to Custom order to reorder"
                           >
                             <ChevronDown className="h-3 w-3" />
                           </Button>
@@ -352,7 +562,7 @@ const Faculty = () => {
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.designation}</TableCell>
                     <TableCell>{item.qualification}</TableCell>
-                    <TableCell>{item.department}</TableCell>
+                    <TableCell>{item.experience || '—'}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -374,8 +584,9 @@ const Faculty = () => {
                   </TableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </DndContext>
         </div>
       </div>
 
@@ -449,43 +660,10 @@ const Faculty = () => {
                   placeholder="e.g., M.Tech., Ph.D"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                {departments.length === 0 ? (
-                  <>
-                    <Select disabled>
-                      <SelectTrigger id="department">
-                        <SelectValue placeholder="No departments available" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-departments" disabled>
-                          No departments available
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      No departments found. Please add departments in the <strong>Departments</strong> section first.
-                    </p>
-                  </>
-                ) : (
-                  <Select
-                    value={formData.department}
-                    onValueChange={(value) => setFormData({ ...formData, department: value })}
-                  >
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.name}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
             </div>
+            <p className="text-sm text-muted-foreground">
+              To show this faculty on department pages, go to <strong>Admin → Department Pages</strong>, select a department, and check the faculty in the Faculty section.
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

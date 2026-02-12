@@ -1,7 +1,33 @@
-import { motion } from 'framer-motion';
-import { GraduationCap, Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Facebook, Linkedin, Instagram, Mail, Phone, MapPin, Eye } from 'lucide-react';
+import { visitorCountAPI } from '@/lib/api';
+
+const SESSION_KEY = 'viet_visit_counted';
 
 const Footer = () => {
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCount = async () => {
+      try {
+        const counted = sessionStorage.getItem(SESSION_KEY);
+        const data = counted
+          ? await visitorCountAPI.get()
+          : await visitorCountAPI.increment();
+        const count = typeof data?.count === 'number' ? data.count : 0;
+        if (isMounted) {
+          setVisitorCount(count);
+          if (!counted) sessionStorage.setItem(SESSION_KEY, '1');
+        }
+      } catch {
+        if (isMounted) setVisitorCount(0);
+      }
+    };
+    fetchCount();
+    return () => { isMounted = false; };
+  }, []);
+
   const quickLinks = [
     { name: 'About Us', href: '/about' },
     { name: 'Vision & Mission', href: '/vision-mission' },
@@ -152,25 +178,42 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-white/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <div className="text-primary-foreground/80 text-sm">
-            © {new Date().getFullYear()} Visakha Institute of Engineering and Technology. All rights reserved.
+        <div className="border-t border-white/20 mt-12 pt-8 space-y-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0">
+            <div className="text-primary-foreground/80 text-sm">
+              © {new Date().getFullYear()} Visakha Institute of Engineering and Technology. All rights reserved.
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
+                Anti Ragging Policy
+              </a>
+              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
+                AICTE Feedback
+              </a>
+              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
+                Mandatory Disclosure
+              </a>
+              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
+                Privacy Policy
+              </a>
+              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
+                Terms of Service
+              </a>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-              Anti Ragging Policy
-            </a>
-            <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-              AICTE Feedback
-            </a>
-            <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-              Mandatory Disclosure
-            </a>
-            <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-              Terms of Service
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-primary-foreground/70">
+            <span className="flex items-center gap-1.5">
+              <Eye className="w-4 h-4 shrink-0" aria-hidden />
+              <span>Visitors: {visitorCount != null ? visitorCount.toLocaleString() : '—'}</span>
+            </span>
+            <span className="hidden sm:inline text-white/30">|</span>
+            <a
+              href="https://www.zyxtechsolutions.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Developed by ZYX TECH SOLUTIONS in collaboration with CSE Department
             </a>
           </div>
         </div>

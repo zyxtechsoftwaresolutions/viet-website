@@ -716,3 +716,26 @@ html {
     display: none;
   }
 }
+
+/* Admin Login - light theme animated background */
+@keyframes admin-bg-morph-light {
+  0%, 100% {
+    background: radial-gradient(ellipse 100% 80% at 30% 20%, rgba(148,163,184,0.08), transparent 50%), radial-gradient(ellipse 80% 60% at 70% 80%, rgba(203,213,225,0.06), transparent 50%);
+  }
+  50% {
+    background: radial-gradient(ellipse 80% 100% at 70% 30%, rgba(148,163,184,0.08), transparent 50%), radial-gradient(ellipse 60% 80% at 20% 70%, rgba(203,213,225,0.06), transparent 50%);
+  }
+}
+
+@keyframes admin-grid-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
+}
+
+.admin-login-bg-morph-light {
+  animation: admin-bg-morph-light 12s ease-in-out infinite;
+}
+
+.admin-login-grid-drift {
+  animation: admin-grid-drift 20s linear infinite;
+}

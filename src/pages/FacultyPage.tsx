@@ -4,7 +4,7 @@ import { Users } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
-import { facultyAPI, hodsAPI, departmentsAPI } from '@/lib/api';
+import { facultyAPI, hodsAPI, facultySettingsAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import {
   Select,
@@ -15,14 +15,6 @@ import {
 } from '@/components/ui/select';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-interface Department {
-  id: number;
-  name: string;
-  stream: string;
-  level: string;
-  image?: string;
-}
 
 interface FacultyMember {
   id: number;
@@ -43,107 +35,133 @@ interface FacultyMember {
 
 const FacultyPage = () => {
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [streamFilter, setStreamFilter] = useState<string>('all');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [designationFilter, setDesignationFilter] = useState<string>('all');
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [f, h, d] = await Promise.all([
-          facultyAPI.getAll(),
-          hodsAPI.getAll(),
-          departmentsAPI.getAll(),
-        ]);
-        const facultyList = Array.isArray(f) ? f : [];
-        const hodsList = Array.isArray(h) ? h : [];
-        const deptList = Array.isArray(d) ? d : [];
-        setDepartments(deptList);
+  const parseExperienceYears = (exp: string | undefined): number => {
+    if (!exp || !exp.trim()) return 0;
+    const match = exp.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
 
-        const hodKey = (x: { name: string; department?: string }) =>
-          `${(x.name || '').trim()}|${(x.department || '').trim()}`;
-        const hodKeys = new Set(hodsList.map((x: any) => hodKey(x)));
+  const getDesignationRank = (des: string | undefined): number => {
+    const d = (des || '').toLowerCase();
+    if (d.includes('principal')) return 100;
+    if (d.includes('hod') || d.includes('head of department')) return 90;
+    if (d.includes('professor') && !d.includes('assistant') && !d.includes('associate')) return 80;
+    if (d.includes('associate professor')) return 70;
+    if (d.includes('assistant professor')) return 60;
+    if (d.includes('lecturer') || d.includes('senior lecturer')) return 50;
+    if (d.includes('guest') || d.includes('visiting')) return 40;
+    return 30;
+  };
 
-        const withRole = (item: any, role: 'principal' | 'hod' | 'faculty', source: 'faculty' | 'hod'): FacultyMember => ({
-          id: item.id,
-          name: item.name,
-          designation: item.designation,
-          qualification: item.qualification || '',
-          email: item.email,
-          phone: item.phone,
-          experience: item.experience,
-          department: item.department,
-          image: item.image,
-          resume: item.resume,
-          sort_order: item.sort_order ?? item.sortOrder,
-          sortOrder: item.sort_order ?? item.sortOrder,
-          _role: role,
-          _source: source,
-        });
+  const loadFaculty = async () => {
+    try {
+      setLoading(true);
+      const [f, h, settings] = await Promise.all([
+        facultyAPI.getAll(),
+        hodsAPI.getAll(),
+        facultySettingsAPI.get().catch(() => ({ sort_by: 'custom' })),
+      ]);
+      const facultyList = Array.isArray(f) ? f : [];
+      const hodsList = Array.isArray(h) ? h : [];
+      // Support both { sort_by } and { settings: { sort_by } } response formats
+      const settingsObj = (settings as any)?.settings ?? settings;
+      const sb = settingsObj?.sort_by;
+      const sortBy = ['custom', 'default', 'experience', 'designation', 'designation-experience'].includes(sb)
+        ? (sb === 'default' ? 'custom' : sb)
+        : 'custom';
 
-        const principalDesignation = (des: string) =>
-          (des || '').toLowerCase().includes('principal');
+      const hodKey = (x: { name: string; department?: string }) =>
+        `${(x.name || '').trim()}|${(x.department || '').trim()}`;
+      const hodKeys = new Set(hodsList.map((x: any) => hodKey(x)));
 
-        const combined: FacultyMember[] = [];
+      const withRole = (item: any, role: 'principal' | 'hod' | 'faculty', source: 'faculty' | 'hod'): FacultyMember => ({
+        id: item.id,
+        name: item.name,
+        designation: item.designation,
+        qualification: item.qualification || '',
+        email: item.email,
+        phone: item.phone,
+        experience: item.experience,
+        department: item.department,
+        image: item.image,
+        resume: item.resume,
+        sort_order: item.sort_order ?? item.sortOrder,
+        sortOrder: item.sort_order ?? item.sortOrder,
+        _role: role,
+        _source: source,
+      });
 
-        // Add HODs first (they're already sorted by sort_order from API)
-        hodsList.forEach((hod: any) => {
-          combined.push(withRole(hod, principalDesignation(hod.designation) ? 'principal' : 'hod', 'hod'));
-        });
+      const principalDesignation = (des: string) =>
+        (des || '').toLowerCase().includes('principal');
 
-        // Add faculty (excluding duplicates with HODs)
-        facultyList.forEach((f: any) => {
-          if (hodKeys.has(hodKey(f))) return;
-          const role = principalDesignation(f.designation) ? 'principal' : 'faculty';
-          combined.push(withRole(f, role, 'faculty'));
-        });
+      const combined: FacultyMember[] = [];
 
-        // Sort by role first (principal, hod, faculty), then by sort_order (desc), then by designation, then by name
-        const roleOrder = { principal: 0, hod: 1, faculty: 2 };
-        combined.sort((a, b) => {
-          const roleA = roleOrder[a._role!] ?? 2;
-          const roleB = roleOrder[b._role!] ?? 2;
-          if (roleA !== roleB) return roleA - roleB;
-          
-          // Within same role, sort by sort_order (descending - higher first)
+      hodsList.forEach((hod: any) => {
+        combined.push(withRole(hod, principalDesignation(hod.designation) ? 'principal' : 'hod', 'hod'));
+      });
+
+      facultyList.forEach((f: any) => {
+        if (hodKeys.has(hodKey(f))) return;
+        const role = principalDesignation(f.designation) ? 'principal' : 'faculty';
+        combined.push(withRole(f, role, 'faculty'));
+      });
+
+      const roleOrder = { principal: 0, hod: 1, faculty: 2 };
+      combined.sort((a, b) => {
+        const roleA = roleOrder[a._role!] ?? 2;
+        const roleB = roleOrder[b._role!] ?? 2;
+        if (roleA !== roleB) return roleA - roleB;
+
+        if (sortBy === 'custom') {
           const sortOrderA = Number(a.sort_order ?? a.sortOrder ?? 0);
           const sortOrderB = Number(b.sort_order ?? b.sortOrder ?? 0);
           if (sortOrderB !== sortOrderA) return sortOrderB - sortOrderA;
-          
-          // Then by designation
           const desA = String(a.designation ?? '').toLowerCase();
           const desB = String(b.designation ?? '').toLowerCase();
           if (desA !== desB) return desA.localeCompare(desB);
-          
-          // Finally by name
-          return String(a.name ?? '').localeCompare(String(b.name ?? ''));
-        });
-        setFaculty(combined);
-      } catch (e) {
-        console.error(e);
-        setFaculty([]);
-        setDepartments([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+        } else if (sortBy === 'experience') {
+          const expA = parseExperienceYears(a.experience);
+          const expB = parseExperienceYears(b.experience);
+          if (expB !== expA) return expB - expA;
+        } else if (sortBy === 'designation') {
+          const rankA = getDesignationRank(a.designation);
+          const rankB = getDesignationRank(b.designation);
+          if (rankB !== rankA) return rankB - rankA;
+        } else if (sortBy === 'designation-experience') {
+          const rankA = getDesignationRank(a.designation);
+          const rankB = getDesignationRank(b.designation);
+          if (rankB !== rankA) return rankB - rankA;
+          const expA = parseExperienceYears(a.experience);
+          const expB = parseExperienceYears(b.experience);
+          if (expB !== expA) return expB - expA;
+        }
+
+        return String(a.name ?? '').localeCompare(String(b.name ?? ''));
+      });
+      setFaculty(combined);
+    } catch (e) {
+      console.error(e);
+      setFaculty([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFaculty();
   }, []);
 
-  const deptNameToStream = useMemo(() => {
-    const m: Record<string, string> = {};
-    departments.forEach((d) => {
-      m[d.name] = d.stream;
-    });
-    return m;
-  }, [departments]);
-
-  const streams = useMemo(() => {
-    const s = new Set(departments.map((d) => d.stream).filter(Boolean));
-    return Array.from(s).sort();
-  }, [departments]);
+  // Refetch when user returns to this tab (e.g. after saving order in Admin)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loadFaculty();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   // Dedupe designations case-insensitively (e.g. "ASSISTANT PROFESSOR" + "Assistant Professor" → one option)
   const designations = useMemo(() => {
@@ -161,13 +179,6 @@ const FacultyPage = () => {
 
   const filtered = useMemo(() => {
     return faculty.filter((f) => {
-      if (streamFilter !== 'all') {
-        const stream = deptNameToStream[f.department || ''] ?? '';
-        if (stream !== streamFilter) return false;
-      }
-      if (departmentFilter !== 'all') {
-        if ((f.department || '') !== departmentFilter) return false;
-      }
       if (designationFilter !== 'all') {
         const fDes = (f.designation || '').trim().toLowerCase();
         const filterDes = designationFilter.trim().toLowerCase();
@@ -175,7 +186,7 @@ const FacultyPage = () => {
       }
       return true;
     });
-  }, [faculty, streamFilter, departmentFilter, designationFilter, deptNameToStream]);
+  }, [faculty, designationFilter]);
 
 
   return (
@@ -209,33 +220,11 @@ const FacultyPage = () => {
         </div>
       </section>
 
-      {/* Filters - Amrita style */}
+      {/* Filters - Designation only */}
       <section className="sticky top-0 z-10 bg-white border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-4 md:px-10 lg:px-12 py-4">
           <div className="flex flex-wrap items-center gap-3 md:gap-4">
-            <span className="text-sm font-medium text-slate-600">Filters:</span>
-            <Select value={streamFilter} onValueChange={setStreamFilter}>
-              <SelectTrigger className="w-[180px] md:w-[200px]">
-                <SelectValue placeholder="Stream" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Streams</SelectItem>
-                {streams.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-[200px] md:w-[240px]">
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map((d) => (
-                  <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <span className="text-sm font-medium text-slate-600">Filter by designation:</span>
             <Select value={designationFilter} onValueChange={setDesignationFilter}>
               <SelectTrigger className="w-[200px] md:w-[240px]">
                 <SelectValue placeholder="Designation" />

@@ -85,15 +85,15 @@ const NewsAnnouncementsSection = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* News table */}
               <div className="rounded-xl overflow-hidden flex flex-col bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div className="px-5 py-3.5 shrink-0 bg-slate-50 border-b border-slate-200/80">
-                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-[#0a192f]" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
+                <div className="px-5 py-3.5 shrink-0 bg-green-100 border-b border-green-200/80">
+                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-green-600" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
                     News
                   </h3>
                 </div>
-                <div className="overflow-hidden" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
+                <div className="overflow-hidden bg-green-50" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
                   <style>{`.news-scroll-wrap::-webkit-scrollbar { display: none; }`}</style>
                   <div
-                    className="news-scroll-wrap news-announce-anim"
+                    className="news-scroll-wrap news-announce-anim bg-green-50"
                     style={{
                       height: news.length > VISIBLE_ROWS ? 2 * news.length * ROW_HEIGHT_PX : news.length * ROW_HEIGHT_PX,
                       animation: news.length > VISIBLE_ROWS
@@ -102,7 +102,7 @@ const NewsAnnouncementsSection = () => {
                     }}
                   >
                     {news.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium">No news at the moment.</div>
+                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium bg-green-50">No news at the moment.</div>
                     ) : (
                       <>
                         {(news.length > VISIBLE_ROWS ? [1, 2] : [1]).map((copy) => (
@@ -112,7 +112,7 @@ const NewsAnnouncementsSection = () => {
                                 const hasLink = item.link && item.link.trim() !== '';
                                 const isExternal = hasLink && /^https?:\/\//i.test(item.link!);
                                 return (
-                                <tr key={`${copy}-${item.id}`} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
+                                <tr key={`${copy}-${item.id}`} className="border-b border-green-100 hover:bg-green-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
                                   <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[100px]">{formatDate(item.date)}</td>
                                   <td className="px-4 py-2">
                                     {hasLink ? (
@@ -162,15 +162,15 @@ const NewsAnnouncementsSection = () => {
 
               {/* Announcements table */}
               <div className="rounded-xl overflow-hidden flex flex-col bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div className="px-5 py-3.5 shrink-0 bg-slate-50 border-b border-slate-200/80">
-                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-[#0a192f]" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
+                <div className="px-5 py-3.5 shrink-0 bg-sky-100 border-b border-sky-200/80">
+                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-sky-600" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
                     Announcements
                   </h3>
                 </div>
-                <div className="overflow-hidden" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
+                <div className="overflow-hidden bg-sky-50" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
                   <style>{`.ann-scroll-wrap::-webkit-scrollbar { display: none; }`}</style>
                   <div
-                    className="ann-scroll-wrap news-announce-anim"
+                    className="ann-scroll-wrap news-announce-anim bg-sky-50"
                     style={{
                       height: announcements.length > VISIBLE_ROWS ? 2 * announcements.length * ROW_HEIGHT_PX : announcements.length * ROW_HEIGHT_PX,
                       animation: announcements.length > VISIBLE_ROWS
@@ -179,14 +179,14 @@ const NewsAnnouncementsSection = () => {
                     }}
                   >
                     {announcements.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium">No announcements at the moment.</div>
+                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium bg-sky-50">No announcements at the moment.</div>
                     ) : (
                       <>
                         {(announcements.length > VISIBLE_ROWS ? [1, 2] : [1]).map((copy) => (
                           <table key={copy} className="w-full text-left border-collapse" style={{ height: announcements.length * ROW_HEIGHT_PX }}>
                             <tbody>
                               {announcements.map((item) => (
-                                <tr key={`${copy}-${item.id}`} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
+                                <tr key={`${copy}-${item.id}`} className="border-b border-sky-100 hover:bg-sky-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
                                   <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[100px]">{formatDate(item.date)}</td>
                                   <td className="px-4 py-2">
                                     <a

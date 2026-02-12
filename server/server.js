@@ -3,7 +3,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import * as db from './lib/db.js';
@@ -44,39 +44,25 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // Your Vercel URL (set in Render env vars)
 ].filter(Boolean);
 
-// Log allowed origins for debugging (must include 8080 when using Vite dev server)
-console.log('Allowed CORS origins:', allowedOrigins);
-console.log('FRONTEND_URL from env:', process.env.FRONTEND_URL);
 if (!allowedOrigins.some(o => o && o.includes('8080'))) {
   console.warn('CORS: port 8080 not in allowed origins – add http://localhost:8080 if frontend runs on 8080');
 }
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      console.log('CORS: Request with no origin - allowing');
-      return callback(null, true);
-    }
-    
-    // Normalize origin (remove trailing slash)
+    if (!origin) return callback(null, true);
+
     const normalizedOrigin = origin.replace(/\/$/, '');
-    
-    // Check if origin matches exactly
     const exactMatch = allowedOrigins.some(allowed => {
-      const normalizedAllowed = allowed.replace(/\/$/, '');
+      const normalizedAllowed = (allowed || '').replace(/\/$/, '');
       return normalizedOrigin === normalizedAllowed;
     });
-    
-    // Check if origin ends with .vercel.app
     const vercelMatch = normalizedOrigin.endsWith('.vercel.app');
-    
+
     if (exactMatch || vercelMatch) {
-      console.log(`CORS: Allowing origin: ${origin}`);
       callback(null, true);
     } else {
-      console.log(`CORS: Blocking origin: ${origin}`);
-      console.log('CORS: Allowed origins are:', allowedOrigins);
+      console.warn(`CORS blocked: ${origin}`);
       callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
     }
   },
@@ -86,17 +72,26 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const publicDir = join(__dirname, '../public');
-const distDir = join(__dirname, '../dist');
+// Resolve paths relative to project root (parent of server/) for reliable deployment
+const projectRoot = resolve(__dirname, '..');
+const publicDir = resolve(projectRoot, 'public');
+const distDir = resolve(projectRoot, 'dist');
+
 // Explore Your Path video: serve from dist first (Vite copies public→dist on build), then public
+// Check multiple locations for Render/Vercel/different deployment layouts
 app.get('/bgvideoexp.mp4', (req, res, next) => {
-  const fromDist = join(distDir, 'bgvideoexp.mp4');
-  const fromPublic = join(publicDir, 'bgvideoexp.mp4');
-  const path = existsSync(fromDist) ? fromDist : (existsSync(fromPublic) ? fromPublic : null);
-  if (path) {
+  const candidates = [
+    resolve(distDir, 'bgvideoexp.mp4'),
+    resolve(publicDir, 'bgvideoexp.mp4'),
+    resolve(process.cwd(), 'dist', 'bgvideoexp.mp4'),
+    resolve(process.cwd(), 'public', 'bgvideoexp.mp4'),
+  ];
+  const videoPath = candidates.find((p) => existsSync(p));
+  if (videoPath) {
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Content-Type', 'video/mp4');
-    return res.sendFile(path);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(videoPath);
   }
   next();
 });
@@ -164,7 +159,8 @@ async function initializeData() {
     'placement-carousel': { images: [] },
     accreditations: { items: [] },
     'aicte-affiliation-letters': { letters: [] },
-    'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } }
+    'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } },
+    'faculty-settings': { settings: { id: 1, sort_by: 'custom' } }
   };
 
   for (const [file, defaultData] of Object.entries(dataFiles)) {
@@ -226,7 +222,6 @@ async function initializeData() {
           ] }
         }
       });
-      console.log('✓ Created Transport page in database');
     }
   } catch (e) { /* db may not be ready */ }
 }
@@ -304,6 +299,25 @@ app.post('/api/auth/login', async (req, res) => {
 // Verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({ user: req.user });
+});
+
+// ==================== VISITOR COUNT (public, no auth) ====================
+app.get('/api/visitor-count', async (req, res) => {
+  try {
+    const count = await db.getVisitorCount();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ count: 0 });
+  }
+});
+
+app.post('/api/visitor-count', async (req, res) => {
+  try {
+    const count = await db.incrementVisitorCount();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ count: 0 });
+  }
 });
 
 // ==================== ANNOUNCEMENTS ROUTES ====================
@@ -830,7 +844,7 @@ app.post('/api/faculty', authenticateToken, async (req, res) => {
     const newFaculty = await db.createFaculty({
       name: body.name || '', designation: body.designation || '', qualification: body.qualification || '',
       email: body.email || '', phone: body.phone || '', experience: body.experience || '',
-      department: body.department || '', image, resume
+      department: body.department ?? null, image, resume
     });
     res.json(newFaculty);
   } catch (error) {
@@ -1438,6 +1452,32 @@ app.delete('/api/intro-video-settings', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== FACULTY SETTINGS ROUTES ====================
+
+app.get('/api/faculty-settings', async (req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const settings = await db.getFacultySettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/faculty-settings', authenticateToken, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const validSortBy = ['custom', 'experience', 'designation', 'designation-experience'];
+    if (body.sort_by !== undefined && !validSortBy.includes(body.sort_by)) {
+      return res.status(400).json({ error: 'sort_by must be one of: custom, experience, designation, designation-experience' });
+    }
+    const updated = await db.updateFacultySettings({ sort_by: body.sort_by });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to update faculty settings' });
+  }
+});
+
 // ==================== DEPARTMENT PAGES (editable content + curriculum) ====================
 
 app.get('/api/department-pages', async (req, res) => {
@@ -1615,11 +1655,10 @@ app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authen
 });
 
 // Serve built frontend (Vite dist) when running as single service (e.g. Render)
-const distPath = join(__dirname, '../dist');
-if (existsSync(distPath)) {
-  app.use(express.static(distPath, { index: false }));
+if (existsSync(distDir)) {
+  app.use(express.static(distDir, { index: false }));
   app.get('*', (req, res) => {
-    res.sendFile(join(distPath, 'index.html'));
+    res.sendFile(resolve(distDir, 'index.html'));
   });
 }
 
@@ -1636,7 +1675,3 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
-
-
-
-

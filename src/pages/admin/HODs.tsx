@@ -86,12 +86,8 @@ const HODs = () => {
   const fetchHODs = async () => {
     try {
       const data = await hodsAPI.getAll();
-      console.log('Fetched HODs:', data);
       if (Array.isArray(data)) {
         setHODs(data);
-        if (data.length === 0) {
-          console.log('No HODs found in database');
-        }
       } else {
         console.error('HODs API returned non-array data:', data);
         setHODs([]);
@@ -108,7 +104,6 @@ const HODs = () => {
   const fetchDepartments = async () => {
     try {
       const data = await departmentsAPI.getAll();
-      console.log('Fetched departments:', data);
       if (Array.isArray(data)) {
         setDepartments(data);
         if (data.length === 0) {

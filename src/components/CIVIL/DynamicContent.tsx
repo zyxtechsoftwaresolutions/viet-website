@@ -626,14 +626,7 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
                       fetchpriority="auto"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
-                        console.error('Failed to load gallery image:', image.src);
-                        console.error('Image URL:', image.src);
-                        console.error('API Base URL:', API_BASE_URL);
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                      onLoad={() => {
-                        console.log('Successfully loaded gallery image:', image.src);
+                        (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
                   </div>

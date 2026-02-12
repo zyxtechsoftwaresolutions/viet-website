@@ -23,6 +23,7 @@ import {
   Briefcase,
   Award,
   Film,
+  Warehouse,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -59,6 +60,7 @@ const AdminLayout = () => {
     { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters' },
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section' },
     { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes' },
+    { icon: Warehouse, label: 'Facilities', path: '/admin/facilities' },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations' },
     { icon: FileText, label: 'Pages', path: '/admin/pages' },
     { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities' },

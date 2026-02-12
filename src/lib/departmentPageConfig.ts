@@ -16,6 +16,18 @@ function matchDept(d: string, ...terms: string[]): boolean {
   return terms.some((t) => lower.includes(t.toLowerCase()));
 }
 
+/** CSE, CSD, CSC, CSM share faculty across all four department pages. */
+function isCSEFamilyDepartment(d: string): boolean {
+  const x = (d || '').toLowerCase();
+  return (
+    ((x.includes('computer science and engineering (cse)') || x === 'cse' ||
+      (x.includes('computer science') && x.includes('(cse)') && !x.includes('cyber') && !x.includes('datascience') && !x.includes('machinelearning'))) && !x.includes('(csc)') && !x.includes('(csd)') && !x.includes('(csm)')) ||
+    x.includes('cse datascience (csd)') || x.includes('datascience (csd)') || (x.includes('data science') && x.includes('(csd)')) || x === 'csd' ||
+    x.includes('cse cybersecurity (csc)') || x.includes('cybersecurity (csc)') || (x.includes('cyber') && x.includes('(csc)')) || x === 'csc' ||
+    x.includes('cse machinelearning (csm)') || x.includes('machinelearning (csm)') || (x.includes('machine learning') && x.includes('(csm)')) || (x.includes('aiml') && x.includes('(csm)')) || x === 'csm'
+  );
+}
+
 const configs: Record<string, DepartmentPageConfig> = {
   // Diploma
   'diploma-agriculture': {
@@ -115,6 +127,78 @@ const configs: Record<string, DepartmentPageConfig> = {
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'mca', 'computer applications'),
     galleryFilter: (img) => matchDept(img.department || '', 'mca', 'management', 'computer applications'),
+  },
+  // Engineering UG (used by DepartmentPageTemplate + migration)
+  // CSE family: CSE, CSD, CSC, CSM share faculty across all four pages
+  'cse': {
+    slug: 'cse',
+    backHref: '/btech',
+    facultyFilter: isCSEFamilyDepartment,
+    galleryFilter: (img) => matchDept(img.department || '', 'computer science', 'cse', 'engineering ug - computer'),
+  },
+  'cyber-security': {
+    slug: 'cyber-security',
+    backHref: '/btech',
+    facultyFilter: isCSEFamilyDepartment,
+    galleryFilter: (img) => matchDept(img.department || '', 'cyber', 'csc'),
+  },
+  'data-science': {
+    slug: 'data-science',
+    backHref: '/btech',
+    facultyFilter: isCSEFamilyDepartment,
+    galleryFilter: (img) => matchDept(img.department || '', 'data science', 'csd'),
+  },
+  'aiml': {
+    slug: 'aiml',
+    backHref: '/btech',
+    facultyFilter: isCSEFamilyDepartment,
+    galleryFilter: (img) => matchDept(img.department || '', 'aiml', 'csm', 'machine learning'),
+  },
+  'ece': {
+    slug: 'ece',
+    backHref: '/btech',
+    facultyFilter: (d) => {
+      const x = (d || '').toLowerCase().trim();
+      const hasEce = x.includes('electronics') && x.includes('communication');
+      const hasEee = x.includes('electrical') && x.includes('electronics');
+      return (hasEce && !hasEee) || x === 'ece' || x.includes('electronics and communication');
+    },
+    galleryFilter: (img) => matchDept(img.department || '', 'ece', 'electronics', 'communication'),
+  },
+  'eee': {
+    slug: 'eee',
+    backHref: '/btech',
+    facultyFilter: (d) => {
+      const x = (d || '').toLowerCase().trim();
+      const hasEee = x.includes('electrical') && x.includes('electronics');
+      const hasEce = x.includes('electronics') && x.includes('communication');
+      return (hasEee && !hasEce) || x === 'eee' || x.includes('electrical and electronics');
+    },
+    galleryFilter: (img) => matchDept(img.department || '', 'eee', 'electrical'),
+  },
+  'civil': {
+    slug: 'civil',
+    backHref: '/btech',
+    facultyFilter: (d) => matchDept(d, 'civil'),
+    galleryFilter: (img) => matchDept(img.department || '', 'civil'),
+  },
+  'mechanical': {
+    slug: 'mechanical',
+    backHref: '/btech',
+    facultyFilter: (d) => matchDept(d, 'mechanical'),
+    galleryFilter: (img) => matchDept(img.department || '', 'mechanical'),
+  },
+  'automobile': {
+    slug: 'automobile',
+    backHref: '/btech',
+    facultyFilter: (d) => matchDept(d, 'automobile', 'ame'),
+    galleryFilter: (img) => matchDept(img.department || '', 'automobile', 'ame'),
+  },
+  'bsh': {
+    slug: 'bsh',
+    backHref: '/btech',
+    facultyFilter: (d) => matchDept(d, 'bsh', 'basic science', 'humanities'),
+    galleryFilter: (img) => matchDept(img.department || '', 'bsh', 'basic science', 'humanities'),
   },
 };
 

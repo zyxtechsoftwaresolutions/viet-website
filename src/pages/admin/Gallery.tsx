@@ -64,7 +64,6 @@ const Gallery = () => {
   const fetchDepartments = async () => {
     try {
       const data = await departmentsAPI.getAll();
-      console.log('Fetched departments:', data);
       if (Array.isArray(data)) {
         setDepartments(data);
         if (data.length === 0) {

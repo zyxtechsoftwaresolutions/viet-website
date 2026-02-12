@@ -32,6 +32,28 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
+// Visitor count (public, no auth)
+export const visitorCountAPI = {
+  get: async () => {
+    try {
+      const r = await fetch(`${API_BASE_URL}/visitor-count`);
+      const data = await r.json().catch(() => ({}));
+      return r.ok && typeof data?.count === 'number' ? data : { count: 0 };
+    } catch {
+      return { count: 0 };
+    }
+  },
+  increment: async () => {
+    try {
+      const r = await fetch(`${API_BASE_URL}/visitor-count`, { method: 'POST' });
+      const data = await r.json().catch(() => ({}));
+      return r.ok && typeof data?.count === 'number' ? data : { count: 0 };
+    } catch {
+      return { count: 0 };
+    }
+  },
+};
+
 // Auth API
 export const authAPI = {
   login: async (username: string, password: string) => {
@@ -186,6 +208,13 @@ export const facultyAPI = {
   delete: (id: number) => apiCall(`/faculty/${id}`, { method: 'DELETE' }),
   reorder: (orderUpdates: Array<{ id: number; sortOrder: number }>) =>
     apiCall('/faculty/reorder', { method: 'POST', body: JSON.stringify({ orderUpdates: orderUpdates.map(u => ({ id: u.id, sort_order: u.sortOrder })) }) }),
+};
+
+// Faculty Settings API (sort preference for public Faculty page)
+export const facultySettingsAPI = {
+  get: () => apiCall('/faculty-settings'),
+  update: (data: { sort_by?: 'custom' | 'experience' | 'designation' | 'designation-experience' }) =>
+    apiCall('/faculty-settings', { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // HOD API (image, resume = Supabase Storage URLs)

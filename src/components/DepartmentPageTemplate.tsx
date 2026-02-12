@@ -90,71 +90,6 @@ function commaList(text: string | undefined): string[] {
   return text.split(',,,').map((s) => s.trim()).filter(Boolean);
 }
 
-// CSE-family: CSE, CSD, CSC, CSM — HODs are per-department; faculty are shared across all four.
-const CSE_FAMILY_SLUGS = ['cse', 'data-science', 'cyber-security', 'aiml'] as const;
-
-function isCSEOnly(department: string): boolean {
-  const d = (department || '').toLowerCase();
-  return (
-    (d.includes('computer science and engineering (cse)') ||
-      d === 'cse' ||
-      (d.includes('computer science') && d.includes('(cse)') && !d.includes('cyber') && !d.includes('datascience') && !d.includes('machinelearning'))) &&
-    !d.includes('(csc)') && !d.includes('(csd)') && !d.includes('(csm)')
-  );
-}
-
-function isCSDOnly(department: string): boolean {
-  const d = (department || '').toLowerCase();
-  return (
-    d.includes('cse datascience (csd)') ||
-    d.includes('datascience (csd)') ||
-    (d.includes('data science') && d.includes('(csd)')) ||
-    d === 'csd'
-  );
-}
-
-function isCSCOnly(department: string): boolean {
-  const d = (department || '').toLowerCase();
-  return (
-    d.includes('cse cybersecurity (csc)') ||
-    d.includes('cybersecurity (csc)') ||
-    (d.includes('cyber') && d.includes('(csc)')) ||
-    d === 'csc'
-  );
-}
-
-function isCSMOnly(department: string): boolean {
-  const d = (department || '').toLowerCase();
-  return (
-    d.includes('cse machinelearning (csm)') ||
-    d.includes('machinelearning (csm)') ||
-    (d.includes('machine learning') && d.includes('(csm)')) ||
-    (d.includes('aiml') && d.includes('(csm)')) ||
-    d === 'csm'
-  );
-}
-
-/** True if department is one of CSE, CSD, CSC, CSM (shared faculty pool). */
-function isCSEFamilyDepartment(department: string): boolean {
-  return isCSEOnly(department) || isCSDOnly(department) || isCSCOnly(department) || isCSMOnly(department);
-}
-
-/** Returns a filter that matches only the HOD for the given CSE-family slug. */
-function getHodFilterForSlug(slug: string): (department: string) => boolean {
-  switch (slug) {
-    case 'cse':
-      return isCSEOnly;
-    case 'data-science':
-      return isCSDOnly;
-    case 'cyber-security':
-      return isCSCOnly;
-    case 'aiml':
-      return isCSMOnly;
-    default:
-      return () => false;
-  }
-}
-
 // Adaptive grid layout based on number of images (1-10)
 // Automatically adjusts photo sizes to create a balanced grid
 function getAdaptiveGalleryLayout(count: number): { gridCols: string; items: Array<{ colSpan: string; rowSpan: string }> } {
@@ -331,31 +266,34 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
             return { src, alt: img.alt || 'Gallery' };
           });
           setAllGalleryImages(mappedImages);
-          // Show only first 10 images in the preview
           setGalleryImages(mappedImages.slice(0, 10));
         }
       } catch (_) {}
     };
-    const loadFaculty = async () => {
+    loadGallery();
+  }, [slug, galleryFilter]);
+
+  useEffect(() => {
+    const loadFacultyAndHods = async () => {
       try {
         const [f, h] = await Promise.all([facultyAPI.getAll(), hodsAPI.getAll()]);
-        const isCSEFamily = CSE_FAMILY_SLUGS.includes(slug as any);
-        if (isCSEFamily) {
-          // HODs: only this page's department (CSE / CSD / CSC / CSM)
-          const hodFilter = getHodFilterForSlug(slug);
-          setHods(h.filter((x: any) => hodFilter(x.department || '')));
-          // Faculty: shared across CSE, CSD, CSC, CSM — show anyone in any of these four
-          setFaculty(f.filter((x: any) => isCSEFamilyDepartment(x.department || '')));
+        const data = await departmentPagesAPI.getBySlug(slug);
+        const facultyIds = Array.isArray(data?.sections?.faculty?.facultyIds) ? data.sections.faculty.facultyIds : [];
+        const deptFilter = facultyFilter ?? (() => true);
+        setHods(h.filter((x: any) => deptFilter(x.department || '')));
+        if (facultyIds.length > 0) {
+          const idSet = new Set(facultyIds);
+          setFaculty(f.filter((x: any) => idSet.has(x.id)));
         } else {
-          const deptFilter = facultyFilter ?? (() => true);
-          setFaculty(f.filter((x: any) => deptFilter(x.department || '')));
-          setHods(h.filter((x: any) => deptFilter(x.department || '')));
+          setFaculty([]);
         }
-      } catch (_) {}
+      } catch (_) {
+        setFaculty([]);
+        setHods([]);
+      }
     };
-    loadGallery();
-    loadFaculty();
-  }, [slug, galleryFilter, facultyFilter]);
+    loadFacultyAndHods();
+  }, [slug, facultyFilter]);
 
 
   useEffect(() => {
@@ -1010,7 +948,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Faculty" title="Faculty" accent="emerald" />
           {facultyWithHods.length > 0 ? (
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {facultyWithHods.map((f: any) => (
                 <div key={f._listKey ?? f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
                   <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
@@ -1043,6 +981,11 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                   {f.qualification && (
                     <p className="text-xs text-slate-500 mt-0.5 truncate" title={f.qualification}>
                       {f.qualification}
+                    </p>
+                  )}
+                  {f.experience && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Experience: {f.experience}
                     </p>
                   )}
                 </div>

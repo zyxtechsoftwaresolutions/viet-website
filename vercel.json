@@ -1,9 +1,8 @@
 {
-    "rewrites": [
-      {
-        "source": "/(.*)",
-        "destination": "/index.html"
-      }
-    ]
-  }
-  
+  "rewrites": [
+    {
+      "source": "/((?!api|bgvideoexp\\.mp4|LOGO_RENDER\\.mp4).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

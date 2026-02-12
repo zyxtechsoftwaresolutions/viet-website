@@ -81,7 +81,7 @@ const ScrollingTicker = () => {
               ref={textRef}
               className="inline-block whitespace-nowrap animate-scroll-left will-change-transform"
               style={{
-                animationDuration: `${Math.max(20, duplicateCount * 2)}s`,
+                animationDuration: `${Math.max(45, duplicateCount * 4)}s`,
               }}
             >
               <span className="text-xs md:text-sm px-2 text-white font-medium">{scrollingText}</span>

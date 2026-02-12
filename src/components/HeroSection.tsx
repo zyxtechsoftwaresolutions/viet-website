@@ -48,6 +48,45 @@ const ProgramIcons = {
 
 const INTRO_COMPLETE_EVENT = 'introComplete';
 
+/** Video URL: env override for CDN/Supabase, else relative path for same-origin serving */
+const EXPLORE_PATH_VIDEO_SRC = import.meta.env.VITE_BGVIDEOEXP_URL || '/bgvideoexp.mp4';
+
+function ExplorePathVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [useFallback, setUseFallback] = useState(false);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const play = () => v.play().catch(() => {});
+    v.addEventListener('loadeddata', play);
+    v.addEventListener('canplay', play);
+    return () => {
+      v.removeEventListener('loadeddata', play);
+      v.removeEventListener('canplay', play);
+    };
+  }, []);
+
+  if (useFallback) return null; // Rely on bg-slate-900 from parent
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      className="absolute inset-0 w-full h-full object-cover z-0"
+      aria-hidden
+      src={EXPLORE_PATH_VIDEO_SRC}
+      onError={() => setUseFallback(true)}
+    >
+      <source src={EXPLORE_PATH_VIDEO_SRC} type="video/mp4" />
+    </video>
+  );
+}
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -515,21 +554,8 @@ const HeroSection = () => {
 
       {/* Explore Your Path – fixed height (Management size), course list scrolls when more items */}
       <div id="whats-your-interest" className="relative overflow-hidden py-12 md:py-14 border-t border-slate-800 h-[520px] md:h-[560px] bg-slate-900">
-        {/* Background video - served from /bgvideoexp.mp4 (dist or public on server) */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover z-0"
-          aria-hidden
-          onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
-          onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
-          src="/bgvideoexp.mp4"
-        >
-          <source src="/bgvideoexp.mp4" type="video/mp4" />
-        </video>
+        {/* Background video - use env override for CDN/Supabase, else /bgvideoexp.mp4 */}
+        <ExplorePathVideo />
         {/* Lighter overlay so video is clearly visible */}
         <div className="absolute inset-0 bg-black/35 z-[1]" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30 z-[1]" aria-hidden />

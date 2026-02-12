@@ -1382,3 +1382,108 @@ export async function updateIntroVideoSettings(item) {
   if (error) throw error;
   return data;
 }
+
+// ==================== FACULTY SETTINGS ====================
+export async function getFacultySettings() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('faculty-settings');
+      return d.settings || { id: 1, sort_by: 'custom' };
+    } catch (e) {
+      return { id: 1, sort_by: 'custom' };
+    }
+  }
+  try {
+    const { data, error } = await supabase
+      .from('faculty_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '42P01') {
+        return { id: 1, sort_by: 'custom' };
+      }
+      throw error;
+    }
+    return data || { id: 1, sort_by: 'custom' };
+  } catch (e) {
+    return { id: 1, sort_by: 'custom' };
+  }
+}
+
+export async function updateFacultySettings(item) {
+  const payload = { updated_at: new Date().toISOString() };
+  if (item.sort_by !== undefined) payload.sort_by = item.sort_by;
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('faculty-settings');
+    d.settings = { id: 1, ...(d.settings || {}), ...payload };
+    await writeJsonFile('faculty-settings', d);
+    return d.settings;
+  }
+  const { data, error } = await supabase
+    .from('faculty_settings')
+    .upsert({ id: 1, ...payload }, { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ==================== VISITOR COUNT ====================
+export async function getVisitorCount() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('visitor-count');
+      return typeof d.count === 'number' ? d.count : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  try {
+    const { data, error } = await supabase
+      .from('visitor_count')
+      .select('count')
+      .eq('id', 1)
+      .single();
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '42P01') return 0;
+      throw error;
+    }
+    return data ? Number(data.count) || 0 : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+export async function incrementVisitorCount() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('visitor-count');
+      d.count = (typeof d.count === 'number' ? d.count : 0) + 1;
+      await writeJsonFile('visitor-count', d);
+      return d.count;
+    } catch (e) {
+      return 0;
+    }
+  }
+  try {
+    const { data: current, error: fetchErr } = await supabase
+      .from('visitor_count')
+      .select('count')
+      .eq('id', 1)
+      .single();
+    if (fetchErr || !current) return 0;
+    const newCount = Number(current.count) + 1;
+    const { data, error } = await supabase
+      .from('visitor_count')
+      .update({ count: newCount, updated_at: new Date().toISOString() })
+      .eq('id', 1)
+      .select()
+      .single();
+    if (error) throw error;
+    return data ? Number(data.count) : newCount;
+  } catch (e) {
+    return 0;
+  }
+}

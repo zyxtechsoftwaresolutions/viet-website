@@ -24,6 +24,9 @@ interface DataTableProps<T> {
   onAdd?: () => void;
   addLabel?: string;
   getId: (item: T) => number | string;
+  headerClassName?: string;
+  bodyClassName?: string;
+  bodyRowClassName?: string;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -34,6 +37,9 @@ export function DataTable<T extends Record<string, any>>({
   onAdd,
   addLabel = 'Add New',
   getId,
+  headerClassName,
+  bodyClassName,
+  bodyRowClassName,
 }: DataTableProps<T>) {
   return (
     <div className="space-y-4">
@@ -47,23 +53,23 @@ export function DataTable<T extends Record<string, any>>({
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className={headerClassName}>
               {columns.map((column) => (
                 <TableHead key={String(column.key)}>{column.header}</TableHead>
               ))}
               {(onEdit || onDelete) && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className={bodyClassName}>
             {data.length === 0 ? (
-              <TableRow>
+              <TableRow className={bodyRowClassName}>
                 <TableCell colSpan={columns.length + (onEdit || onDelete ? 1 : 0)} className="text-center py-8 text-muted-foreground">
                   No data available
                 </TableCell>
               </TableRow>
             ) : (
               data.map((item) => (
-                <TableRow key={getId(item)}>
+                <TableRow key={getId(item)} className={bodyRowClassName}>
                   {columns.map((column) => (
                     <TableCell key={String(column.key)}>
                       {column.render

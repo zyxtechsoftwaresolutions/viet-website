@@ -150,7 +150,7 @@ const NewsTab = () => {
 
   return (
     <div className="space-y-6">
-      <DataTable
+        <DataTable
         data={news}
         columns={columns}
         onAdd={handleAdd}
@@ -158,6 +158,9 @@ const NewsTab = () => {
         onDelete={handleDelete}
         addLabel="Add News"
         getId={(item) => item.id}
+        headerClassName="bg-emerald-200 [&>th]:bg-emerald-200"
+        bodyClassName="bg-emerald-100"
+        bodyRowClassName="hover:bg-emerald-200/80 [&:hover>td]:bg-emerald-200/80"
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -353,6 +356,9 @@ const AnnouncementsTab = () => {
         onDelete={handleDelete}
         addLabel="Add Announcement"
         getId={(item) => item.id}
+        headerClassName="bg-sky-200 [&>th]:bg-sky-200"
+        bodyClassName="bg-sky-100"
+        bodyRowClassName="hover:bg-sky-200/80 [&:hover>td]:bg-sky-200/80"
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
