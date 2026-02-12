@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { introVideoSettingsAPI } from '@/lib/api';
+import { isGoogleDriveLink, getGoogleDrivePreviewEmbedUrl } from '@/lib/googleDriveUtils';
 
 let INTRO_VIDEO_SRC = '/LOGO_RENDER.mp4'; // Fallback
 let INTRO_VIDEO_ENABLED = false; // Fallback
@@ -140,6 +141,9 @@ export default function IntroVideo({ onComplete }: { onComplete: () => void }) {
     return null; // Don't render if no video source
   }
 
+  const isDrive = isGoogleDriveLink(videoSrc);
+  const embedUrl = isDrive ? getGoogleDrivePreviewEmbedUrl(videoSrc) : null;
+
   return (
     <div
       className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black transition-opacity duration-150 ${
@@ -159,31 +163,52 @@ export default function IntroVideo({ onComplete }: { onComplete: () => void }) {
           aria-hidden
         />
       ))}
-      {!isReady && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-          <p className="mt-4 text-sm text-white/70">Loading video...</p>
-        </div>
+      {embedUrl ? (
+        <>
+          <iframe
+            src={embedUrl}
+            title="VIET intro video"
+            className="absolute inset-0 w-full h-full border-0"
+            allow="autoplay; encrypted-media; fullscreen"
+            allowFullScreen
+          />
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="absolute top-4 right-4 px-4 py-2 rounded-md bg-black/50 text-white text-sm font-medium hover:bg-black/70 transition-colors z-10"
+            aria-label="Skip intro video"
+          >
+            Skip
+          </button>
+        </>
+      ) : (
+        <>
+          {!isReady && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <p className="mt-4 text-sm text-white/70">Loading video...</p>
+            </div>
+          )}
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            preload="auto"
+            muted
+            playsInline
+            className="h-full w-full object-contain"
+            aria-label="VIET intro video"
+            onClick={handleSkip}
+          />
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="absolute top-4 right-4 px-4 py-2 rounded-md bg-black/50 text-white text-sm font-medium hover:bg-black/70 transition-colors z-10"
+            aria-label="Skip intro video"
+          >
+            Skip
+          </button>
+        </>
       )}
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        preload="auto"
-        muted
-        playsInline
-        className="h-full w-full object-contain"
-        aria-label="VIET intro video"
-        onClick={handleSkip}
-      />
-      {/* Skip button */}
-      <button
-        type="button"
-        onClick={handleSkip}
-        className="absolute top-4 right-4 px-4 py-2 rounded-md bg-black/50 text-white text-sm font-medium hover:bg-black/70 transition-colors z-10"
-        aria-label="Skip intro video"
-      >
-        Skip
-      </button>
     </div>
   );
 }

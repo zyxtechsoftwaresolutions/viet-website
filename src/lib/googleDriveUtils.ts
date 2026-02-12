@@ -98,23 +98,34 @@ export function getGoogleDriveThumbnail(driveLink: string): string {
   }
 
   try {
-    let fileId = '';
-    const fileMatch = driveLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (fileMatch) {
-      fileId = fileMatch[1];
-    } else {
-      const openMatch = driveLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-      if (openMatch) {
-        fileId = openMatch[1];
-      }
-    }
-
+    const fileId = getGoogleDriveFileId(driveLink);
     if (fileId) {
       return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
     }
-
     return driveLink;
   } catch (error) {
     return driveLink;
   }
+}
+
+/**
+ * Extracts the file ID from a Google Drive link (file or open?id=).
+ */
+export function getGoogleDriveFileId(driveLink: string): string | null {
+  if (!driveLink || !driveLink.includes('drive.google.com')) return null;
+  const fileMatch = driveLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return fileMatch[1];
+  const openMatch = driveLink.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return openMatch ? openMatch[1] : null;
+}
+
+/**
+ * Returns the Google Drive file preview/embed URL for use in an iframe.
+ * Videos play inline without "Download" or "Sign in" when shared as "Anyone with the link can view".
+ * autoplay=1 starts playback automatically.
+ */
+export function getGoogleDrivePreviewEmbedUrl(driveLink: string): string {
+  const fileId = getGoogleDriveFileId(driveLink);
+  if (!fileId) return driveLink;
+  return `https://drive.google.com/file/d/${fileId}/preview?autoplay=1`;
 }

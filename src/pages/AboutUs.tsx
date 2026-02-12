@@ -6,6 +6,9 @@ import Footer from '@/components/Footer';
 import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { pagesAPI } from '@/lib/api';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const statIcons = [BookOpen, Users, GraduationCap, Award];
+
 // Animated Stat Component - moved outside to prevent recreation
 interface StatType {
   number: string;
@@ -162,19 +165,42 @@ const AboutUs = () => {
     fetchPageContent();
   }, []);
 
-  const stats = useMemo(() => [
-    { number: '15+', label: 'Programs', icon: BookOpen, targetValue: 15, suffix: '+' },
-    { number: '4900+', label: 'Students', icon: Users, targetValue: 4900, suffix: '+' },
-    { number: '200+', label: 'Faculty Members', icon: GraduationCap, targetValue: 200, suffix: '+' },
-    { number: 'A', label: 'NAAC Grade', icon: Award, targetValue: 'A', suffix: '', isLetter: true },
-  ], []);
+  const stats = useMemo(() => {
+    const fromApi = pageContent?.stats;
+    if (Array.isArray(fromApi) && fromApi.length >= 4) {
+      return fromApi.slice(0, 4).map((s: any, i: number) => ({
+        number: (s?.number ?? '') + (s?.suffix ?? ''),
+        label: s?.label ?? '',
+        icon: statIcons[i] || BookOpen,
+        targetValue: s?.isLetter ? 'A' : (parseInt(String(s?.number), 10) || 0),
+        suffix: s?.suffix ?? '',
+        isLetter: !!s?.isLetter,
+      }));
+    }
+    return [
+      { number: '15+', label: 'Programs', icon: BookOpen, targetValue: 15, suffix: '+' },
+      { number: '4900+', label: 'Students', icon: Users, targetValue: 4900, suffix: '+' },
+      { number: '200+', label: 'Faculty Members', icon: GraduationCap, targetValue: 200, suffix: '+' },
+      { number: 'A', label: 'NAAC Grade', icon: Award, targetValue: 'A', suffix: '', isLetter: true },
+    ];
+  }, [pageContent?.stats]);
 
-  // Rankings carousel logos
-  const rankingsLogos = [
-    { src: '/naac-A-logo.png', alt: 'NAAC A Grade', name: 'NAAC A Grade', description: 'Accredited with A grade by NAAC' },
-    { src: '/UGC-logo.png', alt: 'UGC Recognition', name: 'UGC Recognition', description: 'Recognized by University Grants Commission' },
-    { src: '/msme-logo.png', alt: 'MSME', name: 'MSME', description: 'Ministry of Micro, Small & Medium Enterprises' },
-  ];
+  const rankingsLogos = useMemo(() => {
+    const fromApi = pageContent?.rankings?.logos;
+    if (Array.isArray(fromApi) && fromApi.length > 0) {
+      return fromApi.map((l: any) => ({
+        src: l?.src?.startsWith('http') ? l.src : (l?.src ? `${API_BASE_URL.replace(/\/api\/?$/, '')}${l.src.startsWith('/') ? l.src : `/${l.src}`}` : ''),
+        alt: l?.alt || l?.name || '',
+        name: l?.name || '',
+        description: l?.description || '',
+      })).filter((l: any) => l.src);
+    }
+    return [
+      { src: '/naac-A-logo.png', alt: 'NAAC A Grade', name: 'NAAC A Grade', description: 'Accredited with A grade by NAAC' },
+      { src: '/UGC-logo.png', alt: 'UGC Recognition', name: 'UGC Recognition', description: 'Recognized by University Grants Commission' },
+      { src: '/msme-logo.png', alt: 'MSME', name: 'MSME', description: 'Ministry of Micro, Small & Medium Enterprises' },
+    ];
+  }, [pageContent?.rankings?.logos]);
 
   const [currentLogoIndex, setCurrentLogoIndex] = useState(0);
 
@@ -197,6 +223,10 @@ const AboutUs = () => {
 
   const heroTitle = pageContent?.hero?.title || 'About VIET';
   const heroDescription = pageContent?.hero?.description || 'Visakha Institute of Engineering & Technology - Excellence in Technical Education Since 2008';
+  const heroImage = pageContent?.hero?.heroImage;
+  const heroBg = heroImage
+    ? (heroImage.startsWith('http') ? heroImage : `${API_BASE_URL.replace(/\/api\/?$/, '')}${heroImage.startsWith('/') ? heroImage : `/${heroImage}`}`)
+    : '/campus-hero.jpg';
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -205,7 +235,7 @@ const AboutUs = () => {
       {/* Hero Section — About page with background */}
       <section
         className="relative min-h-[85vh] md:min-h-[90vh] pt-24 md:pt-28 pb-12 md:pb-16 text-white flex items-center bg-[#5a5a5a] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/campus-hero.jpg)' }}
+        style={{ backgroundImage: `url(${heroBg})` }}
       >
         {/* Dark overlay for text readability */}
         <div
@@ -409,7 +439,7 @@ const AboutUs = () => {
                 Rankings
               </h3>
               <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                VIET has been recognized as one of the leading institutions of higher learning in Andhra Pradesh, consistently maintaining high standards of academic excellence and student success.
+                {pageContent?.rankings?.intro || 'VIET has been recognized as one of the leading institutions of higher learning in Andhra Pradesh, consistently maintaining high standards of academic excellence and student success.'}
               </p>
             </div>
             <div>
@@ -417,7 +447,7 @@ const AboutUs = () => {
                 Accreditation
               </h3>
               <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                In 2023, the institution was awarded an A grade by the NAAC, reflecting our commitment to quality education and continuous improvement.
+                {pageContent?.rankings?.accreditation || 'In 2023, the institution was awarded an A grade by the NAAC, reflecting our commitment to quality education and continuous improvement.'}
               </p>
             </div>
             <div>
@@ -425,7 +455,7 @@ const AboutUs = () => {
                 Governance
               </h3>
               <p className="text-gray-600 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                The governance structure of Visakha Institute of Engineering & Technology's academic and administrative departments ensures transparency and excellence.
+                {pageContent?.rankings?.governance || "The governance structure of Visakha Institute of Engineering & Technology's academic and administrative departments ensures transparency and excellence."}
               </p>
             </div>
           </motion.div>
@@ -442,10 +472,17 @@ const AboutUs = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              {/* Image Placeholder */}
-              <div className="w-full h-64 md:h-80 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center">
-                <Eye className="w-24 h-24 text-slate-400" />
-              </div>
+              {pageContent?.visionImage ? (
+                <img
+                  src={pageContent.visionImage.startsWith('http') ? pageContent.visionImage : `${API_BASE_URL.replace(/\/api\/?$/, '')}${(pageContent.visionImage as string).startsWith('/') ? pageContent.visionImage : `/${pageContent.visionImage}`}`}
+                  alt="Vision"
+                  className="w-full h-64 md:h-80 object-cover rounded-lg"
+                />
+              ) : (
+                <div className="w-full h-64 md:h-80 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center">
+                  <Eye className="w-24 h-24 text-slate-400" />
+                </div>
+              )}
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -484,100 +521,74 @@ const AboutUs = () => {
 
           {/* Mission Subsections */}
           <div className="space-y-12">
-            {/* Education for Life */}
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Education for Life
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  There are two types of education: education for living and education for life. Studying to become a professional is education for a living, while education for life requires an understanding of the essential human values. At VIET, we believe that education should also impart a culture of the heart, based on enduring values and inner strength.
-                </p>
-                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  VIET's culture of education helps to inculcate in our students the right ethos to be rooted in the values of excellence, integrity, and innovation. Endowed with qualities of acceptance, patience, self-confidence, perseverance, and enthusiasm, the benefit of humanity will become foremost in the students' thoughts, words and actions.
-                </p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                {/* Image Placeholder */}
-                <div className="w-full h-64 md:h-80 bg-gradient-to-br from-blue-200 to-blue-300 rounded-lg flex items-center justify-center">
-                  <GraduationCap className="w-24 h-24 text-blue-400" />
+            {Array.isArray(pageContent?.missionSections) && pageContent.missionSections.length > 0 ? (
+              pageContent.missionSections.map((sec: any, idx: number) => (
+                <div key={idx} className={`grid md:grid-cols-2 gap-8 items-center ${idx % 2 === 1 ? '' : ''}`}>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className={idx % 2 === 1 ? 'md:order-2' : ''}
+                  >
+                    {sec?.image ? (
+                      <img
+                        src={sec.image.startsWith('http') ? sec.image : `${API_BASE_URL.replace(/\/api\/?$/, '')}${sec.image.startsWith('/') ? sec.image : `/${sec.image}`}`}
+                        alt={sec?.title || ''}
+                        className="w-full h-64 md:h-80 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-64 md:h-80 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center">
+                        <GraduationCap className="w-24 h-24 text-slate-400" />
+                      </div>
+                    )}
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className={idx % 2 === 1 ? 'md:order-1' : ''}
+                  >
+                    {sec?.title && <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{sec.title}</h3>}
+                    <div className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }} dangerouslySetInnerHTML={{ __html: sec?.body || '' }} />
+                  </motion.div>
                 </div>
-              </motion.div>
-            </div>
-
-            {/* Excellence Driven Research */}
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="md:order-2"
-              >
-                {/* Image Placeholder */}
-                <div className="w-full h-64 md:h-80 bg-gradient-to-br from-purple-200 to-purple-300 rounded-lg flex items-center justify-center">
-                  <Target className="w-24 h-24 text-purple-400" />
+              ))
+            ) : (
+              <>
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+                    <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>Education for Life</h3>
+                    <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>There are two types of education: education for living and education for life. Studying to become a professional is education for a living, while education for life requires an understanding of the essential human values. At VIET, we believe that education should also impart a culture of the heart, based on enduring values and inner strength.</p>
+                    <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>VIET's culture of education helps to inculcate in our students the right ethos to be rooted in the values of excellence, integrity, and innovation.</p>
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+                    <div className="w-full h-64 md:h-80 bg-gradient-to-br from-blue-200 to-blue-300 rounded-lg flex items-center justify-center"><GraduationCap className="w-24 h-24 text-blue-400" /></div>
+                  </motion.div>
                 </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="md:order-1"
-              >
-                <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Excellence Driven Research
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Our motivation to pursue research is focused on addressing major global problems related to technology, innovation, and sustainable development. We believe that if we could transform excellence from a mere word into a path of action, we would be able to address most of the world's challenges.
-                </p>
-                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  If we take this step courageously, then our research and its outcome will have a special impact, spontaneity, and power. This has translated into many latest advancements and innovations that have culminated in greater societal benefit.
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Global Impact */}
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Global Impact
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  At VIET, we stand united in our mission towards solving globally recognized scientific and societal challenges, including environment, development, and technology. VIET stands at the strategic juncture of two streams of cultures: tradition and innovation.
-                </p>
-                <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  It is our vision to bring both cultures together to bridge the division through meaningful collaborations with world-class universities and innovative approaches that will benefit the entire planet.
-                </p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                {/* Image Placeholder */}
-                <div className="w-full h-64 md:h-80 bg-gradient-to-br from-green-200 to-green-300 rounded-lg flex items-center justify-center">
-                  <Globe className="w-24 h-24 text-green-400" />
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="md:order-2">
+                    <div className="w-full h-64 md:h-80 bg-gradient-to-br from-purple-200 to-purple-300 rounded-lg flex items-center justify-center"><Target className="w-24 h-24 text-purple-400" /></div>
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="md:order-1">
+                    <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>Excellence Driven Research</h3>
+                    <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>Our motivation to pursue research is focused on addressing major global problems related to technology, innovation, and sustainable development.</p>
+                    <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>If we take this step courageously, then our research and its outcome will have a special impact, spontaneity, and power.</p>
+                  </motion.div>
                 </div>
-              </motion.div>
-            </div>
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+                    <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>Global Impact</h3>
+                    <p className="text-gray-700 leading-relaxed mb-4 text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>At VIET, we stand united in our mission towards solving globally recognized scientific and societal challenges.</p>
+                    <p className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>It is our vision to bring both cultures together to bridge the division through meaningful collaborations with world-class universities.</p>
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+                    <div className="w-full h-64 md:h-80 bg-gradient-to-br from-green-200 to-green-300 rounded-lg flex items-center justify-center"><Globe className="w-24 h-24 text-green-400" /></div>
+                  </motion.div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -646,7 +657,7 @@ const AboutUs = () => {
               Find Us
             </h2>
             <p className="text-gray-700 mb-8 max-w-3xl text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-              Accredited 'A' by NAAC, Visakha Institute of Engineering & Technology is a multidisciplinary research institution located in Visakhapatnam, Andhra Pradesh, India. The institution's campus is situated at Narava, Visakhapatnam.
+              {(pageContent?.findUs as any)?.intro || "Accredited 'A' by NAAC, Visakha Institute of Engineering & Technology is a multidisciplinary research institution located in Visakhapatnam, Andhra Pradesh, India. The institution's campus is situated at Narava, Visakhapatnam."}
             </p>
             
             <div className="grid md:grid-cols-2 gap-8">
@@ -658,30 +669,24 @@ const AboutUs = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-[#0a192f] mt-1 flex-shrink-0" />
                     <div>
-                      <p className="text-gray-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        88th Division, Narava,<br />
-                        GVMC, Visakhapatnam,<br />
-                        Andhra Pradesh 530027,<br />
-                        India
+                      <p className="text-gray-700 whitespace-pre-line" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                        {(pageContent?.findUs as any)?.address || '88th Division, Narava,\nGVMC, Visakhapatnam,\nAndhra Pradesh 530027,\nIndia'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Phone className="w-5 h-5 text-[#0a192f] mt-1 flex-shrink-0" />
                     <div>
-                      <p className="text-gray-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        +91-9959617476<br />
-                        +91-9959617477<br />
-                        +91-9550957054
+                      <p className="text-gray-700 whitespace-pre-line" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                        {(pageContent?.findUs as any)?.phone || '+91-9959617476\n+91-9959617477\n+91-9550957054'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-[#0a192f] mt-1 flex-shrink-0" />
                     <div>
-                      <p className="text-gray-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        website@viet.edu.in<br />
-                        vietvsp@gmail.com
+                      <p className="text-gray-700 whitespace-pre-line" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                        {(pageContent?.findUs as any)?.email || 'website@viet.edu.in\nvietvsp@gmail.com'}
                       </p>
                     </div>
                   </div>

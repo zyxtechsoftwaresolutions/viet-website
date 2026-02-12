@@ -414,7 +414,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const heroImageUrl = heroImage ? (heroImage.startsWith('http') ? convertGoogleDriveLink(heroImage) : `${API_BASE}${heroImage}`) : null;
   const heroVideoRaw = (hero as { video?: string }).video?.trim() || '';
   const heroVideoInfo = heroVideoRaw && isVideoUrl(heroVideoRaw) ? getVideoEmbedUrl(heroVideoRaw) : null;
-  const heroVideoIsEmbed = heroVideoInfo && ['youtube', 'instagram', 'vimeo'].includes(heroVideoInfo.platform);
+  const heroVideoIsEmbed = heroVideoInfo && ['youtube', 'instagram', 'vimeo', 'googledrive'].includes(heroVideoInfo.platform);
   const heroVideoEmbedUrl = heroVideoIsEmbed ? heroVideoInfo!.embedUrl : null;
   const heroVideoDirectUrl = (() => {
     if (!heroVideoRaw) return null;
@@ -480,7 +480,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
               src={heroVideoEmbedUrl}
               title="Department hero video"
               className="absolute top-1/2 left-1/2 w-[100vmax] h-[56.25vmax] min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover pointer-events-none"
-              allow="autoplay; encrypted-media"
+              allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
             />
           </div>

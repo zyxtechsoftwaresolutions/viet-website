@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const VisionMission = lazy(() => import("./pages/VisionMission"));
 const Chairman = lazy(() => import("./pages/Chairman"));
+const HR = lazy(() => import("./pages/HR"));
 const Principal = lazy(() => import("./pages/Principal"));
 const DeanAcademics = lazy(() => import("./pages/DeanAcademics"));
 const DeanInnovation = lazy(() => import("./pages/DeanInnovation"));
@@ -69,7 +70,8 @@ const Gallery = lazy(() => import("./pages/admin/Gallery"));
 const VibeAtVietAdmin = lazy(() => import("./pages/admin/VibeAtVietAdmin"));
 const Recruiters = lazy(() => import("./pages/admin/Recruiters"));
 const PlacementSection = lazy(() => import("./pages/admin/PlacementSection"));
-const Pages = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
+const Authorities = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
+const AboutUsAdmin = lazy(() => import("./pages/admin/AboutUsAdmin"));
 const TransportRoutes = lazy(() => import("./pages/admin/TransportRoutes"));
 const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
@@ -96,6 +98,7 @@ const App = () => (
             <Route path="/about" element={<AboutUs />} />
             <Route path="/vision-mission" element={<VisionMission />} />
             <Route path="/chairman" element={<Chairman />} />
+            <Route path="/hr" element={<HR />} />
             <Route path="/principal" element={<Principal />} />
             <Route path="/dean-academics" element={<DeanAcademics />} />
             <Route path="/dean-innovation" element={<DeanInnovation />} />
@@ -170,7 +173,8 @@ const App = () => (
               <Route path="placement-section" element={<PlacementSection />} />
               <Route path="transport-routes" element={<TransportRoutes />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
-              <Route path="pages" element={<Pages />} />
+              <Route path="pages" element={<AboutUsAdmin />} />
+              <Route path="authorities" element={<Authorities />} />
             </Route>
             
             {/* Dynamic Route Handler - Checks if route matches a page in database */}

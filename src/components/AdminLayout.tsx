@@ -61,6 +61,7 @@ const AdminLayout = () => {
     { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes' },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations' },
     { icon: FileText, label: 'Pages', path: '/admin/pages' },
+    { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities' },
   ];
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);

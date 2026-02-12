@@ -86,21 +86,36 @@ app.use(cors({
 }));
 app.use(express.json());
 
+const publicDir = join(__dirname, '../public');
+const distDir = join(__dirname, '../dist');
+// Explore Your Path video: serve from dist first (Vite copies public→dist on build), then public
+app.get('/bgvideoexp.mp4', (req, res, next) => {
+  const fromDist = join(distDir, 'bgvideoexp.mp4');
+  const fromPublic = join(publicDir, 'bgvideoexp.mp4');
+  const path = existsSync(fromDist) ? fromDist : (existsSync(fromPublic) ? fromPublic : null);
+  if (path) {
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', 'video/mp4');
+    return res.sendFile(path);
+  }
+  next();
+});
+
 // Serve static files from public directory with optimized caching
-app.use(express.static(join(__dirname, '../public'), {
-  maxAge: '365d', // Cache for 1 year (images don't change often)
+app.use(express.static(publicDir, {
+  maxAge: '365d',
   etag: true,
   lastModified: true,
-  setHeaders: (res, path) => {
-    // Set CORS headers for static files
+  setHeaders: (res, filePath) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-    
-    // Optimize caching for images
-    if (path.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i)) {
+    if (filePath.match(/\.(mp4|webm|ogg|mov)$/i)) {
+      res.set('Accept-Ranges', 'bytes');
+      res.set('Cache-Control', 'public, max-age=86400');
+    } else if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i)) {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
-    } else if (path.match(/\.(css|js)$/i)) {
+    } else if (filePath.match(/\.(css|js)$/i)) {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
     } else {
       res.set('Cache-Control', 'public, max-age=86400');
@@ -433,6 +448,7 @@ app.post('/api/events', authenticateToken, async (req, res) => {
       description: body.description || '',
       date: body.date || '',
       time: body.time || '',
+      time_end: body.time_end || null,
       location: body.location || '',
       link: body.link || '',
       image: image || null
@@ -1597,6 +1613,15 @@ app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authen
     res.status(500).json({ error: error.message });
   }
 });
+
+// Serve built frontend (Vite dist) when running as single service (e.g. Render)
+const distPath = join(__dirname, '../dist');
+if (existsSync(distPath)) {
+  app.use(express.static(distPath, { index: false }));
+  app.get('*', (req, res) => {
+    res.sendFile(join(distPath, 'index.html'));
+  });
+}
 
 // Initialize server
 async function startServer() {

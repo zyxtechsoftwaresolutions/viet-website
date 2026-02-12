@@ -1,0 +1,12 @@
+# Render: ONE service (frontend + API together)
+# Build runs: install deps, build Vite, install server deps. Start runs Node server (serves API + built frontend).
+
+services:
+  - type: web
+    name: viet-website
+    runtime: node
+    buildCommand: npm install && npm run build && cd server && npm install
+    startCommand: cd server && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production

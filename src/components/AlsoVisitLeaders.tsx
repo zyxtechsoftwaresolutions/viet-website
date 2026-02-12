@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { User, GraduationCap, Lightbulb, BookOpen } from 'lucide-react';
+import { User, GraduationCap, Lightbulb, BookOpen, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type LeaderSlug = 'principal' | 'chairman' | 'dean-academics' | 'dean-innovation';
+export type LeaderSlug = 'principal' | 'chairman' | 'hr' | 'dean-academics' | 'dean-innovation';
 
 const LEADERS: { slug: LeaderSlug; label: string; href: string; icon: typeof User }[] = [
   { slug: 'chairman', label: 'Chairman', href: '/chairman', icon: User },
+  { slug: 'hr', label: 'HR', href: '/hr', icon: Briefcase },
   { slug: 'principal', label: 'Principal', href: '/principal', icon: GraduationCap },
   { slug: 'dean-academics', label: 'Dean Academics', href: '/dean-academics', icon: BookOpen },
   { slug: 'dean-innovation', label: 'Dean Innovation & Student Projects', href: '/dean-innovation', icon: Lightbulb },

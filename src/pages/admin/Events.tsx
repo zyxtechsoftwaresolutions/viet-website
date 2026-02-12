@@ -35,6 +35,7 @@ interface Event {
   description: string;
   date: string;
   time: string;
+  time_end?: string;
   location?: string;
   link?: string;
   image?: string;
@@ -51,6 +52,7 @@ const Events = () => {
     description: '',
     date: '',
     time: '',
+    time_end: '',
     location: '',
     link: '',
   });
@@ -80,6 +82,7 @@ const Events = () => {
       description: '',
       date: '',
       time: '',
+      time_end: '',
       location: '',
       link: '',
     });
@@ -95,6 +98,7 @@ const Events = () => {
       description: item.description,
       date: item.date,
       time: item.time,
+      time_end: (item as Event & { time_end?: string }).time_end || '',
       location: item.location || '',
       link: item.link || '',
     });
@@ -250,13 +254,24 @@ const Events = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
+                <Label htmlFor="time">Start time (from)</Label>
                 <Input
                   id="time"
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time_end">End time (to)</Label>
+                <Input
+                  id="time_end"
+                  type="time"
+                  value={formData.time_end}
+                  onChange={(e) => setFormData({ ...formData, time_end: e.target.value })}
+                  placeholder="Optional"
+                />
+                <p className="text-xs text-muted-foreground">When the event ends. Between start and end time the event shows as &quot;Event live&quot;.</p>
               </div>
             </div>
             <div className="space-y-2">

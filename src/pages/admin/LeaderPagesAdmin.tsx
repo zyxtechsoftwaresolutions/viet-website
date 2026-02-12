@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { pagesAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
-import { Edit, User, Award, GraduationCap, Lightbulb, Image as ImageIcon, X, Quote } from 'lucide-react';
+import { Edit, User, Award, GraduationCap, Lightbulb, Briefcase, Image as ImageIcon, X, Quote } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -27,7 +27,7 @@ interface Page {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-const LEADER_SLUGS = ['principal', 'chairman', 'dean-academics', 'dean-innovation'] as const;
+const LEADER_SLUGS = ['principal', 'chairman', 'hr', 'dean-academics', 'dean-innovation'] as const;
 type LeaderSlug = (typeof LEADER_SLUGS)[number];
 
 const getHeroImageUrl = (content: any): string => {
@@ -197,6 +197,7 @@ const LeaderPagesAdmin = () => {
 
   const principalPage = pages.find((p) => p.slug === 'principal');
   const chairmanPage = pages.find((p) => p.slug === 'chairman');
+  const hrPage = pages.find((p) => p.slug === 'hr');
   const deanAcademicsPage = pages.find((p) => p.slug === 'dean-academics');
   const deanInnovationPage = pages.find((p) => p.slug === 'dean-innovation');
 
@@ -213,7 +214,7 @@ const LeaderPagesAdmin = () => {
       <div>
         <h1 className="text-3xl font-bold">Pages</h1>
         <p className="text-muted-foreground mt-1">
-          Edit Principal, Chairman, Dean Academics, and Dean Innovation page content.
+          Edit Principal, Chairman, HR, Dean Academics, and Dean Innovation page content.
         </p>
       </div>
 
@@ -257,6 +258,28 @@ const LeaderPagesAdmin = () => {
             ) : (
               <p className="text-muted-foreground text-sm">
                 Chairman page not found.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-6 w-6" />
+              HR
+            </CardTitle>
+            <CardDescription>Edit HR page content and sections</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {hrPage ? (
+              <Button onClick={() => openEdit(hrPage)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit HR Page
+              </Button>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                HR page not found.
               </p>
             )}
           </CardContent>

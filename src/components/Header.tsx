@@ -197,6 +197,7 @@ const Header = () => {
     { name: 'About US', href: '/about' },
     { name: 'Vision & Mission', href: '/vision-mission' },
     { name: 'Chairman', href: '/chairman' },
+    { name: 'HR', href: '/hr' },
     { name: 'Principal', href: '/principal' },
     { name: 'Faculty', href: '/faculty' },
     { name: 'Dean Academics', href: '/dean-academics' },
@@ -806,7 +807,7 @@ const Header = () => {
                                     e.preventDefault();
                                     setIsStatusSubmenuToggled(!isStatusSubmenuToggled);
                                     setShowStatusSubmenu(!isStatusSubmenuToggled);
-                                  } else if (menuItem.name === 'About US' || menuItem.name === 'Vision & Mission' || menuItem.name === 'Chairman' || menuItem.name === 'Principal' || menuItem.name === 'Faculty') {
+                                  } else if (menuItem.name === 'About US' || menuItem.name === 'Vision & Mission' || menuItem.name === 'Chairman' || menuItem.name === 'HR' || menuItem.name === 'Principal' || menuItem.name === 'Faculty') {
                                     // Let the default link behavior handle navigation
                                     setIsAboutDropdownOpen(false);
                                   }

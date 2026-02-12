@@ -6,6 +6,7 @@ const Footer = () => {
     { name: 'About Us', href: '/about' },
     { name: 'Vision & Mission', href: '/vision-mission' },
     { name: 'Chairman', href: '/chairman' },
+    { name: 'HR', href: '/hr' },
     { name: 'Principal', href: '/principal' },
     { name: 'Accreditation', href: '/accreditation' },
     { name: 'Organizational Chart', href: '/organizational-chart' }

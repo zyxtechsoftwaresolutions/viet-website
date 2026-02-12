@@ -2,7 +2,9 @@
  * Utility functions for handling video URLs from various platforms
  */
 
-export type VideoPlatform = 'youtube' | 'instagram' | 'vimeo' | 'file' | 'unknown';
+import { getGoogleDrivePreviewEmbedUrl } from '@/lib/googleDriveUtils';
+
+export type VideoPlatform = 'youtube' | 'instagram' | 'vimeo' | 'googledrive' | 'file' | 'unknown';
 
 export interface VideoInfo {
   platform: VideoPlatform;
@@ -33,7 +35,10 @@ export function detectVideoPlatform(url: string): VideoPlatform {
   if (lowerUrl.includes('vimeo.com')) {
     return 'vimeo';
   }
-  
+  if (lowerUrl.includes('drive.google.com')) {
+    return 'googledrive';
+  }
+
   return 'unknown';
 }
 
@@ -138,7 +143,14 @@ function convertVimeoUrl(url: string): string {
     return url;
   }
   
-  return `https://player.vimeo.com/video/${videoId}`;
+  // autoplay, mute, loop so video plays automatically without pause or permission screen
+  const params = new URLSearchParams({
+    autoplay: '1',
+    muted: '1',
+    loop: '1',
+    background: '1',
+  });
+  return `https://player.vimeo.com/video/${videoId}?${params.toString()}`;
 }
 
 /**
@@ -172,6 +184,12 @@ export function getVideoEmbedUrl(video: string): VideoInfo {
       return {
         platform: 'vimeo',
         embedUrl: convertVimeoUrl(video),
+        originalUrl: video,
+      };
+    case 'googledrive':
+      return {
+        platform: 'googledrive',
+        embedUrl: getGoogleDrivePreviewEmbedUrl(video),
         originalUrl: video,
       };
     default:

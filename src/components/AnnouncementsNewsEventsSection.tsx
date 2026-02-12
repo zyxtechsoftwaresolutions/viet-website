@@ -9,6 +9,7 @@ interface Event {
   description: string;
   date: string;
   time: string;
+  time_end?: string;
   location?: string;
   image?: string;
   link?: string;
@@ -62,7 +63,7 @@ const AnnouncementsNewsEventsSection = () => {
   }, []);
 
   const calculateCountdown = (eventDate: string, eventTime: string) => {
-    const eventDateTime = new Date(`${eventDate}T${eventTime}`).getTime();
+    const eventDateTime = new Date(`${eventDate}T${eventTime || '00:00'}`).getTime();
     const now = new Date().getTime();
     const distance = eventDateTime - now;
     if (distance < 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -72,6 +73,23 @@ const AnnouncementsNewsEventsSection = () => {
       minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
       seconds: Math.floor((distance % (1000 * 60)) / 1000),
     };
+  };
+
+  // Event status: start time = time, end time = time_end (or end of day if not set)
+  const getEventStartMs = (e: Event) => new Date(`${e.date}T${e.time || '00:00'}`).getTime();
+  const getEventEndMs = (e: Event) => {
+    const endTime = e.time_end?.trim();
+    if (endTime) return new Date(`${e.date}T${endTime}`).getTime();
+    return new Date(`${e.date}T23:59:59`).getTime();
+  };
+  type EventStatus = 'upcoming' | 'live' | 'completed';
+  const getEventStatus = (e: Event): EventStatus => {
+    const now = Date.now();
+    const start = getEventStartMs(e);
+    const end = getEventEndMs(e);
+    if (now < start) return 'upcoming';
+    if (now <= end) return 'live';
+    return 'completed';
   };
 
   useEffect(() => {
@@ -104,22 +122,20 @@ const AnnouncementsNewsEventsSection = () => {
     });
   };
 
-  const now = new Date().getTime();
-  const eventsSortedByDateAsc = [...events].sort((a, b) => {
-    const aTime = new Date(`${a.date}T${a.time || '00:00'}`).getTime();
-    const bTime = new Date(`${b.date}T${b.time || '00:00'}`).getTime();
-    return aTime - bTime;
-  });
-  const eventsSortedByDateDesc = [...events].sort((a, b) => {
-    const aTime = new Date(`${a.date}T${a.time || '00:00'}`).getTime();
-    const bTime = new Date(`${b.date}T${b.time || '00:00'}`).getTime();
-    return bTime - aTime;
-  });
-  const upcomingEvents = eventsSortedByDateAsc.filter((e) => {
-    const eventTime = new Date(`${e.date}T${e.time || '00:00'}`).getTime();
-    return eventTime >= now;
-  });
-  const latestEvent = upcomingEvents[0] || eventsSortedByDateDesc[0];
+  const now = Date.now();
+  const eventsWithStatus = events.map((e) => ({ event: e, status: getEventStatus(e) }));
+  const liveEvents = eventsWithStatus.filter((x) => x.status === 'live').map((x) => x.event);
+  const upcomingEvents = eventsWithStatus
+    .filter((x) => x.status === 'upcoming')
+    .map((x) => x.event)
+    .sort((a, b) => getEventStartMs(a) - getEventStartMs(b));
+  const completedEvents = eventsWithStatus
+    .filter((x) => x.status === 'completed')
+    .map((x) => x.event)
+    .sort((a, b) => getEventEndMs(b) - getEventEndMs(a));
+  const latestEvent = liveEvents[0] || upcomingEvents[0] || completedEvents[0];
+  const latestEventStatus = latestEvent ? getEventStatus(latestEvent) : null;
+  const eventsSortedByDateDesc = [...completedEvents, ...liveEvents, ...upcomingEvents].reverse();
   const rightListEvents = eventsSortedByDateDesc.filter((e) => e.id !== latestEvent?.id);
   const rightListCards = rightListEvents.map((e) => ({
     id: e.id,
@@ -127,14 +143,18 @@ const AnnouncementsNewsEventsSection = () => {
     description: e.description || '',
     dateShort: toDateShort(e.date),
     time: e.time,
+    time_end: e.time_end,
+    timeLabel: e.time_end ? `${e.time || '00:00'} – ${e.time_end}` : (e.time || 'TBA'),
     location: e.location,
     image: e.image || null,
     link: e.link,
   }));
-  const latestEventCountdown = latestEvent ? (countdowns[latestEvent.id] || calculateCountdown(latestEvent.date, latestEvent.time || '00:00')) : null;
-  const latestEventIsUpcoming = latestEventCountdown
-    ? (latestEventCountdown.days > 0 || latestEventCountdown.hours > 0 || latestEventCountdown.minutes > 0 || latestEventCountdown.seconds > 0)
-    : false;
+  const latestEventCountdown = latestEvent && latestEventStatus === 'upcoming'
+    ? (countdowns[latestEvent.id] || calculateCountdown(latestEvent.date, latestEvent.time || '00:00'))
+    : null;
+  const latestEventIsUpcoming = latestEventStatus === 'upcoming';
+  const latestEventIsLive = latestEventStatus === 'live';
+  const latestEventIsCompleted = latestEventStatus === 'completed';
   const latestEventImageUrl = latestEvent?.image || null;
   const rightVisibleCount = Math.min(rightListCards.length, RIGHT_VISIBLE_CARDS) || 1;
   // Use margin on each card so spacing is reliable (no attached cards). Each card: margin 6px top + 6px bottom = 12px between cards.
@@ -231,14 +251,16 @@ const AnnouncementsNewsEventsSection = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {latestEventIsUpcoming ? 'Latest upcoming event' : 'Latest event'}
+                      {latestEventIsLive ? 'Live now' : latestEventIsUpcoming ? 'Latest upcoming event' : 'Latest event'}
                     </p>
                     <h3 className="mt-2 text-2xl md:text-3xl font-bold text-foreground line-clamp-2">
                       {latestEvent ? latestEvent.title : 'No events yet'}
                     </h3>
                     {latestEvent && (
                       <p className="mt-2 text-sm text-muted-foreground">
-                        {formatDate(latestEvent.date)} {latestEvent.time ? `• ${latestEvent.time}` : ''} {latestEvent.location ? `• ${latestEvent.location}` : ''}
+                        {formatDate(latestEvent.date)}
+                        {(latestEvent.time || latestEvent.time_end) ? ` • ${latestEvent.time || '00:00'}${latestEvent.time_end ? ` – ${latestEvent.time_end}` : ''}` : ''}
+                        {latestEvent.location ? ` • ${latestEvent.location}` : ''}
                       </p>
                     )}
                   </div>
@@ -264,7 +286,9 @@ const AnnouncementsNewsEventsSection = () => {
                           <div className="text-[10px] uppercase text-muted-foreground">Sec</div>
                         </div>
                       </div>
-                    ) : latestEvent && !latestEventIsUpcoming ? (
+                    ) : latestEvent && latestEventIsLive ? (
+                      <span className="text-sm font-medium text-emerald-800 bg-emerald-100 rounded-lg px-3 py-2">Event live</span>
+                    ) : latestEvent && latestEventIsCompleted ? (
                       <span className="text-sm font-medium text-green-700 bg-green-100 rounded-lg px-3 py-2">Event completed</span>
                     ) : !latestEvent ? (
                       <p className="text-sm text-muted-foreground">Add events in the admin panel.</p>
@@ -354,7 +378,7 @@ const AnnouncementsNewsEventsSection = () => {
                                 </h4>
                                 <p className="mt-1 flex items-center gap-1.5 text-xs text-white/90 line-clamp-1">
                                   <Clock className="h-3.5 w-3.5 shrink-0 opacity-90" />
-                                  <span>{card.time || 'TBA'}</span>
+                                  <span>{card.timeLabel}</span>
                                   {card.location && <span className="opacity-80">· {card.location}</span>}
                                 </p>
                               </div>

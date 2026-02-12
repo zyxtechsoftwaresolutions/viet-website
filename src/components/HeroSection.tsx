@@ -21,7 +21,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { heroVideosAPI, departmentsAPI } from '@/lib/api';
-import { convertGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
+import { convertGoogleDriveLink, convertGoogleDriveToDownload, getGoogleDrivePreviewEmbedUrl, isGoogleDriveLink } from '@/lib/googleDriveUtils';
 import NewsAnnouncementsSection from '@/components/NewsAnnouncementsSection';
 import ScrollingTicker from '@/components/ScrollingTicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -58,6 +58,8 @@ const HeroSection = () => {
   const [heroSlides, setHeroSlides] = useState<Array<{
     type: 'video';
     src: string;
+    /** When set (e.g. Drive link), use iframe instead of <video> so it plays without access screen */
+    embedUrl?: string;
     poster?: string;
     badge?: string;
     title: string;
@@ -217,18 +219,22 @@ const HeroSection = () => {
         const videos = await heroVideosAPI.getAll();
         if (Array.isArray(videos) && videos.length > 0) {
           const sorted = videos.slice().sort((a: any, b: any) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
-          const slides = sorted.map((video) => ({
-            type: 'video' as const,
-            src: convertGoogleDriveToDownload(video.src),
-            poster: video.poster ? convertGoogleDriveLink(video.poster) : undefined,
-            badge: video.badge || undefined,
-            title: video.title || '',
-            subtitle: video.subtitle || '',
-            buttonText: video.buttonText || 'Apply Now',
-            buttonAction: video.buttonLink
-              ? () => window.open(video.buttonLink!, video.buttonLink!.startsWith('http') ? '_blank' : '_self')
-              : () => {},
-          }));
+          const slides = sorted.map((video) => {
+            const isDrive = isGoogleDriveLink(video.src);
+            return {
+              type: 'video' as const,
+              src: convertGoogleDriveToDownload(video.src),
+              embedUrl: isDrive ? getGoogleDrivePreviewEmbedUrl(video.src) : undefined,
+              poster: video.poster ? convertGoogleDriveLink(video.poster) : undefined,
+              badge: video.badge || undefined,
+              title: video.title || '',
+              subtitle: video.subtitle || '',
+              buttonText: video.buttonText || 'Apply Now',
+              buttonAction: video.buttonLink
+                ? () => window.open(video.buttonLink!, video.buttonLink!.startsWith('http') ? '_blank' : '_self')
+                : () => {},
+            };
+          });
           setHeroSlides(slides);
         } else {
           // Fallback to empty array if no videos
@@ -359,7 +365,15 @@ const HeroSection = () => {
             >
               {/* Video or GIF Background - Optimized for LCP */}
               {slide.type === 'video' ? (
-                unsupportedVideoSlides.has(index) ? (
+                slide.embedUrl ? (
+                  <iframe
+                    src={slide.embedUrl}
+                    title={slide.title}
+                    className="absolute inset-0 w-full h-full object-cover border-0 pointer-events-none"
+                    allow="autoplay; encrypted-media; fullscreen"
+                    allowFullScreen
+                  />
+                ) : unsupportedVideoSlides.has(index) ? (
                   <img
                     src={slide.poster}
                     alt={slide.title}
@@ -500,21 +514,25 @@ const HeroSection = () => {
       <NewsAnnouncementsSection />
 
       {/* Explore Your Path – fixed height (Management size), course list scrolls when more items */}
-      <div id="whats-your-interest" className="relative overflow-hidden py-12 md:py-14 border-t border-slate-800 h-[520px] md:h-[560px]">
-        {/* Background video - public/bgvideoexp.mp4 */}
+      <div id="whats-your-interest" className="relative overflow-hidden py-12 md:py-14 border-t border-slate-800 h-[520px] md:h-[560px] bg-slate-900">
+        {/* Background video - served from /bgvideoexp.mp4 (dist or public on server) */}
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover z-0"
           aria-hidden
+          onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
+          onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
+          src="/bgvideoexp.mp4"
         >
           <source src="/bgvideoexp.mp4" type="video/mp4" />
         </video>
         {/* Lighter overlay so video is clearly visible */}
-        <div className="absolute inset-0 bg-black/35" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30" aria-hidden />
+        <div className="absolute inset-0 bg-black/35 z-[1]" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30 z-[1]" aria-hidden />
 
         <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
           {/* Left: Section name | Right: Toggle + courses */}
