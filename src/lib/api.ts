@@ -65,6 +65,12 @@ export const authAPI = {
   verify: async () => {
     return apiCall('/auth/verify');
   },
+  getSubAdmins: () => apiCall('/auth/sub-admins'),
+  createSubAdmin: (data: { username: string; email?: string; password: string; allowedSections: string[] }) =>
+    apiCall('/auth/sub-admins', { method: 'POST', body: JSON.stringify(data) }),
+  updateSubAdmin: (id: number, data: { username?: string; email?: string; password?: string; allowedSections?: string[] }) =>
+    apiCall(`/auth/sub-admins/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteSubAdmin: (id: number) => apiCall(`/auth/sub-admins/${id}`, { method: 'DELETE' }),
 };
 
 // Announcements API

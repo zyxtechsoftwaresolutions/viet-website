@@ -38,7 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2, Search } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -173,6 +173,7 @@ const Faculty = () => {
   const [sortBy, setSortBy] = useState<'custom' | 'experience' | 'designation' | 'designation-experience'>('custom');
   const [customOrder, setCustomOrder] = useState<Faculty[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchFaculty = async () => {
     try {
@@ -292,7 +293,20 @@ const Faculty = () => {
     return list;
   }, [faculty, sortBy]);
 
-  const displayList = sortBy === 'custom' ? customOrder : sortedFaculty;
+  const baseDisplayList = sortBy === 'custom' ? customOrder : sortedFaculty;
+
+  const displayList = useMemo(() => {
+    if (!searchQuery.trim()) return baseDisplayList;
+    const q = searchQuery.trim().toLowerCase();
+    return baseDisplayList.filter(
+      (f) =>
+        (f.name || '').toLowerCase().includes(q) ||
+        (f.designation || '').toLowerCase().includes(q) ||
+        (f.qualification || '').toLowerCase().includes(q) ||
+        (f.department || '').toLowerCase().includes(q) ||
+        (f.email || '').toLowerCase().includes(q)
+    );
+  }, [baseDisplayList, searchQuery]);
 
   const handleAdd = () => {
     setSelectedItem(null);
@@ -447,6 +461,15 @@ const Faculty = () => {
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[240px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, designation, qualification, department, email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add Faculty

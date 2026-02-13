@@ -78,6 +78,7 @@ const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
+const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -179,6 +180,7 @@ const App = () => (
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
+              <Route path="sub-admins" element={<SubAdmins />} />
             </Route>
             
             {/* Dynamic Route Handler - Checks if route matches a page in database */}

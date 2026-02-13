@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Newspaper,
   Calendar,
-  Image,
   Building2,
   Users,
   UserCog,
@@ -24,6 +23,7 @@ import {
   Award,
   Film,
   Warehouse,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -44,49 +44,65 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: PlayCircle, label: 'Hero Videos', path: '/admin/hero-videos' },
-    { icon: Film, label: 'Intro Video', path: '/admin/intro-video' },
-    { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker' },
-    { icon: Newspaper, label: 'News & Announcements', path: '/admin/news-announcements' },
-    { icon: Calendar, label: 'Events', path: '/admin/events' },
-    { icon: Building2, label: 'Departments', path: '/admin/departments' },
-    { icon: BookOpen, label: 'Department Pages', path: '/admin/department-pages' },
-    { icon: Users, label: 'Faculty', path: '/admin/faculty' },
-    { icon: UserCog, label: 'HODs', path: '/admin/hods' },
-    { icon: Camera, label: 'Gallery', path: '/admin/gallery' },
-    { icon: Grid3x3, label: 'Vibe@Viet', path: '/admin/vibe-at-viet' },
-    { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters' },
-    { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section' },
-    { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes' },
-    { icon: Warehouse, label: 'Facilities', path: '/admin/facilities' },
-    { icon: Award, label: 'Accreditations', path: '/admin/accreditations' },
-    { icon: FileText, label: 'Pages', path: '/admin/pages' },
-    { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities' },
+  const allMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', section: 'dashboard', adminOnly: false },
+    { icon: PlayCircle, label: 'Hero Videos', path: '/admin/hero-videos', section: 'hero-videos', adminOnly: false },
+    { icon: Film, label: 'Intro Video', path: '/admin/intro-video', section: 'intro-video', adminOnly: false },
+    { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker', section: 'ticker', adminOnly: false },
+    { icon: Newspaper, label: 'News & Announcements', path: '/admin/news-announcements', section: 'news-announcements', adminOnly: false },
+    { icon: Calendar, label: 'Events', path: '/admin/events', section: 'events', adminOnly: false },
+    { icon: Building2, label: 'Departments', path: '/admin/departments', section: 'departments', adminOnly: false },
+    { icon: BookOpen, label: 'Department Pages', path: '/admin/department-pages', section: 'department-pages', adminOnly: false },
+    { icon: Users, label: 'Faculty', path: '/admin/faculty', section: 'faculty', adminOnly: false },
+    { icon: UserCog, label: 'HODs', path: '/admin/hods', section: 'hods', adminOnly: false },
+    { icon: Camera, label: 'Gallery', path: '/admin/gallery', section: 'gallery', adminOnly: false },
+    { icon: Grid3x3, label: 'Vibe@Viet', path: '/admin/vibe-at-viet', section: 'vibe-at-viet', adminOnly: false },
+    { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters', section: 'recruiters', adminOnly: false },
+    { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section', section: 'placement-section', adminOnly: false },
+    { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes', section: 'transport-routes', adminOnly: false },
+    { icon: Warehouse, label: 'Facilities', path: '/admin/facilities', section: 'facilities', adminOnly: false },
+    { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
+    { icon: FileText, label: 'Pages', path: '/admin/pages', section: 'pages', adminOnly: false },
+    { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities', section: 'authorities', adminOnly: false },
+    { icon: Shield, label: 'Sub-Admins', path: '/admin/sub-admins', section: 'sub-admins', adminOnly: true },
   ];
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState<{ role?: string; allowedSections?: string[] } | null>(null);
 
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        await authAPI.verify();
+        const res = await authAPI.verify();
+        setUser(res?.user || null);
         setIsAuthenticated(true);
       } catch (err: any) {
         console.error('Auth verification failed:', err);
         setIsAuthenticated(false);
+        setUser(null);
         // Only navigate if it's an auth error, not a connection error
         if (!err.message?.includes('fetch') && !err.message?.includes('Failed to fetch')) {
           navigate('/admin/login');
-        } else {
-          // Show connection error but don't redirect
-          setIsAuthenticated(false);
         }
       }
     };
     verifyAuth();
   }, [navigate]);
+
+  const isAdmin = user?.role === 'admin';
+  const allowedSections = user?.allowedSections || [];
+  const menuItems = allMenuItems.filter((item) => {
+    if (item.adminOnly) return isAdmin;
+    if (isAdmin) return true;
+    return item.section === 'dashboard' || allowedSections.includes(item.section);
+  });
+
+  const currentSection = allMenuItems.find((m) => m.path === location.pathname)?.section;
+  const canAccessCurrentPath =
+    isAdmin ||
+    currentSection === 'dashboard' ||
+    (currentSection && allowedSections.includes(currentSection)) ||
+    (location.pathname === '/admin' || location.pathname === '/admin/');
 
   if (isAuthenticated === null) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -207,7 +223,18 @@ const AdminLayout = () => {
         {/* Main Content */}
         <main className="flex-1 lg:ml-0">
           <div className="p-6">
-            <Outlet />
+            {!canAccessCurrentPath && isAuthenticated ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Shield className="h-16 w-16 text-amber-500 mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Restricted</h2>
+                <p className="text-gray-600 mb-4 max-w-md">
+                  You do not have permission to access this section. Contact your admin to request access.
+                </p>
+                <Button onClick={() => navigate('/admin/dashboard')}>Go to Dashboard</Button>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </div>
         </main>
       </div>

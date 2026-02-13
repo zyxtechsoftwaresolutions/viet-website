@@ -244,6 +244,58 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Map API paths to admin section keys (for sub-admin access control)
+const API_TO_SECTION = [
+  [/^\/api\/announcements/, 'news-announcements'],
+  [/^\/api\/news/, 'news-announcements'],
+  [/^\/api\/events/, 'events'],
+  [/^\/api\/ticker/, 'ticker'],
+  [/^\/api\/hero-videos/, 'hero-videos'],
+  [/^\/api\/intro-video-settings/, 'intro-video'],
+  [/^\/api\/carousel/, 'hero-videos'],
+  [/^\/api\/departments/, 'departments'],
+  [/^\/api\/department-pages/, 'department-pages'],
+  [/^\/api\/faculty/, 'faculty'],
+  [/^\/api\/hods/, 'hods'],
+  [/^\/api\/gallery/, 'gallery'],
+  [/^\/api\/home-gallery/, 'gallery'],
+  [/^\/api\/vibe-at-viet/, 'vibe-at-viet'],
+  [/^\/api\/recruiters/, 'recruiters'],
+  [/^\/api\/placement-section/, 'placement-section'],
+  [/^\/api\/placement-carousel/, 'placement-section'],
+  [/^\/api\/transport-routes/, 'transport-routes'],
+  [/^\/api\/accreditations/, 'accreditations'],
+  [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
+  [/^\/api\/pages/, ['pages', 'facilities', 'authorities']], // facilities & authorities use pages API
+  [/^\/api\/faculty-settings/, 'faculty'],
+];
+
+function getSectionsForPath(path) {
+  for (const [re, sectionOrSections] of API_TO_SECTION) {
+    if (re.test(path)) {
+      return Array.isArray(sectionOrSections) ? sectionOrSections : [sectionOrSections];
+    }
+  }
+  return [];
+}
+
+// Sub-admin section check: admin passes through; sub_admin must have section in allowed_sections
+const checkSectionAccess = (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  if (req.user.role !== 'sub_admin') return res.status(403).json({ error: 'Forbidden' });
+  const sections = getSectionsForPath(req.path);
+  if (sections.length === 0) return next();
+  const allowed = req.user.allowedSections || req.user.allowed_sections || [];
+  const hasAccess = sections.some(s => Array.isArray(allowed) && allowed.includes(s));
+  if (hasAccess) return next();
+  return res.status(403).json({ error: 'Access denied to this section' });
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') return next();
+  return res.status(403).json({ error: 'Admin access required' });
+};
+
 // ==================== AUTHENTICATION ROUTES ====================
 
 // Login
@@ -275,8 +327,9 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    const allowedSections = user.allowed_sections ?? user.allowedSections ?? [];
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, username: user.username, role: user.role, allowedSections },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -287,7 +340,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        allowedSections: Array.isArray(allowedSections) ? allowedSections : []
       }
     });
   } catch (error) {
@@ -298,7 +352,113 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Verify token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
-  res.json({ user: req.user });
+  const u = req.user;
+  res.json({
+    user: {
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      role: u.role,
+      allowedSections: u.allowedSections || u.allowed_sections || []
+    }
+  });
+});
+
+// ==================== SUB-ADMINS (admin only) ====================
+app.get('/api/auth/sub-admins', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    const subAdmins = users
+      .filter(u => u.role === 'sub_admin')
+      .map(u => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        allowedSections: u.allowed_sections ?? u.allowedSections ?? [],
+        createdAt: u.created_at ?? u.createdAt
+      }));
+    res.json(subAdmins);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/sub-admins', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { username, email, password, allowedSections } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+    const existing = await db.findUserByUsernameOrEmail(username);
+    if (existing) {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+    const sections = Array.isArray(allowedSections) ? allowedSections : [];
+    const newUser = await db.createUser({
+      username: username.trim(),
+      email: (email || `${username}@viet.edu.in`).trim(),
+      password: hashedPassword,
+      role: 'sub_admin',
+      allowed_sections: sections
+    });
+    res.status(201).json({
+      id: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      role: 'sub_admin',
+      allowedSections: newUser.allowed_sections ?? newUser.allowedSections ?? []
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/auth/sub-admins/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const target = await db.getUserById(id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role !== 'sub_admin') {
+      return res.status(400).json({ error: 'Can only update sub-admin users' });
+    }
+    const { username, email, password, allowedSections } = req.body || {};
+    const updates = {};
+    if (username !== undefined) updates.username = username.trim();
+    if (email !== undefined) updates.email = email.trim();
+    if (password !== undefined && password) {
+      updates.password = await bcrypt.hash(String(password), 10);
+    }
+    if (allowedSections !== undefined) {
+      updates.allowed_sections = Array.isArray(allowedSections) ? allowedSections : [];
+    }
+    const updated = await db.updateUser(id, updates);
+    res.json({
+      id: updated.id,
+      username: updated.username,
+      email: updated.email,
+      role: updated.role,
+      allowedSections: updated.allowed_sections ?? updated.allowedSections ?? []
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/auth/sub-admins/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const target = await db.getUserById(id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
+    if (target.role !== 'sub_admin') {
+      return res.status(400).json({ error: 'Can only delete sub-admin users' });
+    }
+    await db.deleteUser(id);
+    res.json({ message: 'Sub-admin deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ==================== VISITOR COUNT (public, no auth) ====================
@@ -331,7 +491,7 @@ app.get('/api/announcements', async (req, res) => {
   }
 });
 
-app.post('/api/announcements', authenticateToken, async (req, res) => {
+app.post('/api/announcements', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const newAnnouncement = await db.createAnnouncement({ ...req.body, updatedAt: new Date().toISOString() });
     res.json(newAnnouncement);
@@ -340,7 +500,7 @@ app.post('/api/announcements', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/announcements/:id', authenticateToken, async (req, res) => {
+app.put('/api/announcements/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const updated = await db.updateAnnouncement(req.params.id, { ...req.body, updatedAt: new Date().toISOString() });
     if (!updated) return res.status(404).json({ error: 'Announcement not found' });
@@ -350,7 +510,7 @@ app.put('/api/announcements/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/announcements/:id', authenticateToken, async (req, res) => {
+app.delete('/api/announcements/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteAnnouncement(req.params.id);
     res.json({ message: 'Announcement deleted' });
@@ -370,7 +530,7 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-app.post('/api/news', authenticateToken, async (req, res) => {
+app.post('/api/news', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const newNews = await db.createNews(req.body);
     res.json(newNews);
@@ -379,7 +539,7 @@ app.post('/api/news', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/news/:id', authenticateToken, async (req, res) => {
+app.put('/api/news/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const updated = await db.updateNews(req.params.id, { ...req.body, updatedAt: new Date().toISOString() });
     if (!updated) return res.status(404).json({ error: 'News not found' });
@@ -389,7 +549,7 @@ app.put('/api/news/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/news/:id', authenticateToken, async (req, res) => {
+app.delete('/api/news/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteNews(req.params.id);
     res.json({ message: 'News deleted' });
@@ -409,7 +569,7 @@ app.get('/api/ticker', async (req, res) => {
   }
 });
 
-app.post('/api/ticker', authenticateToken, async (req, res) => {
+app.post('/api/ticker', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const newItem = await db.createTickerItem({ text: req.body.text || '', isActive: req.body.isActive !== undefined ? req.body.isActive : true });
     res.json(newItem);
@@ -418,7 +578,7 @@ app.post('/api/ticker', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/ticker/:id', authenticateToken, async (req, res) => {
+app.put('/api/ticker/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const updated = await db.updateTickerItem(req.params.id, { ...req.body, updatedAt: new Date().toISOString() });
     if (!updated) return res.status(404).json({ error: 'Ticker item not found' });
@@ -429,7 +589,7 @@ app.put('/api/ticker/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/ticker/:id', authenticateToken, async (req, res) => {
+app.delete('/api/ticker/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteTickerItem(req.params.id);
     res.json({ message: 'Ticker item deleted' });
@@ -450,7 +610,7 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, async (req, res) => {
+app.post('/api/events', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
@@ -473,7 +633,7 @@ app.post('/api/events', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/events/:id', authenticateToken, async (req, res) => {
+app.put('/api/events/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body, updatedAt: new Date().toISOString() };
@@ -492,7 +652,7 @@ app.put('/api/events/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/events/:id', authenticateToken, async (req, res) => {
+app.delete('/api/events/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteEvent(req.params.id);
     res.json({ message: 'Event deleted' });
@@ -512,7 +672,7 @@ app.get('/api/transport-routes', async (req, res) => {
   }
 });
 
-app.post('/api/transport-routes', authenticateToken, async (req, res) => {
+app.post('/api/transport-routes', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
@@ -538,7 +698,7 @@ app.post('/api/transport-routes', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/transport-routes/:id', authenticateToken, async (req, res) => {
+app.put('/api/transport-routes/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = {
@@ -568,7 +728,7 @@ app.put('/api/transport-routes/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/transport-routes/:id', authenticateToken, async (req, res) => {
+app.delete('/api/transport-routes/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteTransportRoute(req.params.id);
     res.json({ message: 'Route deleted' });
@@ -590,7 +750,7 @@ app.get('/api/carousel', async (req, res) => {
   }
 });
 
-app.post('/api/carousel', authenticateToken, async (req, res) => {
+app.post('/api/carousel', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const src = typeof body.src === 'string' ? body.src.trim() : '';
@@ -609,7 +769,7 @@ app.post('/api/carousel', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/carousel/:id', authenticateToken, async (req, res) => {
+app.put('/api/carousel/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body, updatedAt: new Date().toISOString() };
@@ -628,7 +788,7 @@ app.put('/api/carousel/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/carousel/:id', authenticateToken, async (req, res) => {
+app.delete('/api/carousel/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteCarouselItem(req.params.id);
     res.json({ message: 'Image deleted' });
@@ -648,7 +808,7 @@ app.get('/api/placement-carousel', async (req, res) => {
   }
 });
 
-app.post('/api/placement-carousel', authenticateToken, async (req, res) => {
+app.post('/api/placement-carousel', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const src = typeof body.src === 'string' ? body.src.trim() : '';
@@ -662,7 +822,7 @@ app.post('/api/placement-carousel', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/placement-carousel/:id', authenticateToken, async (req, res) => {
+app.put('/api/placement-carousel/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body };
@@ -681,7 +841,7 @@ app.put('/api/placement-carousel/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/placement-carousel/:id', authenticateToken, async (req, res) => {
+app.delete('/api/placement-carousel/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deletePlacementCarouselItem(req.params.id);
     res.json({ message: 'Image deleted' });
@@ -704,7 +864,7 @@ app.get('/api/hero-videos', async (req, res) => {
 });
 
 // Hero videos: backend only stores URLs. Admin uploads video/poster to Supabase Storage, then sends URLs here.
-app.post('/api/hero-videos', authenticateToken, async (req, res) => {
+app.post('/api/hero-videos', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
     if (!src || typeof src !== 'string' || !src.trim()) {
@@ -733,7 +893,7 @@ app.post('/api/hero-videos', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/hero-videos/:id', authenticateToken, async (req, res) => {
+app.put('/api/hero-videos/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const updateData = {};
     const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
@@ -760,7 +920,7 @@ app.put('/api/hero-videos/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/hero-videos/:id', authenticateToken, async (req, res) => {
+app.delete('/api/hero-videos/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteHeroVideo(req.params.id);
     res.json({ message: 'Video deleted' });
@@ -780,7 +940,7 @@ app.get('/api/departments', async (req, res) => {
   }
 });
 
-app.post('/api/departments', authenticateToken, async (req, res) => {
+app.post('/api/departments', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
@@ -794,7 +954,7 @@ app.post('/api/departments', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/departments/:id', authenticateToken, async (req, res) => {
+app.put('/api/departments/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body };
@@ -813,7 +973,7 @@ app.put('/api/departments/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/departments/:id', authenticateToken, async (req, res) => {
+app.delete('/api/departments/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteDepartment(req.params.id);
     res.json({ message: 'Department deleted' });
@@ -834,7 +994,7 @@ app.get('/api/faculty', async (req, res) => {
   }
 });
 
-app.post('/api/faculty', authenticateToken, async (req, res) => {
+app.post('/api/faculty', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
@@ -852,7 +1012,7 @@ app.post('/api/faculty', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/faculty/:id', authenticateToken, async (req, res) => {
+app.put('/api/faculty/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body };
@@ -874,7 +1034,7 @@ app.put('/api/faculty/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/faculty/:id', authenticateToken, async (req, res) => {
+app.delete('/api/faculty/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteFaculty(req.params.id);
     res.json({ message: 'Faculty deleted' });
@@ -883,7 +1043,7 @@ app.delete('/api/faculty/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/faculty/reorder', authenticateToken, async (req, res) => {
+app.post('/api/faculty/reorder', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const { orderUpdates } = req.body || {};
     if (!Array.isArray(orderUpdates)) {
@@ -908,7 +1068,7 @@ app.get('/api/hods', async (req, res) => {
   }
 });
 
-app.post('/api/hods', authenticateToken, async (req, res) => {
+app.post('/api/hods', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
@@ -926,7 +1086,7 @@ app.post('/api/hods', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/hods/:id', authenticateToken, async (req, res) => {
+app.put('/api/hods/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body };
@@ -948,7 +1108,7 @@ app.put('/api/hods/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/hods/:id', authenticateToken, async (req, res) => {
+app.delete('/api/hods/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteHod(req.params.id);
     res.json({ message: 'HOD deleted' });
@@ -957,7 +1117,7 @@ app.delete('/api/hods/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/hods/reorder', authenticateToken, async (req, res) => {
+app.post('/api/hods/reorder', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const { orderUpdates } = req.body || {};
     if (!Array.isArray(orderUpdates)) {
@@ -981,7 +1141,7 @@ app.get('/api/gallery', async (req, res) => {
   }
 });
 
-app.post('/api/gallery', authenticateToken, async (req, res) => {
+app.post('/api/gallery', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const src = typeof body.src === 'string' ? body.src.trim() : '';
@@ -995,7 +1155,7 @@ app.post('/api/gallery', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/gallery/:id', authenticateToken, async (req, res) => {
+app.delete('/api/gallery/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteGalleryItem(req.params.id);
     res.json({ message: 'Image deleted' });
@@ -1015,7 +1175,7 @@ app.get('/api/placement-section', async (req, res) => {
   }
 });
 
-app.put('/api/placement-section', authenticateToken, async (req, res) => {
+app.put('/api/placement-section', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updated = await db.updatePlacementSection({
@@ -1043,7 +1203,7 @@ app.get('/api/recruiters', async (req, res) => {
   }
 });
 
-app.post('/api/recruiters', authenticateToken, async (req, res) => {
+app.post('/api/recruiters', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const logo = typeof body.logo === 'string' ? body.logo.trim() : '';
@@ -1057,7 +1217,7 @@ app.post('/api/recruiters', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/recruiters/:id', authenticateToken, async (req, res) => {
+app.put('/api/recruiters/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = { ...body };
@@ -1076,7 +1236,7 @@ app.put('/api/recruiters/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/recruiters/:id', authenticateToken, async (req, res) => {
+app.delete('/api/recruiters/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteRecruiter(req.params.id);
     res.json({ message: 'Recruiter deleted' });
@@ -1099,7 +1259,7 @@ app.get('/api/home-gallery', async (req, res) => {
   }
 });
 
-app.put('/api/home-gallery/:id', authenticateToken, async (req, res) => {
+app.put('/api/home-gallery/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : '';
@@ -1129,7 +1289,7 @@ app.get('/api/vibe-at-viet', async (req, res) => {
 });
 
 // Vibe-at-viet: image and video are URLs only (admin uploads to Supabase Storage first). imageLink for external (e.g. Google Drive).
-app.post('/api/vibe-at-viet', authenticateToken, async (req, res) => {
+app.post('/api/vibe-at-viet', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const caption = body.caption ?? '';
@@ -1154,7 +1314,7 @@ app.post('/api/vibe-at-viet', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/vibe-at-viet/:id', authenticateToken, async (req, res) => {
+app.put('/api/vibe-at-viet/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = {};
@@ -1173,7 +1333,7 @@ app.put('/api/vibe-at-viet/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/vibe-at-viet/:id', authenticateToken, async (req, res) => {
+app.delete('/api/vibe-at-viet/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     await db.deleteVibeAtVietItem(req.params.id);
     res.json({ success: true });
@@ -1213,7 +1373,7 @@ app.get('/api/pages/:id', async (req, res) => {
   }
 });
 
-app.post('/api/pages', authenticateToken, async (req, res) => {
+app.post('/api/pages', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const newPage = await db.createPage({
       slug: req.body.slug,
@@ -1228,7 +1388,7 @@ app.post('/api/pages', authenticateToken, async (req, res) => {
   }
 });
 
-app.put('/api/pages/:id', authenticateToken, async (req, res) => {
+app.put('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const pageId = parseInt(req.params.id);
     const existingPage = await db.getPageById(pageId);
@@ -1274,7 +1434,7 @@ app.put('/api/pages/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/pages/:id', authenticateToken, async (req, res) => {
+app.delete('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const pageId = parseInt(req.params.id);
     const page = await db.getPageById(pageId);
@@ -1309,7 +1469,7 @@ app.get('/api/accreditations', async (req, res) => {
   }
 });
 
-app.put('/api/accreditations/:key', authenticateToken, async (req, res) => {
+app.put('/api/accreditations/:key', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const key = req.params.key;
     const body = req.body || {};
@@ -1344,7 +1504,7 @@ app.get('/api/aicte-affiliation-letters', async (req, res) => {
   }
 });
 
-app.post('/api/aicte-affiliation-letters', authenticateToken, async (req, res) => {
+app.post('/api/aicte-affiliation-letters', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const year = typeof body.year === 'string' ? body.year.trim() : '';
@@ -1365,7 +1525,7 @@ app.post('/api/aicte-affiliation-letters', authenticateToken, async (req, res) =
   }
 });
 
-app.put('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, res) => {
+app.put('/api/aicte-affiliation-letters/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const id = req.params.id;
     const body = req.body || {};
@@ -1388,7 +1548,7 @@ app.put('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, res
   }
 });
 
-app.delete('/api/aicte-affiliation-letters/:id', authenticateToken, async (req, res) => {
+app.delete('/api/aicte-affiliation-letters/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const letter = await db.getAicteAffiliationLetters().then(letters => letters.find(l => String(l.id) === String(req.params.id)));
     if (letter && letter.pdf_url && letter.pdf_url.includes('supabase.co/storage')) {
@@ -1413,7 +1573,7 @@ app.get('/api/intro-video-settings', async (req, res) => {
   }
 });
 
-app.put('/api/intro-video-settings', authenticateToken, async (req, res) => {
+app.put('/api/intro-video-settings', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const updateData = {};
@@ -1437,7 +1597,7 @@ app.put('/api/intro-video-settings', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/intro-video-settings', authenticateToken, async (req, res) => {
+app.delete('/api/intro-video-settings', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     // Delete video from storage if exists
     const settings = await db.getIntroVideoSettings();
@@ -1464,7 +1624,7 @@ app.get('/api/faculty-settings', async (req, res) => {
   }
 });
 
-app.put('/api/faculty-settings', authenticateToken, async (req, res) => {
+app.put('/api/faculty-settings', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const validSortBy = ['custom', 'experience', 'designation', 'designation-experience'];
@@ -1502,7 +1662,7 @@ app.get('/api/department-pages/:slug', async (req, res) => {
   }
 });
 
-app.put('/api/department-pages/:slug', authenticateToken, async (req, res) => {
+app.put('/api/department-pages/:slug', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const slug = req.params.slug;
     const existing = await db.getDepartmentPageBySlug(slug) || { slug, sections: {}, curriculum: { programs: [] } };
@@ -1518,7 +1678,7 @@ app.put('/api/department-pages/:slug', authenticateToken, async (req, res) => {
 });
 
 // Department page hero image: accept image URL in JSON (admin uploads to Supabase first)
-app.post('/api/department-pages/:slug/hero-image', authenticateToken, async (req, res) => {
+app.post('/api/department-pages/:slug/hero-image', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const imageUrl = typeof body.image === 'string' ? body.image.trim() : '';
@@ -1541,7 +1701,7 @@ app.post('/api/department-pages/:slug/hero-image', authenticateToken, async (req
 });
 
 // Department page asset: accept file URL in JSON (admin uploads to Supabase first)
-app.post('/api/department-pages/:slug/asset', authenticateToken, async (req, res) => {
+app.post('/api/department-pages/:slug/asset', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const fileUrl = typeof body.url === 'string' ? body.url.trim() : '';
@@ -1556,7 +1716,7 @@ app.post('/api/department-pages/:slug/asset', authenticateToken, async (req, res
 });
 
 // Curriculum: accept syllabus fileUrl in JSON (admin uploads PDF to Supabase first)
-app.post('/api/department-pages/:slug/curriculum', authenticateToken, async (req, res) => {
+app.post('/api/department-pages/:slug/curriculum', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
     const slug = req.params.slug;
@@ -1608,7 +1768,7 @@ app.post('/api/department-pages/:slug/curriculum', authenticateToken, async (req
 });
 
 // Delete a regulation from a program
-app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authenticateToken, async (req, res) => {
+app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const slug = req.params.slug;
     const programName = decodeURIComponent(req.params.program);

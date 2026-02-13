@@ -23,6 +23,7 @@ const SNAKE_MAP = {
   videoLink: 'video_link', isActive: 'is_active',
   pdfUrl: 'pdf_url', isLatest: 'is_latest', sortOrder: 'sort_order',
   videoUrl: 'video_url', isEnabled: 'is_enabled',
+  allowedSections: 'allowed_sections',
 };
 function toSnake(obj) {
   if (!obj || typeof obj !== 'object') return obj;
@@ -83,9 +84,58 @@ export async function createUser(user) {
     await writeJsonFile('users', d);
     return newUser;
   }
-  const { data, error } = await supabase.from('users').insert(user).select().single();
+  const { data, error } = await supabase.from('users').insert(toSnake(user)).select().single();
+  if (error) throw error;
+  return { ...data, allowed_sections: data.allowed_sections ?? [], allowedSections: data.allowed_sections ?? [] };
+}
+
+export async function getUserById(id) {
+  const users = await getUsers();
+  return users.find(u => String(u.id) === String(id));
+}
+
+export async function updateUser(id, updates) {
+  if (useJsonFallback) {
+    const d = await readJsonFile('users');
+    const idx = d.users.findIndex(u => String(u.id) === String(id));
+    if (idx === -1) return null;
+    const allowedSections = updates.allowed_sections ?? updates.allowedSections;
+    if (allowedSections !== undefined) {
+      d.users[idx].allowed_sections = Array.isArray(allowedSections) ? allowedSections : [];
+      d.users[idx].allowedSections = d.users[idx].allowed_sections;
+    }
+    if (updates.password !== undefined) d.users[idx].password = updates.password;
+    if (updates.username !== undefined) d.users[idx].username = updates.username;
+    if (updates.email !== undefined) d.users[idx].email = updates.email;
+    if (updates.role !== undefined) d.users[idx].role = updates.role;
+    await writeJsonFile('users', d);
+    return d.users[idx];
+  }
+  const payload = {};
+  if (updates.allowed_sections !== undefined) payload.allowed_sections = updates.allowed_sections;
+  if (updates.allowedSections !== undefined) payload.allowed_sections = updates.allowedSections;
+  if (updates.password !== undefined) payload.password = updates.password;
+  if (updates.username !== undefined) payload.username = updates.username;
+  if (updates.email !== undefined) payload.email = updates.email;
+  if (updates.role !== undefined) payload.role = updates.role;
+  if (Object.keys(payload).length === 0) return getUserById(id);
+  const { data, error } = await supabase.from('users').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function deleteUser(id) {
+  if (useJsonFallback) {
+    const d = await readJsonFile('users');
+    const before = d.users.length;
+    d.users = d.users.filter(u => String(u.id) !== String(id));
+    if (d.users.length === before) return false;
+    await writeJsonFile('users', d);
+    return true;
+  }
+  const { error } = await supabase.from('users').delete().eq('id', id);
+  if (error) throw error;
+  return true;
 }
 
 // ==================== ANNOUNCEMENTS ====================
