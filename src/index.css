@@ -739,3 +739,36 @@ html {
 .admin-login-grid-drift {
   animation: admin-grid-drift 20s linear infinite;
 }
+
+/* ========== Mobile responsive: safe areas & dialogs ========== */
+/* Safe area insets for notches and home indicator (no layout change on desktop) */
+@media (max-width: 767px) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .safe-area-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch-friendly tap targets (44px min) - use with utility where needed */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dialog/Modal: full-bleed on mobile so content is visible and scrollable */
+@media (max-width: 767px) {
+  [role="dialog"] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
+    width: calc(100vw - 1rem) !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+}

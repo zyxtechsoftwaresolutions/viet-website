@@ -484,10 +484,10 @@ const AmritaStyleHeader = () => {
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             {/* Top Ribbon - On pure BLACK background with top padding */}
-            <div className="text-white flex-shrink-0 pt-4 pb-1" style={{ backgroundColor: '#000000' }}>
+            <div className="text-white flex-shrink-0 pt-4 pb-1 safe-area-top" style={{ backgroundColor: '#000000' }}>
               <div className="w-full px-4 md:px-8">
-                <div className="flex items-center justify-between py-2">
-                  {/* Left Links */}
+                <div className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  {/* Left Links - hidden on mobile */}
                   <div className="hidden md:flex items-center gap-3 lg:gap-5">
                     {topRibbonLeftLinks.map((link) => (
                       <button
@@ -500,13 +500,13 @@ const AmritaStyleHeader = () => {
                       </button>
                     ))}
                   </div>
-                  {/* Right Links */}
-                  <div className="flex items-center gap-3 lg:gap-5 ml-auto">
+                  {/* Right Links - wrap on mobile, smaller tap targets */}
+                  <div className="flex flex-wrap items-center justify-end gap-2 md:gap-3 lg:gap-5 ml-auto min-h-[44px]">
                     {topRibbonRightLinksBeforeLogin.map((link) => (
                       <button
                         key={link.name}
                         onClick={() => handleNavigation(link.href)}
-                        className="hover:text-yellow-300 transition-colors font-medium tracking-wider text-[11px] lg:text-xs uppercase"
+                        className="hover:text-yellow-300 transition-colors font-medium tracking-wider text-[11px] lg:text-xs uppercase py-2 px-1.5 -my-1 -mx-1 rounded touch-manipulation"
                         style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                       >
                         {link.name}
@@ -518,42 +518,90 @@ const AmritaStyleHeader = () => {
             </div>
 
             {/* Main Content Area - White Card centered on BLACK */}
-            <div className="flex-1 flex flex-col min-h-0" style={{ backgroundColor: '#000000' }}>
-              <div className="flex-1 px-4 md:px-8 py-2 overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ backgroundColor: '#000000' }}>
+              <div className="flex-1 min-h-0 px-2 sm:px-4 md:px-8 py-2 overflow-hidden flex flex-col">
                 <motion.div 
-                  className="bg-white rounded-[20px] h-full flex flex-col overflow-hidden shadow-2xl"
+                  className="bg-white rounded-xl md:rounded-[20px] h-full min-h-0 flex flex-col overflow-hidden shadow-2xl"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.35, delay: 0.05 }}
                 >
-                  {/* Inner Header with Logo and Navigation */}
-                  <div className="px-4 md:px-8 py-4 flex-shrink-0">
-                    <div className="flex items-start gap-3 md:gap-4">
-                      {/* Logo */}
-                      <motion.div 
-                        className="bg-transparent border-2 border-white p-2 md:p-2.5 rounded-xl cursor-pointer flex-shrink-0"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          handleNavigation('/');
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <img
-                          src="/viet-logo-new.png"
-                          alt="VIET Logo"
-                          className="h-10 md:h-12 w-auto object-contain"
-                        />
-                      </motion.div>
+                  {/* Inner Header with Logo and Navigation - stacked on mobile for clarity */}
+                  <div className="px-3 sm:px-4 md:px-8 py-3 md:py-4 flex-shrink-0 border-b border-gray-100 md:border-b-0">
+                    {/* Mobile: row 1 = logo + admissions + close. Row 2 = scrollable nav tabs */}
+                    <div className="flex flex-col gap-3 md:gap-0 md:flex-row md:items-start md:gap-4">
+                      <div className="flex items-center justify-between gap-2 min-h-[44px]">
+                        {/* Logo */}
+                        <motion.div 
+                          className="bg-transparent border-2 border-[#1e3a8a] p-1.5 md:p-2 md:border-white rounded-lg md:rounded-xl cursor-pointer flex-shrink-0 touch-manipulation"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            handleNavigation('/');
+                          }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <img
+                            src="/viet-logo-new.png"
+                            alt="VIET Logo"
+                            className="h-9 md:h-12 w-auto object-contain"
+                          />
+                        </motion.div>
 
-                      {/* Navigation Tabs - single wrapping row, continues after IQAC */}
-                      <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5 md:gap-2">
+                        {/* Admissions + Close - visible on all screens */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <motion.button
+                            onClick={handleAdmissionsClick}
+                            onMouseEnter={() => setIsAdmissionsHovered(true)}
+                            onMouseLeave={() => setIsAdmissionsHovered(false)}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2 backdrop-blur-md touch-manipulation min-h-[44px]",
+                              isAdmissionsHovered 
+                                ? "bg-white/20 text-white border-white/40 shadow-lg" 
+                                : "bg-white/10 text-white border-white/30 shadow-md"
+                            )}
+                            style={{
+                              backdropFilter: 'blur(10px) saturate(180%)',
+                              WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                            }}
+                          >
+                            <motion.div
+                              animate={{ rotate: isAdmissionsHovered ? 90 : 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Plus className={cn(
+                                "w-4 h-4 transition-colors duration-300",
+                                isAdmissionsHovered ? "text-[#1e3a8a]" : "text-white"
+                              )} />
+                            </motion.div>
+                            <span className="hidden sm:inline">Admissions</span>
+                          </motion.button>
+
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setActiveNavItem(null);
+                            }}
+                            className="flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-full text-white border-2 border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg transition-all duration-300 touch-manipulation"
+                            style={{
+                              backdropFilter: 'blur(10px) saturate(180%)',
+                              WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                            }}
+                            aria-label="Close menu"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Navigation Tabs - horizontal scroll on mobile, wrap on desktop */}
+                      <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible flex md:flex-wrap items-center gap-1.5 md:gap-2 pb-1 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                         {mainNavItems.map((item) =>
                           item.href ? (
                             <button
                               key={item.name}
                               onClick={() => handleNavigation(item.href!)}
-                              className="px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium text-gray-600 hover:text-[#1e3a8a] hover:bg-gray-100 transition-all whitespace-nowrap"
+                              className="px-2.5 py-2.5 md:py-1.5 rounded-md text-xs md:text-sm font-medium text-gray-600 hover:text-[#1e3a8a] hover:bg-gray-100 transition-all whitespace-nowrap flex-shrink-0 touch-manipulation min-h-[44px] md:min-h-0"
                               style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                             >
                               {item.name}
@@ -563,7 +611,7 @@ const AmritaStyleHeader = () => {
                               key={item.id}
                               onClick={() => setActiveNavItem(activeNavItem === item.id ? null : item.id!)}
                               className={cn(
-                                "px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                                "px-2.5 py-2.5 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 touch-manipulation min-h-[44px] md:min-h-0",
                                 activeNavItem === item.id
                                   ? "text-[#0a192f] bg-blue-50 border-b-2 border-[#1e3a8a]"
                                   : "text-gray-600 hover:text-[#1e3a8a] hover:bg-gray-100 border-b-2 border-transparent"
@@ -577,50 +625,6 @@ const AmritaStyleHeader = () => {
                             </button>
                           )
                         )}
-                      </div>
-
-                      {/* Admissions + Close */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <motion.button
-                          onClick={handleAdmissionsClick}
-                          onMouseEnter={() => setIsAdmissionsHovered(true)}
-                          onMouseLeave={() => setIsAdmissionsHovered(false)}
-                          className={cn(
-                            "flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2 backdrop-blur-md",
-                            isAdmissionsHovered 
-                              ? "bg-white/20 text-white border-white/40 shadow-lg" 
-                              : "bg-white/10 text-white border-white/30 shadow-md"
-                          )}
-                          style={{
-                            backdropFilter: 'blur(10px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-                          }}
-                        >
-                          <motion.div
-                            animate={{ rotate: isAdmissionsHovered ? 90 : 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Plus className={cn(
-                              "w-4 h-4 transition-colors duration-300",
-                              isAdmissionsHovered ? "text-[#1e3a8a]" : "text-white"
-                            )} />
-                          </motion.div>
-                          <span className="hidden sm:inline">Admissions</span>
-                        </motion.button>
-
-                        <button
-                          onClick={() => {
-                            setIsMenuOpen(false);
-                            setActiveNavItem(null);
-                          }}
-                          className="flex items-center justify-center w-10 h-10 rounded-full text-white border-2 border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg transition-all duration-300"
-                          style={{
-                            backdropFilter: 'blur(10px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-                          }}
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -640,25 +644,25 @@ const AmritaStyleHeader = () => {
                           transition={{ duration: 0.25 }}
                           className="h-full"
                         >
-                          {/* Custom 3-Column Layout for Departments */}
+                          {/* Custom 3-Column Layout for Departments - stacked on mobile */}
                           {activeNavItem === 'departments' ? (
-                            <div className="px-8 md:px-12 py-9 md:py-11 h-full">
-                              <div className="flex h-full gap-0">
+                            <div className="px-4 py-4 md:px-12 md:py-11 h-full overflow-y-auto">
+                              <div className="flex flex-col md:flex-row h-full gap-4 md:gap-0">
                                 {/* Column 1 - Stream Selection */}
-                                <div className="w-48 border-r border-gray-200 flex-shrink-0">
-                                  <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4 border-l-2 border-transparent"
+                                <div className="w-full md:w-48 md:border-r border-gray-200 flex-shrink-0 md:pr-4">
+                                  <h4 className="text-[#0d47a1] font-semibold text-sm mb-2 md:mb-4 px-2 md:px-4 border-l-2 border-transparent"
                                       style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                    {selectedStream ? streamOptions.find(s => s.id === selectedStream)?.name : ''}
+                                    {selectedStream ? streamOptions.find(s => s.id === selectedStream)?.name : 'Stream'}
                                   </h4>
-                                  <div className="space-y-1">
+                                  <div className="flex flex-wrap gap-1 md:block md:space-y-1">
                                     {streamOptions.map((stream) => (
                                       <button
                                         key={stream.id}
                                         onClick={() => handleStreamSelect(stream.id)}
                                         className={cn(
-                                          "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
+                                          "text-left px-3 py-2.5 md:px-4 rounded-lg md:rounded-none md:border-l-2 text-sm transition-all duration-200 touch-manipulation min-h-[44px] md:min-h-0",
                                           selectedStream === stream.id
-                                            ? "text-[#0d47a1] border-[#0d47a1] bg-blue-50/50 font-medium"
+                                            ? "text-[#0d47a1] border-[#0d47a1] bg-blue-50/50 font-medium md:border-l-2"
                                             : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
                                         )}
                                         style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
@@ -671,24 +675,24 @@ const AmritaStyleHeader = () => {
 
                                 {/* Column 2 - Level Selection (only for Engineering & Management) */}
                                 <div className={cn(
-                                  "w-48 border-r border-gray-200 flex-shrink-0 transition-all duration-300",
-                                  (selectedStream === 'diploma' || !selectedStream) ? "opacity-30" : "opacity-100"
+                                  "w-full md:w-48 md:border-r border-gray-200 flex-shrink-0 transition-all duration-300 md:pr-4",
+                                  (selectedStream === 'diploma' || !selectedStream) ? "opacity-60 md:opacity-30" : "opacity-100"
                                 )}>
                                   {selectedStream && selectedStream !== 'diploma' && (
                                     <>
-                                      <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4"
+                                      <h4 className="text-[#0d47a1] font-semibold text-sm mb-2 md:mb-4 px-2 md:px-4"
                                           style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                        {selectedLevel ? getLevelOptions().find(l => l.id === selectedLevel)?.name : ''}
+                                        {selectedLevel ? getLevelOptions().find(l => l.id === selectedLevel)?.name : 'Level'}
                                       </h4>
-                                      <div className="space-y-1">
+                                      <div className="flex flex-wrap gap-1 md:block md:space-y-1">
                                         {getLevelOptions().map((level) => (
                                           <button
                                             key={level.id}
                                             onClick={() => setSelectedLevel(level.id)}
                                             className={cn(
-                                              "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
+                                              "text-left px-3 py-2.5 md:px-4 rounded-lg md:rounded-none md:border-l-2 text-sm transition-all duration-200 touch-manipulation min-h-[44px] md:min-h-0",
                                               selectedLevel === level.id
-                                                ? "text-[#0d47a1] border-[#0d47a1] bg-blue-50/50 font-medium"
+                                                ? "text-[#0d47a1] border-[#0d47a1] bg-blue-50/50 font-medium md:border-l-2"
                                                 : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
                                             )}
                                             style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
@@ -700,23 +704,23 @@ const AmritaStyleHeader = () => {
                                     </>
                                   )}
                                   {selectedStream === 'diploma' && (
-                                    <div className="px-4 py-2 text-sm text-gray-400 italic">
+                                    <div className="px-2 md:px-4 py-2 text-sm text-gray-400 italic">
                                       No level selection needed
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Column 3 - Courses/Departments */}
-                                <div className="flex-1 pl-6 md:pl-8 overflow-y-auto">
+                                <div className="flex-1 min-h-0 pl-0 md:pl-8 overflow-y-auto">
                                   {getCourses().length > 0 ? (
                                     <>
-                                      <h4 className="text-gray-500 text-xs uppercase tracking-wider mb-4"
+                                      <h4 className="text-gray-500 text-xs uppercase tracking-wider mb-3 md:mb-4"
                                           style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
                                         {selectedStream === 'diploma' ? 'Diploma Courses' : 
                                          selectedStream === 'engineering' ? (selectedLevel === 'ug' ? 'B.Tech Programs' : 'M.Tech Programs') :
                                          selectedStream === 'management' ? (selectedLevel === 'ug' ? 'UG Programs' : 'PG Programs') : 'Select a stream'}
                                       </h4>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-4 md:gap-y-5">
                                         {getCourses().map((course, index) => (
                                           <motion.button
                                             key={course.name}
@@ -724,7 +728,7 @@ const AmritaStyleHeader = () => {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.03 }}
                                             onClick={() => handleNavigation(course.href)}
-                                            className="text-left group py-2 pr-4"
+                                            className="text-left group py-3 pr-4 rounded-lg active:bg-gray-50 touch-manipulation min-h-[48px] md:min-h-0 md:py-2 md:rounded-none"
                                             style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                                           >
                                             <h5 className="text-sm font-medium text-gray-800 group-hover:text-[#0d47a1] transition-colors mb-1">
@@ -740,7 +744,7 @@ const AmritaStyleHeader = () => {
                                       </div>
                                     </>
                                   ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                                    <div className="flex items-center justify-center py-8 md:py-0 md:h-full text-gray-400 text-sm">
                                       {!selectedStream 
                                         ? 'Select a stream to view courses' 
                                         : selectedStream !== 'diploma' && !selectedLevel 
@@ -753,12 +757,12 @@ const AmritaStyleHeader = () => {
                             </div>
                           ) : (
                             /* Default Layout for other sections */
-                            <div className="px-8 md:px-12 py-9 md:py-11">
-                              <div className="flex flex-col md:flex-row gap-8 md:gap-10">
+                            <div className="px-4 py-4 md:px-12 md:py-11 overflow-y-auto">
+                              <div className="flex flex-col md:flex-row gap-6 md:gap-10">
                                 {/* Left Column - Title & Description */}
                                 <div className="md:w-1/4 md:border-r border-gray-200 md:pr-10 pb-6 md:pb-0 border-b md:border-b-0 flex-shrink-0">
                                   <h3 
-                                    className="text-lg md:text-xl text-[#0a192f] mb-3 leading-tight"
+                                    className="text-base md:text-xl text-[#0a192f] mb-2 md:mb-3 leading-tight"
                                     style={{ 
                                       fontFamily: activeNavItem === 'about' 
                                         ? "'Anton', sans-serif" 
@@ -770,12 +774,12 @@ const AmritaStyleHeader = () => {
                                   >
                                     {subMenuData[activeNavItem].title}
                                   </h3>
-                                  <p className="text-sm text-gray-600 leading-relaxed mb-5" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+                                  <p className="text-sm text-gray-600 leading-relaxed mb-4 md:mb-5" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
                                     {subMenuData[activeNavItem].description}
                                   </p>
                                   <button
                                     onClick={() => handleNavigation(subMenuData[activeNavItem].knowMoreLink)}
-                                    className="inline-flex items-center gap-2 text-[#1e3a8a] hover:text-[#0a192f] font-medium text-sm transition-colors group"
+                                    className="inline-flex items-center gap-2 text-[#1e3a8a] hover:text-[#0a192f] font-medium text-sm transition-colors group touch-manipulation min-h-[44px]"
                                     style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                                   >
                                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -783,9 +787,9 @@ const AmritaStyleHeader = () => {
                                   </button>
                                 </div>
 
-                                {/* Right Section - Links Grid */}
-                                <div className="flex-1">
-                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-4 md:gap-x-7 md:gap-y-5">
+                                {/* Right Section - Links Grid - 1 col on small mobile, 2 on larger */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 gap-x-4 md:gap-x-7 md:gap-y-5">
                                     {subMenuData[activeNavItem].columns.map((col, index) => (
                                       <motion.button
                                         key={col.title}
@@ -793,7 +797,7 @@ const AmritaStyleHeader = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.02 }}
                                         onClick={() => handleNavigation(col.link)}
-                                        className="text-left group p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                                        className="text-left group p-3 rounded-lg hover:bg-gray-50 active:bg-gray-50 transition-colors touch-manipulation min-h-[48px]"
                                         style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                                       >
                                         <h4 className="text-sm font-semibold text-gray-800 group-hover:text-[#1e3a8a] transition-colors flex items-center gap-1.5">
@@ -820,18 +824,18 @@ const AmritaStyleHeader = () => {
               </div>
 
               {/* Quick Contact Info at Bottom - On BLACK background */}
-              <div className="flex-shrink-0 py-4" style={{ backgroundColor: '#000000' }}>
+              <div className="flex-shrink-0 py-3 md:py-4 safe-area-bottom" style={{ backgroundColor: '#000000' }}>
                 <div className="px-4 md:px-8">
-                  <div className="flex flex-wrap items-center justify-center gap-5 md:gap-10 text-sm text-gray-400">
-                    <a href="tel:+919959617476" className="flex items-center gap-2 hover:text-white transition-colors">
-                      <Phone className="w-4 h-4" />
+                  <div className="flex flex-wrap items-center justify-center gap-4 md:gap-10 text-xs md:text-sm text-gray-400">
+                    <a href="tel:+919959617476" className="flex items-center gap-2 hover:text-white transition-colors py-2 touch-manipulation min-h-[44px]">
+                      <Phone className="w-4 h-4 flex-shrink-0" />
                       +91-9959617476
                     </a>
-                    <a href="mailto:info@vfriengg.com" className="flex items-center gap-2 hover:text-white transition-colors">
-                      <Mail className="w-4 h-4" />
+                    <a href="mailto:info@vfriengg.com" className="flex items-center gap-2 hover:text-white transition-colors py-2 touch-manipulation min-h-[44px]">
+                      <Mail className="w-4 h-4 flex-shrink-0" />
                       info@vfriengg.com
                     </a>
-                    <span className="hidden sm:flex items-center gap-2">
+                    <span className="hidden sm:flex items-center gap-2 py-2">
                       <MapPin className="w-4 h-4" />
                       Narava, Visakhapatnam
                     </span>
