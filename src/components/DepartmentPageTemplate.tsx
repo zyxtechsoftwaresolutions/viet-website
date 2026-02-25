@@ -219,6 +219,8 @@ export type DepartmentPageTemplateProps = {
   facultyFilter?: (department: string) => boolean;
 };
 
+type FacultyOrderFilter = 'designation' | 'experience' | 'designation-experience';
+
 const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   slug,
   backHref = '/btech',
@@ -363,6 +365,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     return heroVideoRaw.startsWith('/') ? `${API_BASE}${heroVideoRaw}` : `${API_BASE}/${heroVideoRaw}`;
   })();
   const admissionLink = s.admission?.link || DEFAULT_ADMISSIONS_URL;
+  const facultyOrderFilter: FacultyOrderFilter =
+    s.faculty?.sortBy === 'designation' || s.faculty?.sortBy === 'experience' || s.faculty?.sortBy === 'designation-experience'
+      ? s.faculty.sortBy
+      : 'designation-experience';
 
   const curriculumPrograms = deptPage?.curriculum?.programs ?? [];
   const curriculumFromApi = curriculumPrograms.length > 0;
@@ -378,24 +384,85 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const whyChooseList = commaList(s.overview?.whyChoose);
   const missionList = commaList(s.visionMission?.mission);
 
-  // Faculty list includes HODs first, then faculty; dedupe by name so same person appears once
-  const facultyWithHods = useMemo(() => {
+  const parseExperienceYears = (exp: string | undefined): number => {
+    if (!exp || !exp.trim()) return 0;
+    const match = exp.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  const getDesignationRank = (des: string | undefined): number => {
+    const d = (des || '').toLowerCase();
+    if (d.includes('principal')) return 100;
+    if (d.includes('hod') || d.includes('head of department')) return 90;
+    if (d.includes('professor') && !d.includes('assistant') && !d.includes('associate')) return 80;
+    if (d.includes('associate professor')) return 70;
+    if (d.includes('assistant professor')) return 60;
+    if (d.includes('lecturer') || d.includes('senior lecturer')) return 50;
+    if (d.includes('guest') || d.includes('visiting')) return 40;
+    return 30;
+  };
+
+  const getHodPriority = (des: string | undefined): number => {
+    const d = (des || '').toLowerCase();
+    if (d.includes('hod') || d.includes('head of department')) return 2;
+    return 1;
+  };
+
+  // Faculty list: keep HOD(s) of this department first, then sort remaining faculty
+  // by selected order from Admin -> Department Pages -> Faculty.
+  const sortedFacultyWithHods = useMemo(() => {
+    const sortedHods = [...hods].sort((a: any, b: any) => {
+      const hpA = getHodPriority(a.designation);
+      const hpB = getHodPriority(b.designation);
+      if (hpB !== hpA) return hpB - hpA;
+      const drA = getDesignationRank(a.designation);
+      const drB = getDesignationRank(b.designation);
+      if (drB !== drA) return drB - drA;
+      const exA = parseExperienceYears(a.experience);
+      const exB = parseExperienceYears(b.experience);
+      if (exB !== exA) return exB - exA;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
+    const sortedFaculty = [...faculty].sort((a: any, b: any) => {
+      if (facultyOrderFilter === 'designation') {
+        const drA = getDesignationRank(a.designation);
+        const drB = getDesignationRank(b.designation);
+        if (drB !== drA) return drB - drA;
+      } else if (facultyOrderFilter === 'experience') {
+        const exA = parseExperienceYears(a.experience);
+        const exB = parseExperienceYears(b.experience);
+        if (exB !== exA) return exB - exA;
+      } else {
+        const drA = getDesignationRank(a.designation);
+        const drB = getDesignationRank(b.designation);
+        if (drB !== drA) return drB - drA;
+        const exA = parseExperienceYears(a.experience);
+        const exB = parseExperienceYears(b.experience);
+        if (exB !== exA) return exB - exA;
+      }
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
     const seen = new Set<string>();
     const result: any[] = [];
-    for (const h of hods) {
+
+    for (const h of sortedHods) {
       const key = (h.name || '').trim().toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
       result.push({ ...h, _listKey: `hod-${h.id}` });
     }
-    for (const f of faculty) {
+
+    for (const f of sortedFaculty) {
       const key = (f.name || '').trim().toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
       result.push({ ...f, _listKey: `faculty-${f.id}` });
     }
+
     return result;
-  }, [hods, faculty]);
+  }, [hods, faculty, facultyOrderFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -947,9 +1014,9 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       <section id="faculty" ref={(el) => { sectionRefs.current['faculty'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Faculty" title="Faculty" accent="emerald" />
-          {facultyWithHods.length > 0 ? (
+          {sortedFacultyWithHods.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {facultyWithHods.map((f: any) => (
+              {sortedFacultyWithHods.map((f: any) => (
                 <div key={f._listKey ?? f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
                   <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
                     {f.image ? (

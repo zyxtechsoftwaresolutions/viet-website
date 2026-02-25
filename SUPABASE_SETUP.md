@@ -36,6 +36,11 @@ Admin uploads **videos** directly from the browser to Supabase Storage (no backe
 1. In Supabase Dashboard → **Storage**, create a bucket named **videos**, set it **Public**.
 2. Or run the migration: `supabase/migrations/002_videos_bucket.sql` in the SQL Editor (creates bucket + RLS policies for public read and anon upload).
 
+**Large hero videos (e.g. 150 MB):** Supabase enforces a **global** file size limit that overrides bucket settings.
+
+- **Free plan:** The global limit cannot exceed **50 MB**. Files larger than 50 MB will always fail with "max limit exceeded" or 400. Use a video under 50 MB or upgrade to Pro.
+- **Pro/Team plan:** In Dashboard go to **Storage** → **Settings**. In the top section set **Global file size limit** (e.g. 500 MB or 5 GB). The bucket-level "unrestricted" only means "use the global limit"; if the global limit is still 50 MB, large uploads will fail. Raise the global limit there first.
+
 Then set **frontend** env vars so the admin app can upload (same project, anon key):
 
 ```env

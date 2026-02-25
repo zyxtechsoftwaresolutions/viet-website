@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { departmentPagesAPI, facultyAPI } from '@/lib/api';
 import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
@@ -77,6 +77,7 @@ type RDProjectCard = { id: string; name: string; duration: string; funding: stri
 type IdeaCellStat = { label: string; value: string };
 type IdeaCellPillar = { id: string; icon: string; title: string; items: string[] };
 type ClubCard = { id: string; category: string; title: string; subtitle: string };
+type FacultyOrderFilter = 'designation' | 'experience' | 'designation-experience';
 
 const defaultSections = () => ({
   hero: { image: '', video: '', badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' },
@@ -90,7 +91,7 @@ const defaultSections = () => ({
   programOverview: { peos: '', psos: '', posText: '', posBadges: [] as string[] },
   facilities: { cards: [] as FacilityCard[] },
   whyViet: { cards: [] as WhyVietCard[] },
-  faculty: { content: '', facultyIds: [] as number[] },
+  faculty: { content: '', facultyIds: [] as number[], sortBy: 'designation-experience' as FacultyOrderFilter },
   projects: { stats: [{ label: 'Completed', value: '50+' }, { label: 'Industry', value: '25+' }, { label: 'Research', value: '15+' }, { label: 'Award winning', value: '10+' }] as ProjectStat[], cards: [] as ProjectCard[] },
   placements: { stats: [{ label: 'Placement rate', value: '95%' }, { label: 'Companies', value: '50+' }, { label: 'Highest package', value: '₹8.5L' }, { label: 'Average package', value: '₹4.2L' }] as PlacementStat[], recruiterImages: [] as string[], cards: [] as PlacementCard[] },
   rd: { title: 'R&D Lab', stats: [{ label: 'Papers', value: '25+' }, { label: 'Ph.D Faculty', value: '8' }, { label: 'Ongoing', value: '5' }, { label: 'Patents', value: '3' }] as RDStat[], researchAreas: [] as string[], cards: [] as RDProjectCard[] },
@@ -224,9 +225,15 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
   }
 
   if (raw.faculty) {
+    const rawSortBy = raw.faculty.sortBy;
+    const sortBy: FacultyOrderFilter =
+      rawSortBy === 'designation' || rawSortBy === 'experience' || rawSortBy === 'designation-experience'
+        ? rawSortBy
+        : def.faculty.sortBy;
     out.faculty = {
       content: raw.faculty.content ?? def.faculty.content,
       facultyIds: Array.isArray(raw.faculty.facultyIds) ? raw.faculty.facultyIds : (def.faculty.facultyIds || []),
+      sortBy,
     };
   }
   ['gallery', 'alumni'].forEach((k) => {
@@ -262,7 +269,7 @@ const DepartmentPages = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [regulationToDelete, setRegulationToDelete] = useState<{ program: string; regulation: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [allFaculty, setAllFaculty] = useState<Array<{ id: number; name: string; designation?: string }>>([]);
+  const [allFaculty, setAllFaculty] = useState<Array<{ id: number; name: string; designation?: string; experience?: string }>>([]);
   const [facultySearchQuery, setFacultySearchQuery] = useState('');
 
   useEffect(() => {
@@ -270,10 +277,17 @@ const DepartmentPages = () => {
   }, [slug]);
 
   useEffect(() => {
-    facultyAPI.getAll().then((data) => {
-      const list = Array.isArray(data) ? data : [];
-      setAllFaculty(list.map((f: any) => ({ id: f.id, name: f.name, designation: f.designation })));
-    }).catch(() => setAllFaculty([]));
+    facultyAPI.getAll()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setAllFaculty(list.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          designation: f.designation,
+          experience: f.experience,
+        })));
+      })
+      .catch(() => setAllFaculty([]));
   }, []);
 
   const loadPage = async () => {
@@ -432,6 +446,53 @@ const DepartmentPages = () => {
   const ideaCellStats = sections.ideaCell?.stats ?? [];
   const ideaCellPillars = sections.ideaCell?.pillars ?? [];
   const clubCards = sections.clubActivities?.cards ?? [];
+  const filteredFacultyForSelection = useMemo(() => {
+    const parseExperienceYears = (exp: string | undefined): number => {
+      if (!exp || !exp.trim()) return 0;
+      const match = exp.match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+    const getDesignationRank = (des: string | undefined): number => {
+      const d = (des || '').toLowerCase();
+      if (d.includes('principal')) return 100;
+      if (d.includes('hod') || d.includes('head of department')) return 90;
+      if (d.includes('professor') && !d.includes('assistant') && !d.includes('associate')) return 80;
+      if (d.includes('associate professor')) return 70;
+      if (d.includes('assistant professor')) return 60;
+      if (d.includes('lecturer') || d.includes('senior lecturer')) return 50;
+      if (d.includes('guest') || d.includes('visiting')) return 40;
+      return 30;
+    };
+    const q = facultySearchQuery.trim().toLowerCase();
+    const facultyOrderFilter: FacultyOrderFilter =
+      sections.faculty?.sortBy === 'designation' || sections.faculty?.sortBy === 'experience' || sections.faculty?.sortBy === 'designation-experience'
+        ? sections.faculty.sortBy
+        : 'designation-experience';
+    const filtered = allFaculty.filter((f) => {
+      const name = (f.name || '').toLowerCase();
+      const designation = (f.designation || '').toLowerCase();
+      return !q || name.includes(q) || designation.includes(q);
+    });
+    return [...filtered].sort((a, b) => {
+      if (facultyOrderFilter === 'designation') {
+        const rankA = getDesignationRank(a.designation);
+        const rankB = getDesignationRank(b.designation);
+        if (rankB !== rankA) return rankB - rankA;
+      } else if (facultyOrderFilter === 'experience') {
+        const expA = parseExperienceYears(a.experience);
+        const expB = parseExperienceYears(b.experience);
+        if (expB !== expA) return expB - expA;
+      } else {
+        const rankA = getDesignationRank(a.designation);
+        const rankB = getDesignationRank(b.designation);
+        if (rankB !== rankA) return rankB - rankA;
+        const expA = parseExperienceYears(a.experience);
+        const expB = parseExperienceYears(b.experience);
+        if (expB !== expA) return expB - expA;
+      }
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }, [allFaculty, facultySearchQuery, sections.faculty?.sortBy]);
 
   const addCategory = () => {
     const id = 'cat-' + Date.now();
@@ -745,6 +806,7 @@ const DepartmentPages = () => {
           <TabsTrigger value="rd">13. R&D</TabsTrigger>
           <TabsTrigger value="ideaCell">14. Idea Cell</TabsTrigger>
           <TabsTrigger value="clubActivities">15. Club Activities</TabsTrigger>
+          <TabsTrigger value="faculty">16. Faculty</TabsTrigger>
           <TabsTrigger value="more">More Sections</TabsTrigger>
         </TabsList>
 
@@ -1566,7 +1628,7 @@ const DepartmentPages = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="more" className="space-y-4">
+        <TabsContent value="faculty" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Faculty</CardTitle>
@@ -1588,22 +1650,36 @@ const DepartmentPages = () => {
                   <p className="text-sm text-muted-foreground">No faculty added yet. Add faculty in Admin → Faculty first.</p>
                 ) : (
                   <>
-                    <Input
-                      placeholder="Search by name or designation..."
-                      value={facultySearchQuery}
-                      onChange={(e) => setFacultySearchQuery(e.target.value)}
-                      className="mb-3"
-                    />
+                    {(() => {
+                      const currentSort: FacultyOrderFilter =
+                        sections.faculty?.sortBy === 'designation' || sections.faculty?.sortBy === 'experience' || sections.faculty?.sortBy === 'designation-experience'
+                          ? sections.faculty.sortBy
+                          : 'designation-experience';
+                      return (
+                    <div className="mb-3 grid gap-3 md:grid-cols-2">
+                      <Input
+                        placeholder="Search by name or designation..."
+                        value={facultySearchQuery}
+                        onChange={(e) => setFacultySearchQuery(e.target.value)}
+                      />
+                      <Select value={currentSort} onValueChange={(value: FacultyOrderFilter) => updateSection('faculty', 'sortBy', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="designation">DESIGNATION</SelectItem>
+                          <SelectItem value="experience">EXPERIENCE</SelectItem>
+                          <SelectItem value="designation-experience">DESIGNATION & EXPERIENCE</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                      );
+                    })()}
                     <div className="border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2">
-                      {allFaculty
-                        .filter((f) => {
-                          const q = facultySearchQuery.trim().toLowerCase();
-                          if (!q) return true;
-                          const name = (f.name || '').toLowerCase();
-                          const designation = (f.designation || '').toLowerCase();
-                          return name.includes(q) || designation.includes(q);
-                        })
-                        .map((f) => (
+                      {filteredFacultyForSelection.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No faculty match the selected filter.</p>
+                      )}
+                      {filteredFacultyForSelection.map((f) => (
                       <div key={f.id} className="flex items-center gap-2">
                         <Checkbox
                           id={`faculty-${f.id}`}
@@ -1621,6 +1697,9 @@ const DepartmentPages = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="more" className="space-y-4">
           {['gallery', 'alumni'].map((key) => (
             <Card key={key}>
               <CardHeader>
