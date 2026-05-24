@@ -93,7 +93,7 @@ const Accreditations = () => {
               <p className="text-lg md:text-xl font-semibold text-white/95">
                 Recognized Excellence in Technical Education
               </p>
-              <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+              <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
                 Recognized Excellence in Technical Education and Quality Assurance
               </p>
             </motion.div>

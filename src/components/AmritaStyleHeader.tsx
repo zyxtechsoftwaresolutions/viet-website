@@ -360,12 +360,12 @@ const AmritaStyleHeader = () => {
             >
               {/* Full logo container - visible when not scrolled */}
               <motion.div 
-                className="rounded-lg overflow-hidden bg-transparent border-2 border-white p-2"
+                className="rounded-lg overflow-hidden bg-transparent"
                 initial={false}
                 animate={{
                   width: isScrolled ? 0 : 'auto',
                   opacity: isScrolled ? 0 : 1,
-                  padding: isScrolled ? 0 : '8px',
+                  padding: isScrolled ? 0 : 0,
                 }}
                 transition={{
                   duration: 0.5,
@@ -375,7 +375,7 @@ const AmritaStyleHeader = () => {
                 <img
                   src="/viet-logo-new.png"
                   alt="VIET Logo"
-                  className="h-12 md:h-14 w-auto object-contain"
+                  className="h-16 md:h-20 w-auto object-contain"
                 />
               </motion.div>
               

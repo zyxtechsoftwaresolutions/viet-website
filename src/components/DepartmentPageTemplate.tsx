@@ -714,7 +714,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                   {/* Right: HOD Message - Only show with first HOD */}
                   {index === 0 && s.hod?.message && (
                     <div className="mt-8 md:mt-0">
-                      <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
+                      <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
                         <div
                           dangerouslySetInnerHTML={{ __html: s.hod.message }}
                           className="message-content indent-8"
@@ -731,7 +731,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
               <p className="text-slate-500 text-sm">Heads of Department will appear here once added through the Admin → HODs panel.</p>
               {s.hod?.message && (
                 <div className="mt-8 text-left max-w-3xl mx-auto">
-                  <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
+                  <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
                     <div
                       dangerouslySetInnerHTML={{ __html: s.hod.message }}
                       className="message-content indent-8"

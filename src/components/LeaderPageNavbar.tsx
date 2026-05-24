@@ -388,6 +388,10 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form', '_blank');
   };
 
+  const handleVsptClick = () => {
+    document.getElementById('ticker-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const handleBackClick = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -420,12 +424,12 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
             >
               {/* Full logo container - visible when not scrolled */}
               <motion.div 
-                className="rounded-lg overflow-hidden bg-transparent border-2 border-white p-2"
+                className="rounded-lg overflow-hidden bg-transparent"
                 initial={false}
                 animate={{
                   width: isScrolled ? 0 : 'auto',
                   opacity: isScrolled ? 0 : 1,
-                  padding: isScrolled ? 0 : '8px',
+                  padding: isScrolled ? 0 : 0,
                 }}
                 transition={{
                   duration: 0.5,
@@ -435,9 +439,9 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                 <img
                   src="/viet-logo-new.png"
                   alt="VIET Logo"
-                  className="h-12 md:h-14 w-auto object-contain"
-                  width={120}
-                  height={48}
+                  className="h-16 md:h-20 w-auto object-contain"
+                  width={160}
+                  height={64}
                   loading="eager"
                   fetchpriority="high"
                   decoding="async"
@@ -476,77 +480,83 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
             </motion.div>
 
             {/* Right Side - Back/Admissions + Menu Button */}
-            <div className={cn("flex items-center pointer-events-auto", isHomePage ? "flex-col gap-2" : "gap-3")}>
-              <div className="flex items-center gap-3">
-                {/* Back/Admissions Button */}
-                <motion.button
-                  onClick={isHomePage ? handleAdmissionsClick : handleBackClick}
-                  onMouseEnter={() => setIsBackHovered(true)}
-                  onMouseLeave={() => setIsBackHovered(false)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2",
-                    isScrolled 
-                      ? cn(
-                          isBackHovered 
-? "bg-white text-primary border-primary"
+            <div className="flex items-center gap-3 pointer-events-auto">
+              {/* Back (inner pages) / VSPT (home) — same size as former Admissions button */}
+              <motion.button
+                onClick={isHomePage ? handleVsptClick : handleBackClick}
+                onMouseEnter={() => setIsBackHovered(true)}
+                onMouseLeave={() => setIsBackHovered(false)}
+                className={cn(
+                  "flex items-center justify-center gap-2 min-w-[7.5rem] px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2",
+                  isHomePage
+                    ? cn(
+                        "font-bold tracking-[0.12em] uppercase shadow-[0_0_20px_rgba(225,115,26,0.55)] ring-2 ring-yellow-300/90",
+                        isScrolled
+                          ? isBackHovered
+                            ? "bg-orange-600 text-white border-white scale-[1.02]"
+                            : "bg-[#E1731A] text-white border-white"
+                          : isBackHovered
+                            ? "bg-orange-500 text-white border-white shadow-[0_0_28px_rgba(255,200,50,0.65)] scale-[1.03]"
+                            : "bg-[#E1731A] text-white border-white shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+                      )
+                    : cn(
+                        isScrolled
+                          ? isBackHovered
+                            ? "bg-white text-primary border-primary"
                             : "bg-primary text-white border-primary"
-                        )
-                      : cn(
-                          "backdrop-blur-md",
-                          isBackHovered 
-                            ? "bg-white/20 text-white border-white/40 shadow-lg" 
-                            : "bg-white/10 text-white border-white/30 shadow-md"
-                        )
-                  )}
-                  style={!isScrolled ? {
-                    backdropFilter: 'blur(10px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-                  } : {}}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {!isHomePage && (
-                    <ArrowLeft className={cn(
+                          : cn(
+                              "backdrop-blur-md",
+                              isBackHovered
+                                ? "bg-white/20 text-white border-white/40 shadow-lg"
+                                : "bg-white/10 text-white border-white/30 shadow-md"
+                            )
+                      )
+                )}
+                style={
+                  isHomePage || isScrolled
+                    ? undefined
+                    : {
+                        backdropFilter: "blur(10px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(10px) saturate(180%)",
+                      }
+                }
+                whileTap={{ scale: 0.95 }}
+              >
+                {!isHomePage && (
+                  <ArrowLeft
+                    className={cn(
                       "w-4 h-4 transition-colors duration-300",
-                      isScrolled 
-                        ? (isBackHovered ? "text-primary" : "text-white")
-                        : "text-white"
-                    )} />
-                  )}
-                  <span className="hidden sm:inline">{isHomePage ? 'Admissions' : 'Back'}</span>
-                </motion.button>
+                      isScrolled ? (isBackHovered ? "text-primary" : "text-white") : "text-white"
+                    )}
+                  />
+                )}
+                <span className={cn(isHomePage && "animate-text-blink text-base md:text-lg")}>
+                  {isHomePage ? "VSPT" : "Back"}
+                </span>
+              </motion.button>
 
-                {/* Menu Button */}
-                <motion.button
-                  onClick={() => setIsMenuOpen(true)}
-                  className={cn(
-                    "flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 text-white border-2",
-                    isScrolled
-                      ? "bg-gray-800 hover:bg-gray-700 border-gray-800"
-                      : "border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg"
-                  )}
-                  style={!isScrolled ? {
-                    backdropFilter: 'blur(10px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-                  } : {}}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Menu className="w-5 h-5" />
-                </motion.button>
-              </div>
-
-              {/* VSPT Button - Only on Home Page: solid orange bg, blinking text, no glass */}
-              {isHomePage && (
-                <motion.button
-                  className={cn(
-                    "flex items-center justify-center w-full px-4 py-2.5 rounded-full font-bold text-xl md:text-2xl lg:text-3xl transition-all duration-300 border-2 border-white bg-orange-500 text-white hover:bg-orange-600 hover:border-white shadow-md hover:shadow-lg"
-                  )}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="hidden sm:inline animate-text-blink">VSPT</span>
-                </motion.button>
-              )}
+              {/* Menu Button */}
+              <motion.button
+                onClick={() => setIsMenuOpen(true)}
+                className={cn(
+                  "flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 text-white border-2",
+                  isScrolled
+                    ? "bg-gray-800 hover:bg-gray-700 border-gray-800"
+                    : "border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg"
+                )}
+                style={
+                  !isScrolled
+                    ? {
+                        backdropFilter: "blur(10px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(10px) saturate(180%)",
+                      }
+                    : {}
+                }
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Menu className="w-5 h-5" />
+              </motion.button>
             </div>
           </motion.header>
         )}

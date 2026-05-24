@@ -142,7 +142,7 @@ const FacilityPage = () => {
               {heroTitle}
             </h1>
             {heroDescription && (
-              <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins">
+              <p className="text-base md:text-lg text-white/90 leading-relaxed">
                 {heroDescription}
               </p>
             )}

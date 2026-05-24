@@ -1,9 +1,97 @@
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
-import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
+import {
+  isVideoUrl,
+  getVideoEmbedUrl,
+  getChromelessYouTubeEmbedUrl,
+  type VideoPlatform,
+} from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
+
+const IFRAME_VIDEO_PLATFORMS: VideoPlatform[] = ['youtube', 'instagram', 'vimeo'];
+
+function shouldUseIframeEmbed(video: string): boolean {
+  if (!isVideoUrl(video)) return false;
+  const { platform } = getVideoEmbedUrl(video);
+  return IFRAME_VIDEO_PLATFORMS.includes(platform);
+}
+
+function VibeGalleryVideo({
+  slotIndex,
+  videoPath,
+  poster,
+  caption,
+  videoRefs,
+}: {
+  slotIndex: number;
+  videoPath: string;
+  poster: string;
+  caption: string;
+  videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
+}) {
+  const src = (() => {
+    if (!videoPath) return '';
+    if (isGoogleDriveLink(videoPath)) return convertGoogleDriveToDownload(videoPath);
+    if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) return videoPath;
+    return videoPath;
+  })();
+
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+      <video
+        ref={(el) => {
+          videoRefs.current[slotIndex] = el;
+        }}
+        className="vibe-gallery-video absolute inset-0 h-full w-full object-cover pointer-events-none"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        controls={false}
+        controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+        disablePictureInPicture
+        disableRemotePlayback
+        poster={poster}
+        onCanPlay={() => {
+          const video = videoRefs.current[slotIndex];
+          if (video) video.play().catch(() => {});
+        }}
+        onError={(e) => {
+          const target = e.target as HTMLVideoElement;
+          target.style.display = 'none';
+          const img = document.createElement('img');
+          img.src = poster;
+          img.className = 'absolute inset-0 h-full w-full object-cover pointer-events-none';
+          img.alt = caption;
+          target.parentElement?.appendChild(img);
+        }}
+      >
+        <source src={src} type="video/mp4" />
+        <source src={src} type="video/webm" />
+      </video>
+    </div>
+  );
+}
+
+function VibeYoutubeEmbed({ videoUrl, title }: { videoUrl: string; title: string }) {
+  const embedUrl = getChromelessYouTubeEmbedUrl(videoUrl);
+
+  return (
+    <div className="vibe-yt-embed absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
+      <iframe
+        src={embedUrl}
+        title={title}
+        className="vibe-yt-iframe border-0 pointer-events-none"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        loading="eager"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
 
 const imageSrc = (path: string) => {
   if (!path) return '/placeholder.svg';
@@ -35,13 +123,6 @@ const VibeAtViet = () => {
       .catch(() => setGalleryItems([]))
       .finally(() => setLoading(false));
   }, []);
-
-  const videoSrc = (path: string) => {
-    if (!path) return '';
-    if (isGoogleDriveLink(path)) return convertGoogleDriveToDownload(path);
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return path;
-  };
 
   // Grid layout pattern - Based on provided HTML/CSS structure
   // 5 columns × 5 rows grid
@@ -103,7 +184,7 @@ const VibeAtViet = () => {
   }, [galleryItems]);
 
   return (
-    <section className="py-8 md:py-10 bg-white overflow-hidden">
+    <section id="vibe-at-viet" className="py-8 md:py-10 bg-white overflow-hidden">
       <div className="container mx-auto px-4 md:px-10 lg:px-12">
         {/* Section Header */}
         <div className="mb-6 md:mb-8 flex items-center gap-3">
@@ -141,88 +222,38 @@ const VibeAtViet = () => {
               return (
               <div
                 key={`vibe-slot-${slotIndex}-${item.id}`}
-                className={`vibe-gallery-item relative group cursor-pointer ${gridClass}`}
+                className={`vibe-gallery-item relative group cursor-pointer h-full min-h-[60px] ${gridClass}`}
               >
                 {item.video ? (
-                  isVideoUrl(item.video) ? (
-                    // Render iframe for video links (YouTube, Instagram, etc.)
+                  shouldUseIframeEmbed(item.video) ? (
                     (() => {
-                      const videoInfo = getVideoEmbedUrl(item.video);
-                      // YouTube URLs already have autoplay params from videoUtils
-                      const embedUrl = videoInfo.embedUrl;
+                      const { platform, embedUrl } = getVideoEmbedUrl(item.video);
+                      if (platform === 'youtube') {
+                        return (
+                          <VibeYoutubeEmbed videoUrl={item.video} title={item.caption} />
+                        );
+                      }
                       return (
-                        <div className="w-full h-full relative" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                        <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
                           <iframe
                             src={embedUrl}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            className="absolute inset-0 w-full h-full"
-                            style={{ 
-                              border: 'none', 
-                              position: 'absolute', 
-                              top: '50%',
-                              left: '50%',
-                              width: '177.78%',
-                              height: '177.78%',
-                              minWidth: '100%',
-                              minHeight: '100%',
-                              transform: 'translate(-50%, -50%)',
-                              zIndex: 0,
-                              pointerEvents: 'none',
-                              backgroundColor: '#000'
-                            }}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            className="vibe-gallery-iframe border-0 pointer-events-none"
                             title={item.caption}
                             loading="lazy"
-                            frameBorder="0"
-                            allowFullScreen={false}
-                          />
-                          {/* Fallback image overlay - shows behind video */}
-                          <img
-                            src={imageSrc(item.image)}
-                            alt={item.caption}
-                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                            width={400}
-                            height={400}
-                            loading={slotIndex < 4 ? "eager" : "lazy"}
-                            fetchpriority={slotIndex < 4 ? "high" : "auto"}
-                            decoding="async"
-                            style={{ zIndex: -1, opacity: 1 }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
+                            tabIndex={-1}
                           />
                         </div>
                       );
                     })()
                   ) : (
-                    // Render video element for uploaded files or Google Drive videos
-                    <video
-                      ref={(el) => { videoRefs.current[slotIndex] = el; }}
-                      className="w-full h-full object-cover"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="auto"
+                    <VibeGalleryVideo
+                      slotIndex={slotIndex}
+                      videoPath={item.video}
                       poster={imageSrc(item.image)}
-                      onCanPlay={() => {
-                        const video = videoRefs.current[slotIndex];
-                        if (video) video.play().catch(() => {});
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLVideoElement;
-                        target.style.display = 'none';
-                        const img = document.createElement('img');
-                        img.src = imageSrc(item.image);
-                        img.className = 'w-full h-full object-cover';
-                        img.alt = item.caption;
-                        target.parentElement?.appendChild(img);
-                      }}
-                    >
-                      {/* Support both MP4 and Google Drive direct links */}
-                      <source src={videoSrc(item.video!)} type="video/mp4" />
-                      <source src={videoSrc(item.video!)} type="video/webm" />
-                      <img src={imageSrc(item.image)} alt={item.caption} className="w-full h-full object-cover" loading="eager" />
-                    </video>
+                      caption={item.caption}
+                      videoRefs={videoRefs}
+                    />
                   )
                 ) : (
                   <img

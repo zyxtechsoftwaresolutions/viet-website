@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
+  ChevronRight,
+  Plus,
   Search,
   Sprout,
   Building2,
@@ -26,6 +28,221 @@ import NewsAnnouncementsSection from '@/components/NewsAnnouncementsSection';
 import ScrollingTicker from '@/components/ScrollingTicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+const ADMISSIONS_FORM_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form';
+const ECAP_URL = 'https://webprosindia.com/viet/Default.aspx?ReturnUrl=%2fviet';
+const CAMU_STAFF_URL = 'https://camu.in/';
+const CAMU_STUDENT_URL = 'https://www.mycamu.co.in/#/';
+
+/** REVA-style hero quick links — sharp boxes, vivid colors, spaced stack on the right edge */
+const HERO_QUICK_LINKS = [
+  { id: 'programmes', label: 'Programmes', bg: '#F58220', icon: 'plus' as const },
+  { id: 'admissions', label: 'Admissions', bg: '#4D545D', icon: 'plus' as const },
+  { id: 'apply', label: 'Apply Now', bg: '#76B82A', icon: 'chevron' as const },
+  { id: 'vibe', label: 'Vibe@VIET', bg: '#00AEEF', icon: 'plus' as const },
+  { id: 'portal', label: 'Portal', bg: '#00969D', icon: 'plus' as const },
+];
+
+const heroQuickBoxClass =
+  "group relative w-full flex items-center justify-between gap-2 px-4 py-3 lg:py-3.5 text-left text-white font-semibold text-[0.8125rem] lg:text-sm tracking-[0.02em] shadow-[0_3px_10px_rgba(0,0,0,0.22)] transition-all duration-300 ease-out hover:brightness-110 hover:-translate-x-1 hover:shadow-[0_6px_16px_rgba(0,0,0,0.28)] active:brightness-95 active:translate-x-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-[-2px]";
+
+function HeroQuickLinkIcon({ icon }: { icon: 'plus' | 'chevron' }) {
+  if (icon === 'chevron') {
+    return (
+      <ChevronRight
+        className="w-4 h-4 shrink-0 opacity-95 transition-transform duration-300 ease-out group-hover:translate-x-1"
+        strokeWidth={2.5}
+        aria-hidden
+      />
+    );
+  }
+  return (
+    <span className="relative flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden>
+      <Plus
+        className="h-4 w-4 opacity-95 transition-transform duration-300 ease-out group-hover:rotate-45"
+        strokeWidth={2.5}
+      />
+    </span>
+  );
+}
+
+function HeroQuickLinkBox({
+  label,
+  bg,
+  icon,
+  onClick,
+}: {
+  label: string;
+  bg: string;
+  icon: 'plus' | 'chevron';
+  onClick?: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick} className={heroQuickBoxClass} style={{ backgroundColor: bg }}>
+      <span className="drop-shadow-sm">{label}</span>
+      <HeroQuickLinkIcon icon={icon} />
+    </button>
+  );
+}
+
+function HeroQuickLinks({
+  onProgrammes,
+  onVibeAtViet,
+}: {
+  onProgrammes: () => void;
+  onVibeAtViet: () => void;
+}) {
+  const openAdmissions = () => window.open(ADMISSIONS_FORM_URL, '_blank', 'noopener,noreferrer');
+
+  const actions: Record<string, () => void> = {
+    programmes: onProgrammes,
+    admissions: openAdmissions,
+    apply: openAdmissions,
+    vibe: onVibeAtViet,
+  };
+
+  const portalLink = HERO_QUICK_LINKS.find((l) => l.id === 'portal')!;
+
+  return (
+    <>
+      {/* Desktop — REVA-style vertical stack, sharp edges, visible gaps */}
+      <nav
+        className="hidden md:flex absolute right-0 top-[6.25rem] lg:top-[6.5rem] z-20 flex-col gap-[3px] w-[168px] lg:w-[182px]"
+        aria-label="Quick links"
+      >
+        {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
+          <HeroQuickLinkBox
+            key={link.id}
+            label={link.label}
+            bg={link.bg}
+            icon={link.icon}
+            onClick={actions[link.id]}
+          />
+        ))}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={heroQuickBoxClass}
+              style={{ backgroundColor: portalLink.bg }}
+            >
+              <span className="drop-shadow-sm">{portalLink.label}</span>
+              <HeroQuickLinkIcon icon="plus" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="left"
+            sideOffset={8}
+            className="w-56 p-2 z-[30] rounded-sm border-slate-200 shadow-xl"
+          >
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] px-2 py-2">
+              Portal login
+            </p>
+            <a
+              href={CAMU_STUDENT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-sm"
+            >
+              Student Login
+            </a>
+            <a
+              href={CAMU_STAFF_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-sm"
+            >
+              Staff Login
+            </a>
+            <a
+              href={ECAP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-sm"
+            >
+              ECAP Login
+            </a>
+          </PopoverContent>
+        </Popover>
+      </nav>
+
+      {/* Mobile — same vivid colors, sharp mini tiles */}
+      <div className="md:hidden absolute bottom-[4.5rem] left-0 right-0 z-20 px-3">
+        <div className="flex gap-[3px] overflow-x-auto pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
+            <button
+              key={link.id}
+              type="button"
+              onClick={actions[link.id]}
+              className="group snap-start shrink-0 flex items-center justify-between gap-2 min-w-[7.5rem] px-3 py-2.5 text-white text-[11px] font-semibold shadow-md transition-transform duration-300 active:scale-[0.98]"
+              style={{ backgroundColor: link.bg }}
+            >
+              <span>{link.label}</span>
+              {link.icon === 'chevron' ? (
+                <ChevronRight
+                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+              ) : (
+                <Plus
+                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-45"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+              )}
+            </button>
+          ))}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="group snap-start shrink-0 flex items-center justify-between gap-2 min-w-[6.5rem] px-3 py-2.5 text-white text-[11px] font-semibold shadow-md"
+                style={{ backgroundColor: portalLink.bg }}
+              >
+                <span>Portal</span>
+                <Plus
+                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-45"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-52 p-2 z-[30] rounded-sm">
+              <a
+                href={CAMU_STUDENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Student Login
+              </a>
+              <a
+                href={CAMU_STAFF_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Staff Login
+              </a>
+              <a
+                href={ECAP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                ECAP Login
+              </a>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+    </>
+  );
+}
 
 // Professional Lucide icon mapping – clean outline style
 const ProgramIcons = {
@@ -361,7 +578,7 @@ const HeroSection = () => {
   };
 
   const handleAdmissionsClick = () => {
-    window.open('https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form', '_blank');
+    window.open(ADMISSIONS_FORM_URL, '_blank', 'noopener,noreferrer');
   };
 
   // Show loading or empty state
@@ -466,7 +683,7 @@ const HeroSection = () => {
               <div className={`absolute inset-0 flex items-end transition-opacity duration-300 ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}>
-                <div className="w-full px-8 md:px-16 lg:px-24 pb-20 md:pb-24 lg:pb-28">
+                <div className="w-full px-8 md:px-16 lg:px-24 pb-20 md:pb-28 lg:pb-28 md:pr-44 lg:pr-48">
                   <div className="max-w-2xl">
                     {/* Badge */}
                     {slide.badge && (
@@ -508,8 +725,12 @@ const HeroSection = () => {
               </div>
             </div>
           ))}
-          
-          
+
+          <HeroQuickLinks
+            onProgrammes={() => scrollToSection('whats-your-interest')}
+            onVibeAtViet={() => scrollToSection('vibe-at-viet')}
+          />
+
           {/* Navigation Dots */}
           <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
             {heroSlides.map((_, index) => (
@@ -536,7 +757,7 @@ const HeroSection = () => {
           </div>
           
           {/* Slide Counter */}
-          <div className="absolute bottom-6 md:bottom-8 right-6 md:right-8 z-20 text-white/70 text-sm font-medium">
+          <div className="absolute bottom-6 md:bottom-8 right-6 md:right-48 lg:right-52 z-20 text-white/70 text-sm font-medium">
             <span className="text-white">{String(currentSlide + 1).padStart(2, '0')}</span>
             <span className="mx-1">/</span>
             <span>{String(heroSlides.length).padStart(2, '0')}</span>

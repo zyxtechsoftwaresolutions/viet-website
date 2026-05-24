@@ -47,7 +47,7 @@ const Chairman = () => {
   if (!heroImageUrl) heroImageUrl = '/chairmanedit.jpeg';
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 font-poppins">
       <LeaderPageNavbar backHref="/about" />
 
       {/* Hero Section — uses heroImage from admin or fallback */}

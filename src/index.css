@@ -13,7 +13,13 @@
   font-family: 'Firlest', sans-serif !important;
 }
 
-/* Poppins for leader page message and body text */
+/* Montserrat — default body font for all pages except leader profiles */
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif !important;
+  font-display: swap;
+}
+
+/* Poppins — Chairman, Principal, HR, Dean pages only */
 .font-poppins {
   font-family: 'Poppins', sans-serif !important;
   font-display: swap;
@@ -157,7 +163,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     scroll-behavior: smooth;
   }
 
@@ -613,7 +619,55 @@ html {
   transform: scale(1.08);
 }
 
-.vibe-gallery-item iframe {
+/* Vibe@VIET — hide native video controls & play overlays */
+.vibe-gallery-item video,
+.vibe-gallery-video {
+  pointer-events: none;
+}
+
+.vibe-gallery-item video::-webkit-media-controls,
+.vibe-gallery-item video::-webkit-media-controls-enclosure,
+.vibe-gallery-item video::-webkit-media-controls-panel,
+.vibe-gallery-item video::-webkit-media-controls-play-button,
+.vibe-gallery-item video::-webkit-media-controls-start-playback-button,
+.vibe-gallery-item video::-webkit-media-controls-overlay-play-button,
+.vibe-gallery-item video::-webkit-media-controls-timeline,
+.vibe-gallery-item video::-webkit-media-controls-volume-slider,
+.vibe-gallery-item video::-webkit-media-controls-mute-button,
+.vibe-gallery-item video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+  opacity: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.vibe-gallery-item video:hover::-webkit-media-controls {
+  display: none !important;
+}
+
+/* Vimeo / Instagram embeds in gallery */
+.vibe-gallery-iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 177.78%;
+  height: 177.78%;
+  min-width: 100%;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+.vibe-gallery-item:hover .vibe-gallery-iframe {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+/* YouTube embed in gallery — same cover scale as other iframes */
+.vibe-yt-embed {
+  isolation: isolate;
+}
+
+.vibe-yt-iframe {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -627,9 +681,7 @@ html {
   transform: translate(-50%, -50%);
 }
 
-.vibe-gallery-item:hover iframe {
-  z-index: 0;
-  pointer-events: none;
+.vibe-gallery-item:hover .vibe-yt-iframe {
   transform: translate(-50%, -50%) scale(1.05);
 }
 

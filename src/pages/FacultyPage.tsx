@@ -213,7 +213,7 @@ const FacultyPage = () => {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Faculty
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed">
               Our faculty across all departments and streams.
             </p>
           </motion.div>

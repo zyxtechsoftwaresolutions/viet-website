@@ -212,7 +212,7 @@ const CommitteesPage: React.FC = () => {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Institutional Committees
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
               VIET has established various committees to ensure effective governance, quality assurance, and comprehensive student support across all aspects of institutional functioning.
             </p>
           </motion.div>
@@ -227,7 +227,7 @@ const CommitteesPage: React.FC = () => {
 
       <div className="committees-page">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Montserrat:wght@400;500;600;700&display=swap');
 
           .committees-page {
             min-height: 100vh;
@@ -264,7 +264,7 @@ const CommitteesPage: React.FC = () => {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 50px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 0.813rem;
             font-weight: 600;
             letter-spacing: 1px;
@@ -287,7 +287,7 @@ const CommitteesPage: React.FC = () => {
           }
 
           .hero-subtitle {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 1.125rem;
             color: #4a5568;
             max-width: 800px;
@@ -330,7 +330,7 @@ const CommitteesPage: React.FC = () => {
           }
 
           .stat-label {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 0.875rem;
             color: #718096;
             text-transform: uppercase;
@@ -377,7 +377,7 @@ const CommitteesPage: React.FC = () => {
           }
 
           .info-card h3 {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 1.125rem;
             font-weight: 700;
             color: #667eea;
@@ -385,7 +385,7 @@ const CommitteesPage: React.FC = () => {
           }
 
           .info-card p {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 0.938rem;
             color: #4a5568;
             line-height: 1.7;
@@ -414,7 +414,7 @@ const CommitteesPage: React.FC = () => {
           .committees-table thead th {
             padding: 20px 24px;
             text-align: left;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 0.875rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -437,7 +437,7 @@ const CommitteesPage: React.FC = () => {
 
           .committees-table tbody td {
             padding: 20px 24px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             color: #2d3748;
           }
 
@@ -516,7 +516,7 @@ const CommitteesPage: React.FC = () => {
           }
 
           .description-text {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-size: 0.938rem;
             color: #4a5568;
             line-height: 1.7;

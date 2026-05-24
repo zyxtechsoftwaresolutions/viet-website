@@ -1,489 +1,414 @@
-import { motion } from 'framer-motion';
-import { Shield, Users, AlertTriangle, Heart, UserCheck, BookOpen, Building2, GraduationCap, Target } from 'lucide-react';
-import LeaderPageNavbar from '@/components/LeaderPageNavbar';
-import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Shield,
+  Scale,
+  Phone,
+  Mail,
+  MapPin,
+  AlertTriangle,
+  Target,
+  Eye,
+  Lock,
+  ClipboardList,
+  MessageCircle,
+  Megaphone,
+  ExternalLink,
+} from "lucide-react";
+import LeaderPageNavbar from "@/components/LeaderPageNavbar";
+import Footer from "@/components/Footer";
+import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+type Member = {
+  sno: number;
+  name: string;
+  dept: string;
+  designation: string;
+};
+
+const antiRaggingMembers: Member[] = [
+  { sno: 1, name: "Dr. G Vidya Pradeep Varma", dept: "Principal", designation: "Chair Person" },
+  { sno: 2, name: "Dr K. Dayana", dept: "MECH", designation: "Member" },
+  { sno: 3, name: "Ch. Veeru Naidu", dept: "NSS", designation: "Member" },
+  { sno: 4, name: "Mr. P. Prasad", dept: "Principal Diploma College", designation: "Member" },
+  { sno: 5, name: "K. Rama Krishna", dept: "Librarian", designation: "Member" },
+  { sno: 6, name: "P. Sai Prasana", dept: "Librarian", designation: "Member" },
+  { sno: 7, name: "S. Kusaraju", dept: "Physical Director", designation: "Member" },
+  { sno: 8, name: "K. Chandana", dept: "MECH", designation: "Member" },
+  { sno: 9, name: "P. Ramesh", dept: "Boys Hostel", designation: "Boys Hostel Warden" },
+  { sno: 10, name: "Prasanna Lakshmi", dept: "Girls Hostel", designation: "Girls Hostel Warden" },
+];
+
+const womenCellMembers: Member[] = [
+  { sno: 1, name: "Dr. G Vidya Pradeep Varma", dept: "Principal", designation: "Chair Person" },
+  { sno: 2, name: "Mr. Ch Kannam Naidu", dept: "CIVIL, HOD", designation: "Advisor" },
+  { sno: 3, name: "Dr K. Dayana", dept: "MECH", designation: "Convenor" },
+  { sno: 4, name: "Y. Priyanka", dept: "CIVIL", designation: "Co-Convenor" },
+  { sno: 5, name: "A S C Tejaaswini Kona", dept: "CSE", designation: "Treasurer" },
+  { sno: 6, name: "Dr. SK Razia", dept: "BS&H", designation: "Member" },
+  { sno: 7, name: "K. Chandana", dept: "MECH", designation: "Member" },
+  { sno: 8, name: "K. Divya", dept: "MBA", designation: "Member" },
+];
+
+function designationBadgeClass(designation: string) {
+  const d = designation.toLowerCase();
+  if (d.includes("chair")) return "bg-blue-100 text-blue-800 border-blue-200";
+  if (d.includes("advisor")) return "bg-emerald-100 text-emerald-800 border-emerald-200";
+  if (d.includes("convenor") || d.includes("treasurer")) return "bg-violet-100 text-violet-800 border-violet-200";
+  if (d.includes("warden")) return "bg-amber-100 text-amber-800 border-amber-200";
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function MemberTable({ members }: { members: Member[] }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="w-full min-w-[640px]">
+        <thead>
+          <tr className="bg-slate-800 text-white">
+            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider w-14">S.No</th>
+            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Name</th>
+            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Department</th>
+            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Designation</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200 bg-white">
+          {members.map((member) => (
+            <tr
+              key={member.sno}
+              className="hover:bg-slate-50/80 transition-colors"
+            >
+              <td className="px-5 py-4 text-sm font-medium text-slate-500 tabular-nums">{member.sno}</td>
+              <td className="px-5 py-4 text-sm font-medium text-slate-900">{member.name}</td>
+              <td className="px-5 py-4 text-sm text-slate-600">{member.dept}</td>
+              <td className="px-5 py-4">
+                <Badge
+                  variant="secondary"
+                  className={cn("text-xs font-medium border", designationBadgeClass(member.designation))}
+                >
+                  {member.designation}
+                </Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SectionHeading({
+  label,
+  title,
+  description,
+}: {
+  label: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="mb-8">
+      <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-3">
+        {label}
+      </p>
+      <h2 className="text-2xl md:text-3xl lg:text-[2rem] font-semibold text-slate-900 tracking-tight leading-tight">
+        {title}
+      </h2>
+      {description && (
+        <p className="mt-3 text-slate-600 text-base md:text-lg leading-relaxed max-w-4xl">
+          {description}
+        </p>
+      )}
+      <div className="h-px w-16 bg-slate-300 mt-6" aria-hidden />
+    </div>
+  );
+}
 
 const GrievanceRedressal = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    }
-  };
-
-  const antiRaggingMembers = [
-    {
-      id: 1,
-      name: "Dr.G Vidya Pradeep Varma",
-      department: "PRINCIPAL",
-      designation: "Chair Person",
-      icon: GraduationCap,
-      color: "from-blue-500 to-purple-600"
-    },
-    {
-      id: 2,
-      name: "Dr K.Dayana",
-      department: "MECH",
-      designation: "Members",
-      icon: UserCheck,
-      color: "from-green-500 to-teal-600"
-    },
-    {
-      id: 3,
-      name: "Ch.Veeru Naidu",
-      department: "NSS",
-      designation: "Members",
-      icon: Users,
-      color: "from-purple-500 to-violet-600"
-    },
-    {
-      id: 4,
-      name: "Mr. P.Prasad",
-      department: "Principal Diploma College",
-      designation: "Members",
-      icon: Building2,
-      color: "from-slate-800 to-blue-950"
-    },
-    {
-      id: 5,
-      name: "K.Rama Krishna",
-      department: "LIBRARIAN",
-      designation: "Members",
-      icon: BookOpen,
-      color: "from-indigo-500 to-blue-600"
-    },
-    {
-      id: 6,
-      name: "P.Sai Prasana",
-      department: "LIBRARIAN",
-      designation: "Members",
-      icon: BookOpen,
-      color: "from-emerald-500 to-green-600"
-    },
-    {
-      id: 7,
-      name: "S.Kusaraju",
-      department: "PHYSICAL DIRECTOR",
-      designation: "Members",
-      icon: Shield,
-      color: "from-amber-500 to-yellow-600"
-    },
-    {
-      id: 8,
-      name: "K.Chandana",
-      department: "MECH",
-      designation: "Members",
-      icon: UserCheck,
-      color: "from-rose-500 to-pink-600"
-    },
-    {
-      id: 9,
-      name: "P.Ramesh",
-      department: "BOYS HOSTEL WARDEN",
-      designation: "Boys Hostel warden",
-      icon: Building2,
-      color: "from-cyan-500 to-blue-600"
-    },
-    {
-      id: 10,
-      name: "Prasanna Lakshmi",
-      department: "GIRLS HOSTEL WARDEN",
-      designation: "Girls Hostel Warden",
-      icon: Building2,
-      color: "from-lime-500 to-green-600"
-    }
-  ];
-
-  const womenGrievanceMembers = [
-    {
-      id: 1,
-      name: "Dr.G Vidya Pradeep Varma",
-      department: "PRINCIPAL",
-      designation: "Chair Person",
-      icon: GraduationCap,
-      color: "from-blue-500 to-purple-600"
-    },
-    {
-      id: 2,
-      name: "Mr.Ch Kannam Naidu",
-      department: "CIVIL,HOD",
-      designation: "Advisor",
-      icon: UserCheck,
-      color: "from-green-500 to-teal-600"
-    },
-    {
-      id: 3,
-      name: "Dr K.Dayana",
-      department: "MECH",
-      designation: "Convenor",
-      icon: Users,
-      color: "from-purple-500 to-violet-600"
-    },
-    {
-      id: 4,
-      name: "Y.Priyanka",
-      department: "CIVIL",
-      designation: "co-convenor",
-      icon: Building2,
-      color: "from-slate-800 to-blue-950"
-    },
-    {
-      id: 5,
-      name: "A S C Tejaaswini Kona",
-      department: "CSE",
-      designation: "Treasurer",
-      icon: BookOpen,
-      color: "from-indigo-500 to-blue-600"
-    },
-    {
-      id: 6,
-      name: "Dr. SK Razia",
-      department: "BS&H",
-      designation: "Members",
-      icon: Shield,
-      color: "from-emerald-500 to-green-600"
-    },
-    {
-      id: 7,
-      name: "K.Chandana",
-      department: "MECH",
-      designation: "Members",
-      icon: UserCheck,
-      color: "from-amber-500 to-yellow-600"
-    },
-    {
-      id: 8,
-      name: "K.Divya",
-      department: "MBA",
-      designation: "Members",
-      icon: Heart,
-      color: "from-rose-500 to-pink-600"
-    }
-  ];
+  const [activeTab, setActiveTab] = useState<"anti-ragging" | "women-cell">("anti-ragging");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-slate-100">
       <LeaderPageNavbar backHref="/about" />
-      
-      {/* Hero Section */}
-      <section className="pt-56 pb-20 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white">
-        <div className="container mx-auto px-4">
+
+      {/* Hero — Chairman spacing */}
+      <section
+        className="relative min-h-[70vh] md:min-h-[75vh] pt-24 md:pt-28 pb-12 md:pb-16 text-white flex items-center bg-slate-800 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url(/campus-hero.jpg)" }}
+      >
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-black/80 from-35% via-black/55 to-black/30"
+          aria-hidden
+        />
+        <div className="container mx-auto px-4 md:px-8 relative z-10">
           <motion.div
-            className="text-center max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+            className="max-w-2xl"
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
+              Student Welfare
+            </p>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Grievance Redressal
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 leading-relaxed">
-              Ensuring a safe, respectful, and supportive environment for all
+            <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
+              Mechanisms for anti-ragging compliance, women&apos;s grievance redressal, and prompt resolution of
+              student and staff concerns at VIET.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <motion.div
-        className="container mx-auto px-4 py-16"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Anti Ragging Committee */}
-        <motion.section variants={itemVariants} className="mb-16">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-8 md:p-12">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-950 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <AlertTriangle className="w-8 h-8 text-white" />
+      {/* Tab navigation */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+        <div className="container mx-auto px-4 md:px-10 lg:px-12">
+          <div className="flex gap-1 overflow-x-auto" role="tablist">
+            {(
+              [
+                { id: "anti-ragging" as const, label: "Anti-Ragging Committee", icon: Shield },
+                { id: "women-cell" as const, label: "Women Grievance Cell", icon: Scale },
+              ] as const
+            ).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={activeTab === id}
+                onClick={() => setActiveTab(id)}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  activeTab === id
+                    ? "border-blue-600 text-blue-700"
+                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+                )}
+              >
+                <Icon className="w-4 h-4 shrink-0" aria-hidden />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Anti-Ragging */}
+      {activeTab === "anti-ragging" && (
+        <>
+          <section className="py-20 md:py-28 bg-[#fafafa]">
+            <div className="container mx-auto px-4 md:px-10 lg:px-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <SectionHeading
+                  label="Campus safety"
+                  title="Anti-Ragging Committee"
+                  description="The committee is responsible for maintaining a ragging-free campus and ensuring strict compliance with UGC and statutory anti-ragging norms."
+                />
+
+                <div className="prose prose-slate max-w-none text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-left space-y-5 mb-10">
+                  <p>
+                    Ragging is defined as any act that violates or is perceived to violate an individual student&apos;s
+                    dignity. It is <strong className="text-slate-800 font-semibold">totally banned</strong> on campus.
+                    Anyone found guilty of ragging or abetting ragging is liable to punishment under applicable law. VIET
+                    enforces zero tolerance through awareness, monitoring, and disciplinary action.
+                  </p>
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                  Anti Ragging Committee
-                </h2>
-                <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                  Committed to maintaining a ragging-free environment and ensuring student safety
+
+                <div className="flex items-start gap-3 p-4 md:p-5 mb-10 rounded-lg border border-red-200 bg-red-50/80">
+                  <AlertTriangle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" aria-hidden />
+                  <p className="text-sm md:text-base text-red-900 leading-relaxed m-0">
+                    Any act of ragging is a <strong>criminal offence</strong> under Indian law. Offenders may face
+                    expulsion, FIR registration, and criminal prosecution.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-12">
+                  <div className="border border-slate-200 rounded-lg p-6 md:p-7 bg-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Eye className="w-5 h-5 text-blue-700" aria-hidden />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-900">Vision</h3>
+                    </div>
+                    <p className="text-slate-600 text-base leading-relaxed m-0">
+                      To build a ragging-free environment by instilling democratic values, tolerance, empathy, and
+                      sensitivity so that students become responsible citizens.
+                    </p>
+                  </div>
+                  <div className="border border-slate-200 rounded-lg p-6 md:p-7 bg-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <Target className="w-5 h-5 text-slate-700" aria-hidden />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-900">Mission</h3>
+                    </div>
+                    <p className="text-slate-600 text-base leading-relaxed m-0">
+                      To create an atmosphere of discipline by passing a clear message that no act of ragging is
+                      tolerated within college premises.
+                    </p>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-semibold text-slate-900 mb-4">Committee members</h3>
+                <MemberTable members={antiRaggingMembers} />
+              </motion.div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Women Grievance Cell */}
+      {activeTab === "women-cell" && (
+        <section className="py-20 md:py-28 bg-[#fafafa]">
+          <div className="container mx-auto px-4 md:px-10 lg:px-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <SectionHeading
+                label="POSH compliance"
+                title="Women Grievance Cell"
+                description="In compliance with Supreme Court directions, the cell also functions as the Internal Complaints Committee under the POSH Act."
+              />
+
+              <div className="prose prose-slate max-w-none text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-left space-y-5 mb-10">
+                <p>
+                  Education should instil moral and ethical values alongside academic learning. The Women Grievance Cell
+                  provides a safe platform for addressing gender-specific concerns and ensuring dignity for all members of
+                  the campus community.
                 </p>
               </div>
 
-              {/* Anti Ragging Policy */}
-              <div className="bg-gradient-to-br from-slate-50 to-blue-100 rounded-xl p-8 border-l-4 border-slate-700 mb-8">
-                <div className="space-y-6 text-slate-700 leading-relaxed">
-                  <p className="text-lg">
-                    Ragging has ruined countless innocent lives and careers. It is now defined as an act that violates or is perceived to violate an individual student's dignity. Ragging is totally banned in the campus and anyone found guilty of ragging and/or helping ragging is liable to be punished as it is criminal offence. Visakha Institute of Engineering and Technology College ensures strict compliance on the prevention of Ragging in the form.
-                  </p>
-                  
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">
-                      <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
-                        <Shield className="w-6 h-6 text-blue-600 mr-3" />
-                        Vision
-                      </h3>
-                      <p className="text-slate-600 italic">
-                        "To build a ragging free environment by instilling the principles of democratic values, tolerance, empathy, compassion and sensitivity to that students become responsible citizens"
+              <ul className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10 list-none p-0 m-0">
+                {[
+                  { icon: Lock, title: "Confidential support", text: "A safe environment for reporting concerns." },
+                  { icon: ClipboardList, title: "Fair redressal", text: "Timely and impartial handling of complaints." },
+                  { icon: MessageCircle, title: "Counselling", text: "Information on campus counselling services." },
+                  { icon: Megaphone, title: "Awareness", text: "Programs that promote a respectful campus culture." },
+                ].map(({ icon: Icon, title, text }) => (
+                  <li key={title} className="border border-slate-200 rounded-lg p-5 bg-white">
+                    <Icon className="w-5 h-5 text-slate-700 mb-3" aria-hidden />
+                    <p className="font-semibold text-slate-900 text-sm mb-1">{title}</p>
+                    <p className="text-sm text-slate-600 leading-relaxed m-0">{text}</p>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex items-start gap-3 p-4 md:p-5 mb-10 rounded-lg border border-emerald-200 bg-emerald-50/80">
+                <p className="text-sm md:text-base text-emerald-900 leading-relaxed m-0">
+                  No instances of sexual harassment have been reported at VIET campus. The institution remains committed
+                  to maintaining this record through proactive awareness and support systems.
+                </p>
+              </div>
+
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Committee members</h3>
+              <MemberTable members={womenCellMembers} />
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* Contact */}
+      <section className="py-20 md:py-28 bg-white border-t border-slate-200">
+        <div className="container mx-auto px-4 md:px-10 lg:px-12">
+          <SectionHeading
+            label="Reach us"
+            title="Contact for grievances"
+            description="For anti-ragging complaints, women&apos;s cell matters, or general grievances, use the contacts below."
+          />
+
+          <div className="grid md:grid-cols-2 gap-8 mb-10">
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-blue-700" aria-hidden />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">Anti-Ragging</h3>
+                </div>
+                <ul className="space-y-4 list-none p-0 m-0">
+                  <li className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 text-slate-400 mt-1 shrink-0" aria-hidden />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Phone / WhatsApp</p>
+                      <p className="text-sm text-slate-800 m-0">+91-9494670501 · 9959617477, 9959617476</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Mail className="w-4 h-4 text-slate-400 mt-1 shrink-0" aria-hidden />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Email</p>
+                      <a href="mailto:vietvsp@gmail.com" className="text-sm text-blue-700 hover:underline">
+                        vietvsp@gmail.com
+                      </a>
+                    </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-slate-700" aria-hidden />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">General grievances</h3>
+                </div>
+                <ul className="space-y-4 list-none p-0 m-0">
+                  <li className="flex items-start gap-3">
+                    <Mail className="w-4 h-4 text-slate-400 mt-1 shrink-0" aria-hidden />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Email</p>
+                      <a href="mailto:website@viet.edu.in" className="text-sm text-blue-700 hover:underline">
+                        website@viet.edu.in
+                      </a>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Phone className="w-4 h-4 text-slate-400 mt-1 shrink-0" aria-hidden />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Phone</p>
+                      <p className="text-sm text-slate-800 m-0">9959617476, 9959617477</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-slate-400 mt-1 shrink-0" aria-hidden />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Address</p>
+                      <p className="text-sm text-slate-800 m-0">
+                        88th Division, Narava, GVMC, Visakhapatnam
                       </p>
                     </div>
-                    
-                    <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6">
-                      <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
-                        <Target className="w-6 h-6 text-green-600 mr-3" />
-                        Mission
-                      </h3>
-                      <p className="text-slate-600 italic">
-                        "To create an atmosphere of discipline by passing a clear message that no act of ragging in college premises"
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
 
-              {/* Anti Ragging Committee Members Table */}
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">Members of the Anti Ragging Committee</h3>
-                <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gradient-to-r from-slate-700 to-blue-900 text-white">
-                          <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              S.No
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Name of the Faculty
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Department
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Designation
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                          {antiRaggingMembers.map((member, index) => (
-                            <motion.tr
-                              key={member.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              whileHover={{ 
-                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                                transition: { duration: 0.2 }
-                              }}
-                              className="hover:bg-slate-50/50 transition-colors duration-200"
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                <div className="flex items-center">
-                                  <div className={`w-8 h-8 bg-gradient-to-br ${member.color} rounded-full flex items-center justify-center mr-3`}>
-                                    <span className="text-white text-xs font-bold">{member.id}</span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                                {member.name}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-slate-600">
-                                {member.department}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge 
-                                  variant="secondary" 
-                                  className={`text-xs px-3 py-1 ${
-                                    member.designation.includes('Chair Person') 
-                                      ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                                      : member.designation.includes('warden')
-                                      ? 'bg-green-100 text-green-800 border-green-200'
-                                      : 'bg-gray-100 text-gray-800 border-gray-200'
-                                  }`}
-                                >
-                                  {member.designation}
-                                </Badge>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
-
-        {/* Women Grievance Cell */}
-        <motion.section variants={itemVariants} className="mb-16">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-8 md:p-12">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Heart className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                  Women Grievance Cell
-                </h2>
-                <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                  Providing a safe and supportive environment for all members of the campus community
-                </p>
-              </div>
-
-              {/* Women Grievance Policy */}
-              <div className="bg-gradient-to-br from-pink-50 to-purple-100 rounded-xl p-8 border-l-4 border-pink-500 mb-8">
-                <div className="space-y-6 text-slate-700 leading-relaxed">
-                  <p className="text-lg">
-                    Education should bring in moral ethical values of well being to learners and every educator and educating institutions should strive hard to bring in the core human values in the process of learning and focus on quality approach to ensure better living with better educated countrymen. Discipline is the bridge between goals and accomplishment ensures strict rules and regulations for students on behalf of discipline committee.
-                  </p>
-                  
-                  <p className="text-lg">
-                    In compliance with the directions of the Supreme Court of India to have a special Sexual Harassment Committee as mandatory, the Women's Grievance Cell also functions as Sexual Harassment Committee.
-                  </p>
-                  
-                  <p className="text-lg">
-                    It provides confidential and supportive environment for members of the campus community who might likely have been sexually harassed; advises complainant of the informal and formal means of redressal, ensures the fair and timely redressal of sexual harassment complaints. (However so far no instances of sexual harassment have been reported)
-                  </p>
-                  
-                  <p className="text-lg">
-                    It provides information regarding counselling and support services on the campus, and promotes awareness about sexual harassment through educational initiatives that encourages and fosters a respectful and safe campus environment.
-                  </p>
-                </div>
-              </div>
-
-              {/* Women Grievance Cell Members Table */}
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">Members of the Women Grievance Cell</h3>
-                <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
-                          <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              S.No
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Name of the Faculty
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Department
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">
-                              Designation
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                          {womenGrievanceMembers.map((member, index) => (
-                            <motion.tr
-                              key={member.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              whileHover={{ 
-                                backgroundColor: 'rgba(236, 72, 153, 0.05)',
-                                transition: { duration: 0.2 }
-                              }}
-                              className="hover:bg-pink-50/50 transition-colors duration-200"
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                <div className="flex items-center">
-                                  <div className={`w-8 h-8 bg-gradient-to-br ${member.color} rounded-full flex items-center justify-center mr-3`}>
-                                    <span className="text-white text-xs font-bold">{member.id}</span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                                {member.name}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-slate-600">
-                                {member.department}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge 
-                                  variant="secondary" 
-                                  className={`text-xs px-3 py-1 ${
-                                    member.designation.includes('Chair Person') 
-                                      ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                                      : member.designation.includes('Advisor')
-                                      ? 'bg-purple-100 text-purple-800 border-purple-200'
-                                      : member.designation.includes('Convenor')
-                                      ? 'bg-green-100 text-green-800 border-green-200'
-                                      : member.designation.includes('Treasurer')
-                                      ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                      : 'bg-gray-100 text-gray-800 border-gray-200'
-                                  }`}
-                                >
-                                  {member.designation}
-                                </Badge>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
-
-        {/* Contact Information */}
-        <motion.section variants={itemVariants}>
-          <Card className="shadow-xl border-0 bg-gradient-to-br from-slate-800 to-blue-900 text-white">
-            <CardContent className="p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Contact for Grievances
-                </h2>
-                <p className="text-xl text-blue-100 leading-relaxed max-w-3xl mx-auto">
-                  We are committed to addressing all grievances promptly and ensuring a safe, respectful environment for everyone.
-                </p>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div>
-                    <h3 className="text-xl font-bold text-blue-200 mb-4">Anti-Ragging Contact</h3>
-                    <ul className="space-y-2 text-blue-100">
-                      <li>• WhatsApp: +91-9494670501</li>
-                      <li>• Email: vietvsp@gmail.com</li>
-                      <li>• Phone: 9959617477, 9959617476</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-blue-200 mb-4">General Grievances</h3>
-                    <ul className="space-y-2 text-blue-100">
-                      <li>• Email: website@viet.edu.in</li>
-                      <li>• Phone: 9959617476, 9959617477</li>
-                      <li>• Address: 88th Division, Narava, GVMC, Visakhapatnam</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.section>
-      </motion.div>
+          <div className="rounded-lg bg-slate-800 text-white p-6 md:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">UGC anti-ragging helpline</p>
+              <p className="text-2xl md:text-3xl font-bold tracking-tight">1800-180-5522</p>
+              <p className="text-sm text-slate-400 mt-1">Toll-free · 24×7</p>
+            </div>
+            <a
+              href="https://www.ugc.ac.in/antiRagging/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-white/30 bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors shrink-0"
+            >
+              UGC portal
+              <ExternalLink className="w-4 h-4" aria-hidden />
+            </a>
+          </div>
+        </div>
+      </section>
 
       <Footer />
       <ScrollProgressIndicator />

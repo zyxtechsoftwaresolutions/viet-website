@@ -127,5 +127,5 @@ export function getGoogleDriveFileId(driveLink: string): string | null {
 export function getGoogleDrivePreviewEmbedUrl(driveLink: string): string {
   const fileId = getGoogleDriveFileId(driveLink);
   if (!fileId) return driveLink;
-  return `https://drive.google.com/file/d/${fileId}/preview?autoplay=1`;
+  return `https://drive.google.com/file/d/${fileId}/preview?autoplay=1&rm=minimal`;
 }

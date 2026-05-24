@@ -76,7 +76,7 @@ const Laboratory = () => {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Our Laboratories
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed">
               Where theory meets practice — advanced engineering labs.
             </p>
           </motion.div>
@@ -93,14 +93,14 @@ const Laboratory = () => {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               About our labs
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
               About Our Laboratories
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
-            <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] max-w-3xl">
+            <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] max-w-3xl">
               <p>
                 Our state-of-the-art laboratories form the backbone of practical engineering education. Established with cutting-edge technology and industry-standard equipment, we provide students with hands-on experience across <strong className="text-slate-800 font-semibold">8+ specialized labs</strong> covering all major B.Tech disciplines including Computer Science, Electronics, VLSI Design, Embedded Systems, and Networking. Each lab is supervised by experienced technical staff and lab assistants who guide students through practical sessions, ensuring safety and maximum learning outcomes.
               </p>
@@ -118,10 +118,10 @@ const Laboratory = () => {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               Explore labs
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
               Laboratory Facilities
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -141,7 +141,7 @@ const Laboratory = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-[2] pointer-events-none">
-                    <h3 className="text-xl font-semibold font-poppins">{lab.name}</h3>
+                    <h3 className="text-xl font-semibold">{lab.name}</h3>
                     <div className="h-1 w-12 bg-amber-400 rounded mt-2" />
                   </div>
 
@@ -152,7 +152,7 @@ const Laboratory = () => {
                     }`}
                   >
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-lg font-semibold text-white font-poppins">{lab.name}</h3>
+                      <h3 className="text-lg font-semibold text-white">{lab.name}</h3>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setActiveLabIndex(null); }}
@@ -198,10 +198,10 @@ const Laboratory = () => {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-white/70 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-white/70 uppercase mb-4">
               At a glance
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-white tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-white tracking-tight mb-8 leading-tight">
               Our Lab Resources
             </h2>
             <div className="h-px w-16 bg-white/40 mb-10" aria-hidden />

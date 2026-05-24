@@ -32,7 +32,7 @@ export default function CampusLife() {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Campus Life
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
               Where innovation meets inspiration at Visakha Institute of Engineering and Technology
             </p>
           </motion.div>
@@ -55,14 +55,14 @@ export default function CampusLife() {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               About campus life
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
               A Living, Breathing <span className="text-amber-600">Ecosystem</span>
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
-            <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
+            <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
               <p>
                 At Visakha Institute of Engineering and Technology, campus life transcends the traditional
                 boundaries of education. We've created an environment where cutting-edge technology meets
@@ -88,10 +88,10 @@ export default function CampusLife() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               Explore our campus
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 leading-tight">
               Campus Highlights
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -106,8 +106,8 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent opacity-70"></div>
                 <div className="absolute bottom-0 left-0 p-8 md:p-10">
                   <div className="w-12 h-1 bg-amber-400 mb-4"></div>
-                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-3 font-poppins">Academic Excellence</h3>
-                  <p className="text-zinc-100 text-base md:text-lg max-w-2xl font-poppins leading-relaxed">
+                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-3">Academic Excellence</h3>
+                  <p className="text-zinc-100 text-base md:text-lg max-w-2xl leading-relaxed">
                     State-of-the-art smart classrooms equipped with interactive technology, fostering
                     collaborative learning and innovative thinking.
                   </p>
@@ -124,7 +124,7 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-zinc-900/60 flex items-end p-6">
                   <div>
                     <div className="w-8 h-1 bg-amber-400 mb-3"></div>
-                    <h4 className="text-xl md:text-2xl font-bold text-white font-poppins">Campus Architecture</h4>
+                    <h4 className="text-xl md:text-2xl font-bold text-white">Campus Architecture</h4>
                   </div>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-zinc-900/60 flex items-end p-6">
                   <div>
                     <div className="w-8 h-1 bg-amber-400 mb-3"></div>
-                    <h4 className="text-xl md:text-2xl font-bold text-white font-poppins">Innovation Labs</h4>
+                    <h4 className="text-xl md:text-2xl font-bold text-white">Innovation Labs</h4>
                   </div>
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-zinc-900/60 flex items-end p-6">
                   <div>
                     <div className="w-8 h-1 bg-amber-400 mb-3"></div>
-                    <h4 className="text-xl md:text-2xl font-bold text-white font-poppins">Cultural Celebrations</h4>
+                    <h4 className="text-xl md:text-2xl font-bold text-white">Cultural Celebrations</h4>
                   </div>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-zinc-900/60 flex items-end p-6">
                   <div>
                     <div className="w-8 h-1 bg-amber-400 mb-3"></div>
-                    <h4 className="text-xl md:text-2xl font-bold text-white font-poppins">Sports & Fitness</h4>
+                    <h4 className="text-xl md:text-2xl font-bold text-white">Sports & Fitness</h4>
                   </div>
                 </div>
               </div>
@@ -180,8 +180,8 @@ export default function CampusLife() {
                 <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/60 to-transparent flex items-center p-8 md:p-10">
                   <div className="max-w-xl">
                     <div className="w-12 h-1 bg-amber-400 mb-4"></div>
-                    <h4 className="text-2xl md:text-3xl font-bold text-white mb-3 font-poppins">Knowledge Repository</h4>
-                    <p className="text-zinc-100 font-poppins text-[1.0625rem] md:text-lg leading-[1.85]">
+                    <h4 className="text-2xl md:text-3xl font-bold text-white mb-3">Knowledge Repository</h4>
+                    <p className="text-zinc-100 text-[1.0625rem] md:text-lg leading-[1.85]">
                       Extensive digital and physical collections supporting research and learning
                     </p>
                   </div>
@@ -201,10 +201,10 @@ export default function CampusLife() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               At a glance
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 leading-tight">
               Campus <span className="text-amber-600">Statistics</span>
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -219,8 +219,8 @@ export default function CampusLife() {
               ].map((stat, i) => (
                 <div key={i} className="flex-shrink-0 w-56 md:w-64 snap-start">
                   <div className="relative group bg-white p-6 shadow-lg border border-slate-200 group-hover:border-amber-400 transition-colors rounded-xl">
-                    <div className="text-4xl md:text-5xl font-bold text-amber-600 mb-2 font-poppins">{stat.number}</div>
-                    <div className="text-slate-600 font-semibold tracking-wide uppercase text-xs font-poppins">{stat.label}</div>
+                    <div className="text-4xl md:text-5xl font-bold text-amber-600 mb-2">{stat.number}</div>
+                    <div className="text-slate-600 font-semibold tracking-wide uppercase text-xs">{stat.label}</div>
                   </div>
                 </div>
               ))}
@@ -238,10 +238,10 @@ export default function CampusLife() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               What defines VIET
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 leading-tight">
               What Defines <span className="text-amber-600">VIET Life</span>
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -263,10 +263,10 @@ export default function CampusLife() {
                   className="group p-6 md:p-8 rounded-xl border-2 border-slate-200 group-hover:border-amber-400 bg-white group-hover:shadow-xl transition-all"
                 >
                   <div className={`w-16 h-1 bg-amber-500 mb-6`}></div>
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 font-poppins group-hover:text-amber-600 transition-colors">
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 group-hover:text-amber-600 transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-600 font-poppins text-[1.0625rem] leading-[1.85]">{feature.description}</p>
+                  <p className="text-slate-600 text-[1.0625rem] leading-[1.85]">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -286,15 +286,15 @@ export default function CampusLife() {
           >
             <div className="absolute top-0 left-0 text-[150px] md:text-[200px] font-black text-amber-400/20 leading-none">"</div>
             <div className="relative pl-12 md:pl-24 pt-12 md:pt-20">
-              <p className="text-xl md:text-3xl lg:text-4xl font-light text-slate-800 leading-relaxed mb-8 italic font-poppins">
+              <p className="text-xl md:text-3xl lg:text-4xl font-light text-slate-800 leading-relaxed mb-8 italic">
                 VIET isn't just an institution – it's a launchpad for dreams. The blend of rigorous
                 academics, hands-on projects, and vibrant campus culture shaped me into who I am today.
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-1 bg-amber-500"></div>
                 <div>
-                  <div className="text-slate-900 font-bold text-lg font-poppins">VIET Alumni</div>
-                  <div className="text-slate-600 text-sm font-poppins">Class of 2023</div>
+                  <div className="text-slate-900 font-bold text-lg">VIET Alumni</div>
+                  <div className="text-slate-600 text-sm">Class of 2023</div>
                 </div>
               </div>
             </div>
@@ -311,10 +311,10 @@ export default function CampusLife() {
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               Infrastructure
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-10 leading-tight">
               World-Class <span className="text-amber-600">Facilities</span>
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -338,8 +338,8 @@ export default function CampusLife() {
                   className="flex-shrink-0 w-64 md:w-72 snap-start group relative bg-white border-2 border-slate-200 hover:border-amber-400 p-6 transition-all hover:shadow-xl rounded-xl"
                 >
                   <div className="text-4xl md:text-5xl mb-4">{facility.icon}</div>
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 font-poppins">{facility.title}</h3>
-                  <p className="text-slate-600 text-sm font-poppins leading-relaxed">{facility.desc}</p>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3">{facility.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{facility.desc}</p>
                 </div>
               ))}
             </div>
@@ -357,13 +357,13 @@ export default function CampusLife() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12 md:mb-16"
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               Celebrations
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-4 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-4 leading-tight">
               Major Events
             </h2>
-            <p className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg">Celebrations that bring our campus alive</p>
+            <p className="text-slate-600 text-[1.0625rem] md:text-lg">Celebrations that bring our campus alive</p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             {[
@@ -379,9 +379,9 @@ export default function CampusLife() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className={`relative bg-gradient-to-br ${event.gradient} p-8 md:p-10 rounded-xl border-2 border-slate-200 shadow-xl`}
               >
-                <div className="text-white font-bold text-sm tracking-widest mb-2 opacity-90 font-poppins">{event.subtitle}</div>
-                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 font-poppins">{event.title}</h3>
-                <p className="text-white/90 font-poppins text-[1.0625rem] leading-[1.85]">{event.description}</p>
+                <div className="text-white font-bold text-sm tracking-widest mb-2 opacity-90">{event.subtitle}</div>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">{event.title}</h3>
+                <p className="text-white/90 text-[1.0625rem] leading-[1.85]">{event.description}</p>
               </motion.div>
             ))}
           </div>
@@ -401,11 +401,11 @@ export default function CampusLife() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 font-poppins leading-tight">
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
                 Ready to Experience<br />
                 <span className="text-white">VIET Campus Life?</span>
               </h2>
-              <p className="text-lg md:text-xl text-slate-800 mb-10 max-w-2xl mx-auto font-poppins text-[1.0625rem] md:text-lg leading-[1.85]">
+              <p className="text-lg md:text-xl text-slate-800 mb-10 max-w-2xl mx-auto text-[1.0625rem] md:text-lg leading-[1.85]">
                 Join us in shaping the future. Be part of a community where innovation thrives,
                 talents flourish, and futures are built.
               </p>
@@ -413,7 +413,7 @@ export default function CampusLife() {
                 href="https://viet.edu.in"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-3 bg-white text-slate-900 font-bold px-8 md:px-10 py-4 md:py-5 hover:bg-slate-100 transition-all rounded-full shadow-xl hover:shadow-2xl font-poppins"
+                className="group inline-flex items-center gap-3 bg-white text-slate-900 font-bold px-8 md:px-10 py-4 md:py-5 hover:bg-slate-100 transition-all rounded-full shadow-xl hover:shadow-2xl"
               >
                 <span className="text-base md:text-lg">EXPLORE VIET</span>
                 <svg className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -74,7 +74,7 @@ const Sports = () => {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Sports & Games
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins mb-6">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed mb-6">
               A dedicated indoor sports room, expert PT staff, and a wide range of indoor and outdoor games for fitness and fun.
             </p>
             <a href="#sports-offered" className="inline-block px-6 py-3 bg-white text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-all shadow-lg">

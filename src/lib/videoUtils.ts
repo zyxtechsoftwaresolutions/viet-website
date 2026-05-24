@@ -46,51 +46,52 @@ export function detectVideoPlatform(url: string): VideoPlatform {
  * Converts a YouTube URL to an embed URL
  */
 function convertYouTubeUrl(url: string): string {
-  // Handle various YouTube URL formats
-  // https://www.youtube.com/watch?v=VIDEO_ID
-  // https://youtu.be/VIDEO_ID
-  // https://www.youtube.com/embed/VIDEO_ID
-  // https://m.youtube.com/watch?v=VIDEO_ID
-  // https://www.youtube.com/shorts/VIDEO_ID (YouTube Shorts)
-  // https://youtube.com/shorts/VIDEO_ID
-  
-  let videoId = '';
-  
-  // Extract video ID from different URL formats
-  // Priority: shorts, watch, youtu.be, embed
-  const shortsMatch = url.match(/(?:youtube\.com\/shorts\/)([^&\n?#\/]+)/);
-  if (shortsMatch) {
-    videoId = shortsMatch[1];
-  } else {
-    const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-    if (watchMatch) {
-      videoId = watchMatch[1];
-    }
-  }
-  
-  if (!videoId) {
-    // Fallback: try to extract from URL path
-    const pathMatch = url.match(/\/watch\?v=([^&\n?#]+)/);
-    if (pathMatch) {
-      videoId = pathMatch[1];
-    }
-  }
-  
-  if (!videoId) {
-    // If we can't extract, return original URL
-    return url;
-  }
-  
-  // Check if original URL was a Shorts URL
-  const isShorts = url.toLowerCase().includes('/shorts/');
-  
-  // Return embed URL with autoplay, mute, loop, and no controls
-  // For YouTube Shorts, add loop and playlist for continuous playback
-  const params = isShorts 
-    ? 'autoplay=1&mute=1&loop=1&playlist=' + videoId + '&controls=0&rel=0&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3'
-    : 'autoplay=1&mute=1&loop=1&playlist=' + videoId + '&controls=0&rel=0&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3';
-  
-  return `https://www.youtube.com/embed/${videoId}?${params}`;
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) return url;
+  return buildChromelessYouTubeEmbedUrl(videoId);
+}
+
+/** Extract YouTube video id from common URL shapes */
+export function extractYouTubeVideoId(url: string): string | null {
+  const shortsMatch = url.match(/(?:youtube\.com\/shorts\/)([^&\n?#/]+)/);
+  if (shortsMatch) return shortsMatch[1];
+
+  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  if (watchMatch) return watchMatch[1];
+
+  const pathMatch = url.match(/\/watch\?v=([^&\n?#]+)/);
+  if (pathMatch) return pathMatch[1];
+
+  return null;
+}
+
+/** Minimal UI embed — use in gallery tiles where controls must not show */
+export function buildChromelessYouTubeEmbedUrl(videoId: string): string {
+  const params = new URLSearchParams({
+    autoplay: '1',
+    mute: '1',
+    loop: '1',
+    playlist: videoId,
+    controls: '0',
+    rel: '0',
+    modestbranding: '1',
+    disablekb: '1',
+    fs: '0',
+    iv_load_policy: '3',
+    playsinline: '1',
+    cc_load_policy: '0',
+    autohide: '1',
+    showinfo: '0',
+    enablejsapi: '0',
+    origin: typeof window !== 'undefined' ? window.location.origin : '',
+  });
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+}
+
+export function getChromelessYouTubeEmbedUrl(url: string): string {
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) return convertYouTubeUrl(url);
+  return buildChromelessYouTubeEmbedUrl(videoId);
 }
 
 /**

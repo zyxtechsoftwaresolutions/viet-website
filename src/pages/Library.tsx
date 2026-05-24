@@ -37,7 +37,7 @@ const Library = () => {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
               Our Library
             </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins">
+            <p className="text-base md:text-lg text-white/90 leading-relaxed">
               A place of knowledge, inspiration, and academic excellence.
             </p>
           </motion.div>
@@ -54,14 +54,14 @@ const Library = () => {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               About our library
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
               About Our Library
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
-            <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85]">
+            <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85]">
               <p className="mb-6">
                 The college library is the heart of our academic community. Established in 1985, our library
                 has grown to house over <strong className="text-slate-800 font-semibold">50,000 books</strong>,
@@ -86,10 +86,10 @@ const Library = () => {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
               What we offer
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
               Library Features
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
@@ -130,10 +130,10 @@ const Library = () => {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-white/70 uppercase mb-4 font-poppins">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-white/70 uppercase mb-4">
               At a glance
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-white tracking-tight mb-8 font-poppins leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-white tracking-tight mb-8 leading-tight">
               Our Collection
             </h2>
             <div className="h-px w-16 bg-white/40 mb-10" aria-hidden />
@@ -170,10 +170,10 @@ const Library = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+              <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
                 Opening hours
               </p>
-              <h3 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-8 font-poppins">
+              <h3 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-8">
                 Library Timings
               </h3>
               <div className="h-px w-16 bg-slate-300 mb-6" aria-hidden />
@@ -184,7 +184,7 @@ const Library = () => {
                   { day: "Sunday", time: "10:00 AM - 4:00 PM" },
                 ].map((item, index) => (
                   <div key={index} className="flex justify-between py-3 border-b border-slate-200">
-                    <span className="text-slate-800 font-poppins">{item.day}</span>
+                    <span className="text-slate-800">{item.day}</span>
                     <span className="text-amber-600 font-medium">{item.time}</span>
                   </div>
                 ))}
@@ -197,14 +197,14 @@ const Library = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4 font-poppins">
+              <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
                 Guidelines
               </p>
-              <h3 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-8 font-poppins">
+              <h3 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-8">
                 Library Rules
               </h3>
               <div className="h-px w-16 bg-slate-300 mb-6" aria-hidden />
-              <ul className="space-y-3 text-slate-600 font-poppins text-[1.0625rem] leading-relaxed">
+              <ul className="space-y-3 text-slate-600 text-[1.0625rem] leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Maintain silence in the reading area</li>
                 <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Valid ID card required for entry</li>
                 <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Books can be borrowed for 14 days</li>

@@ -92,7 +92,7 @@ const ResearchDevelopment: React.FC = () => {
               <p className="text-lg md:text-xl font-semibold text-white/95">
                 Catalyst for Technological Breakthroughs
               </p>
-              <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+              <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
                 Catalyst for Technological Breakthroughs and Academic Brilliance
               </p>
             </motion.div>

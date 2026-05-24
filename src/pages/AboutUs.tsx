@@ -259,7 +259,7 @@ const AboutUs = () => {
               <p className="text-lg md:text-xl font-semibold text-white/95">
                 Excellence in Technical Education
               </p>
-              <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+              <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
                 {heroDescription}
               </p>
               <a
