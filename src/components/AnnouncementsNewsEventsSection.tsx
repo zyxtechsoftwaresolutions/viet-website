@@ -303,13 +303,13 @@ const AnnouncementsNewsEventsSection = () => {
             </div>
           </div>
 
-          {/* Right: height locked to left card so 3 cards sum = left card height (aligned) */}
+          {/* Right: height locked to left card on desktop; fixed sensible height on mobile */}
           <div
             className="lg:col-span-2 order-1 lg:order-2 flex min-h-0 overflow-hidden"
             style={
               leftCardHeightPx != null
                 ? { height: `${leftCardHeightPx}px`, minHeight: 0, maxHeight: `${leftCardHeightPx}px` }
-                : { minHeight: 0 }
+                : { minHeight: '280px' }
             }
           >
             <div

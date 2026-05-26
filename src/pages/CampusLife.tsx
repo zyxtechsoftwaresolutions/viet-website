@@ -10,7 +10,7 @@ export default function CampusLife() {
 
       {/* Hero Section — Chairman-style spacing */}
       <section
-        className="relative min-h-[85vh] md:min-h-[90vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-center overflow-hidden"
+        className="relative min-h-[55vh] md:min-h-[90vh] pt-20 md:pt-28 pb-10 md:pb-16 flex items-center overflow-hidden"
         style={{
           background: 'linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)',
         }}

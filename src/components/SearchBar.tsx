@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -281,11 +280,11 @@ const SearchBar = () => {
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
+        <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/80 z-10 pointer-events-none" />
+        <input
           ref={inputRef}
           type="text"
-          placeholder="Search pages, departments, courses..."
+          placeholder="Search pages, departments..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -293,7 +292,7 @@ const SearchBar = () => {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-10 w-full bg-white/10 dark:bg-slate-800/90 backdrop-blur-sm border-white/20 dark:border-slate-600 text-white dark:text-slate-100 placeholder:text-white/60 dark:placeholder:text-slate-400 focus:bg-white/20 dark:focus:bg-slate-700 focus:border-white/40 dark:focus:border-slate-500"
+          className="w-full h-9 pl-10 pr-10 bg-white/10 border border-white/30 rounded-full text-white text-sm placeholder:text-white/50 focus:bg-white/20 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-[#E1731A]/40 transition-all"
         />
         {searchQuery && (
           <button
@@ -302,9 +301,9 @@ const SearchBar = () => {
               setResults([]);
               setIsOpen(false);
             }}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white z-10"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -316,28 +315,28 @@ const SearchBar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-border max-h-96 overflow-y-auto z-50"
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-80 overflow-y-auto z-[9999] min-w-[280px]"
           >
             {results.map((result, index) => (
               <button
                 key={`${result.href}-${index}`}
                 onClick={() => handleSelectResult(result)}
                 className={cn(
-                  "w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors",
-                  "flex items-center justify-between gap-2 border-b border-border last:border-b-0"
+                  "w-full text-left px-4 py-2.5 hover:bg-orange-50 transition-colors",
+                  "flex items-center justify-between gap-2 border-b border-gray-100 last:border-b-0"
                 )}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-foreground truncate">
+                  <div className="font-medium text-gray-800 text-sm truncate">
                     {result.name}
                   </div>
                   {result.category && (
-                    <div className="text-xs text-muted-foreground mt-1 truncate">
+                    <div className="text-[11px] text-gray-500 mt-0.5 truncate">
                       {result.category}
                     </div>
                   )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
               </button>
             ))}
           </motion.div>
@@ -348,9 +347,9 @@ const SearchBar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-border p-4 z-50"
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-3 z-[9999] min-w-[280px]"
           >
-            <div className="text-sm text-muted-foreground text-center">
+            <div className="text-xs text-gray-500 text-center">
               No results found for "{searchQuery}"
             </div>
           </motion.div>

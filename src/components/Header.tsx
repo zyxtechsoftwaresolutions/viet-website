@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, GraduationCap, Phone, MessageCircle, ChevronRight } from 'lucide-react';
+import { Menu, X, GraduationCap, Phone, MessageCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -38,6 +38,16 @@ const Header = () => {
   const [isUGSubmenuToggled, setIsUGSubmenuToggled] = useState(false);
   const [showPGSubmenu, setShowPGSubmenu] = useState(false);
   const [isPGSubmenuToggled, setIsPGSubmenuToggled] = useState(false);
+  const [mobileAccordion, setMobileAccordion] = useState<Record<string, boolean>>({});
+
+  const toggleMobileAccordion = (key: string) => {
+    setMobileAccordion(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+    setMobileAccordion({});
+  };
 
   // Open admin-managed accreditation PDF (falls back to /accreditations)
   const openAccreditationPdf = async (key: 'AUTONOMOUS' | 'NAAC' | 'UGC' | 'ISO') => {
@@ -1841,7 +1851,7 @@ const Header = () => {
             className={`lg:hidden transition-colors duration-300 ${
               isScrolled ? '' : 'text-white hover:text-white/80'
             }`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => { if (isMobileMenuOpen) closeMobileMenu(); else setIsMobileMenuOpen(true); }}
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -1850,485 +1860,252 @@ const Header = () => {
             )}
           </Button>
         </div>
-
-        {/* Mobile Menu */}
-        <motion.div
-          className={`lg:hidden overflow-hidden ${
-            isMobileMenuOpen ? 'max-h-96' : 'max-h-0'
-          }`}
-          initial={false}
-          animate={{
-            height: isMobileMenuOpen ? 'auto' : 0,
-            opacity: isMobileMenuOpen ? 1 : 0
-          }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <div className="glass rounded-lg m-4 p-6 space-y-2">
-            {/* Search Bar - Mobile */}
-            <div className="mb-4 pb-4 border-b border-border">
-              <SearchBar />
-            </div>
-            {navItems.map((item) => (
-              <div key={item.name}>
-                {item.hasDropdown ? (
-                  <div className="space-y-1 mb-2">
-                    <div className="text-sm font-semibold text-gray-700 mb-1 px-3">{item.name}</div>
-                    {item.name === 'Placements' && placementsMenuItems.map((menuItem) => (
-                      <button
-                        key={menuItem.name}
-                        onClick={() => {
-                          navigate(menuItem.href);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                      >
-                        {menuItem.name}
-                      </button>
-                    ))}
-                    {item.name === 'Admissions' && admissionsMenuItems.map((menuItem) => (
-                      <div key={menuItem.name} className="space-y-1">
-                        <a
-                          href={menuItem.href}
-                          target={menuItem.href.startsWith('http') ? '_blank' : undefined}
-                          rel={menuItem.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          onClick={(e) => {
-                            if (menuItem.name === 'Courses Offered') {
-                              e.preventDefault();
-                              // Don't navigate, just show submenu
-                              return;
-                            }
-                            if (!menuItem.href.startsWith('http') && !menuItem.href.startsWith('#')) {
-                              navigate(menuItem.href);
-                            } else if (menuItem.href.startsWith('#')) {
-                              navigate('/');
-                              setTimeout(() => {
-                                const element = document.querySelector(menuItem.href);
-                                if (element) {
-                                  element.scrollIntoView({ behavior: 'smooth' });
-                                }
-                              }, 100);
-                            }
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                        >
-                          {menuItem.name}
-                        </a>
-                        {menuItem.name === 'Courses Offered' && (
-                          <div className="pl-8 space-y-1">
-                            {coursesSubmenuItems.map((courseItem) => (
-                              <button
-                                key={courseItem.name}
-                                onClick={() => {
-                                  navigate(courseItem.href);
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                              >
-                                {courseItem.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {item.name === 'Departments' && departmentsMenuItems.map((menuItem) => (
-                      <div key={menuItem.name} className="space-y-1">
-                        <a
-                          href={menuItem.href}
-                          onClick={(e) => {
-                            if (menuItem.name === 'DIPLOMA' || menuItem.name === 'ENGINEERING' || menuItem.name === 'MANAGEMENT') {
-                              e.preventDefault();
-                              // Don't navigate, just show submenu
-                              return;
-                            }
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                        >
-                          {menuItem.name}
-                        </a>
-                        {menuItem.name === 'DIPLOMA' && (
-                          <div className="pl-8 space-y-1">
-                            {diplomaSubmenuItems.map((diplomaItem) => (
-                              <button
-                                key={diplomaItem.name}
-                                onClick={() => {
-                                  navigate(diplomaItem.href);
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                              >
-                                {diplomaItem.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {menuItem.name === 'ENGINEERING' && (
-                          <div className="pl-8 space-y-1">
-                            {engineeringSubmenuItems.map((engItem) => (
-                              <div key={engItem.name} className="space-y-1">
-                                <a
-                                  href={engItem.href}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    // Don't navigate, just show submenu
-                                  }}
-                                  className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                                >
-                                  {engItem.name}
-                                </a>
-                                {engItem.name === 'UNDER GRADUATION (UG)' && (
-                                  <div className="pl-8 space-y-1">
-                                    {ugEngineeringSubmenuItems.map((ugItem) => (
-                                      <button
-                                        key={ugItem.name}
-                                        onClick={() => {
-                                          navigate(ugItem.href);
-                                          setIsMobileMenuOpen(false);
-                                        }}
-                                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-300"
-                                      >
-                                        {ugItem.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                                {engItem.name === 'POST GRADUATION (PG)' && (
-                                  <div className="pl-8 space-y-1">
-                                    {pgEngineeringSubmenuItems.map((pgItem) => (
-                                      <button
-                                        key={pgItem.name}
-                                        onClick={() => {
-                                          navigate(pgItem.href);
-                                          setIsMobileMenuOpen(false);
-                                        }}
-                                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-300"
-                                      >
-                                        {pgItem.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {menuItem.name === 'MANAGEMENT' && (
-                          <div className="pl-8 space-y-1">
-                            {/* UNDER GRADUATE Section */}
-                            <div className="bg-blue-900 text-white px-3 py-2 text-xs font-semibold uppercase rounded-md">
-                              UNDER GRADUATE
-                            </div>
-                            {managementSubmenuItems
-                              .filter(item => item.category === 'UNDER GRADUATE')
-                              .map((mgmtItem) => (
-                                <button
-                                  key={mgmtItem.name}
-                                  onClick={() => {
-                                    navigate(mgmtItem.href);
-                                    setIsMobileMenuOpen(false);
-                                  }}
-                                  className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                                >
-                                  {mgmtItem.name}
-                                </button>
-                              ))}
-                            
-                            {/* POST GRADUATE Section */}
-                            <div className="bg-blue-900 text-white px-3 py-2 text-xs font-semibold uppercase rounded-md mt-2">
-                              POST GRADUATE
-                            </div>
-                            {managementSubmenuItems
-                              .filter(item => item.category === 'POST GRADUATE')
-                              .map((mgmtItem) => (
-                                <button
-                                  key={mgmtItem.name}
-                                  onClick={() => {
-                                    navigate(mgmtItem.href);
-                                    setIsMobileMenuOpen(false);
-                                  }}
-                                  className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                                >
-                                  {mgmtItem.name}
-                                </button>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {item.name === 'Examinations' && examinationsMenuItems.map((menuItem) => (
-                      <button
-                        key={menuItem.name}
-                        onClick={() => {
-                          navigate(menuItem.href);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                      >
-                        {menuItem.name}
-                      </button>
-                    ))}
-                    {item.name === 'Facilities' && facilitiesMenuItems.map((menuItem) => (
-                      <div key={menuItem.name} className="space-y-1">
-                        <a
-                          href={menuItem.href}
-                          onClick={(e) => {
-                            if (menuItem.name === 'Library') {
-                              e.preventDefault();
-                              // Don't navigate, just show submenu
-                              return;
-                            }
-                            if (menuItem.href.startsWith('/')) {
-                              e.preventDefault();
-                              navigate(menuItem.href);
-                            }
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                        >
-                          {menuItem.name}
-                        </a>
-                        {menuItem.name === 'Library' && (
-                          <div className="pl-8 space-y-1">
-                            {librarySubmenuItems.map((libraryItem) => (
-                              <button
-                                key={libraryItem.name}
-                                onClick={() => {
-                                  if (libraryItem.href.startsWith('/')) {
-                                    navigate(libraryItem.href);
-                                  } else {
-                                    navigate('/');
-                                    setTimeout(() => {
-                                      const element = document.querySelector(libraryItem.href);
-                                      if (element) {
-                                        element.scrollIntoView({ behavior: 'smooth' });
-                                      }
-                                    }, 100);
-                                  }
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                              >
-                                {libraryItem.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {item.name === 'About' && aboutMenuItems.map((menuItem) => (
-                      <button
-                        key={menuItem.name}
-                        onClick={() => {
-                          if (menuItem.href.startsWith('/')) {
-                            navigate(menuItem.href);
-                          } else {
-                            navigate('/');
-                            setTimeout(() => {
-                              const element = document.querySelector(menuItem.href);
-                              if (element) {
-                                element.scrollIntoView({ behavior: 'smooth' });
-                              }
-                            }, 100);
-                          }
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                      >
-                        {menuItem.name}
-                      </button>
-                    ))}
-                    {item.name === 'IQAC' && iqacMenuItems.map((menuItem) => (
-                      <div key={menuItem.name} className="space-y-1">
-                        <button
-                          onClick={() => {
-                            if (menuItem.name === 'NAAC' || menuItem.name === 'IQAC MOM') {
-                              // Don't navigate, just show submenu
-                              return;
-                            }
-                            if (menuItem.href.startsWith('/')) {
-                              navigate(menuItem.href);
-                            } else {
-                              navigate('/');
-                              setTimeout(() => {
-                                const element = document.querySelector(menuItem.href);
-                                if (element) {
-                                  element.scrollIntoView({ behavior: 'smooth' });
-                                }
-                              }, 100);
-                            }
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-600"
-                        >
-                          {menuItem.name}
-                        </button>
-                        {menuItem.name === 'IQAC MOM' && (
-                          <div className="pl-8 space-y-1">
-                            {iqacMOMSubmenuItems.map((iqacMOMItem) => (
-                              <button
-                                key={iqacMOMItem.name}
-                                onClick={() => {
-                                  if (iqacMOMItem.href.startsWith('/')) {
-                                    navigate(iqacMOMItem.href);
-                                  } else {
-                                    navigate('/');
-                                    setTimeout(() => {
-                                      const element = document.querySelector(iqacMOMItem.href);
-                                      if (element) {
-                                        element.scrollIntoView({ behavior: 'smooth' });
-                                      }
-                                    }, 100);
-                                  }
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                              >
-                                {iqacMOMItem.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {menuItem.name === 'NAAC' && (
-                          <div className="pl-8 space-y-1">
-                            {naacSubmenuItems.map((submenuItem) => (
-                              <div key={submenuItem.name} className="space-y-1">
-                                <button
-                                  onClick={() => {
-                                    if (submenuItem.name === 'AQAR' || submenuItem.name === 'AQAR Reports') {
-                                      // Don't navigate, just show submenu
-                                      return;
-                                    }
-                                    if (submenuItem.href.startsWith('/')) {
-                                      navigate(submenuItem.href);
-                                    } else {
-                                      navigate('/');
-                                      setTimeout(() => {
-                                        const element = document.querySelector(submenuItem.href);
-                                        if (element) {
-                                          element.scrollIntoView({ behavior: 'smooth' });
-                                        }
-                                      }, 100);
-                                    }
-                                    setIsMobileMenuOpen(false);
-                                  }}
-                                  className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-500"
-                                >
-                                  {submenuItem.name}
-                                </button>
-                                {submenuItem.name === 'AQAR' && (
-                                  <div className="pl-8 space-y-1">
-                                    {aqarSubmenuItems.map((aqarItem) => (
-                                      <button
-                                        key={aqarItem.name}
-                                        onClick={() => {
-                                          if (aqarItem.href.startsWith('/')) {
-                                            navigate(aqarItem.href);
-                                          } else {
-                                            navigate('/');
-                                            setTimeout(() => {
-                                              const element = document.querySelector(aqarItem.href);
-                                              if (element) {
-                                                element.scrollIntoView({ behavior: 'smooth' });
-                                              }
-                                            }, 100);
-                                          }
-                                          setIsMobileMenuOpen(false);
-                                        }}
-                                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                                      >
-                                        {aqarItem.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                                {submenuItem.name === 'AQAR Reports' && (
-                                  <div className="pl-8 space-y-1">
-                                    {aqarReportsSubmenuItems.map((aqarReportsItem) => (
-                                      <button
-                                        key={aqarReportsItem.name}
-                                        onClick={() => {
-                                          if (aqarReportsItem.href.startsWith('/')) {
-                                            navigate(aqarReportsItem.href);
-                                          } else {
-                                            navigate('/');
-                                            setTimeout(() => {
-                                              const element = document.querySelector(aqarReportsItem.href);
-                                              if (element) {
-                                                element.scrollIntoView({ behavior: 'smooth' });
-                                              }
-                                            }, 100);
-                                          }
-                                          setIsMobileMenuOpen(false);
-                                        }}
-                                        className="block w-full text-left transition-colors duration-300 text-xs font-medium py-1.5 px-6 rounded-md hover:bg-white/10 text-gray-400"
-                                      >
-                                        {aqarReportsItem.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (item.name === 'Home') {
-                        if (location.pathname === '/') {
-                          scrollToSection('home');
-                        } else {
-                          navigate('/');
-                        }
-                      } else if (item.name === 'Academics') {
-                        if (location.pathname === '/') {
-                          scrollToSection('program-finder');
-                        } else {
-                          navigate('/#program-finder');
-                        }
-                      } else {
-                        // Check if href is a route (starts with /) or a section (starts with #)
-                        if (item.href.startsWith('/')) {
-                          // It's a route, navigate directly
-                          navigate(item.href);
-                        } else if (item.href.startsWith('#')) {
-                          // It's a section anchor
-                          if (location.pathname === '/') {
-                            const element = document.querySelector(item.href);
-                            if (element) {
-                              element.scrollIntoView({ behavior: 'smooth' });
-                            }
-                          } else {
-                            navigate(`/${item.href}`);
-                          }
-                        }
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`block w-full text-left transition-colors duration-300 text-sm font-medium py-2 px-3 rounded-md hover:bg-white/10 ${
-                      isScrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    {item.name}
-                  </button>
-                )}
-              </div>
-            ))}
-            <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-              <Button className="bg-gradient-primary text-white border-0 justify-start">
-                LOGIN
-              </Button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </motion.header>
-    {/* No spacer; hero starts immediately under header */}
+
+    {/* ── Full-Screen Mobile Menu (outside header to avoid transform containment) ── */}
+    <AnimatePresence>
+      {isMobileMenuOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/50 z-[998] lg:hidden"
+            onClick={closeMobileMenu}
+          />
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-[380px] bg-white z-[999] lg:hidden flex flex-col shadow-2xl"
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <img src="/logo-viet.png" alt="VIET" className="w-9 h-9 object-contain" width={36} height={36} />
+                <span className="font-bold text-gray-900 text-lg tracking-tight">VIET</span>
+              </div>
+              <button onClick={closeMobileMenu} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="px-5 py-3 border-b border-gray-100">
+              <SearchBar />
+            </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain py-2">
+              {navItems.map((navEntry) => {
+                if (!navEntry.hasDropdown) {
+                  return (
+                    <button
+                      key={navEntry.name}
+                      onClick={() => {
+                        if (navEntry.name === 'Home') { location.pathname === '/' ? scrollToSection('home') : navigate('/'); }
+                        else if (navEntry.name === 'Academics') { location.pathname === '/' ? scrollToSection('program-finder') : navigate('/#program-finder'); }
+                        else if (navEntry.href.startsWith('/')) { navigate(navEntry.href); }
+                        else if (navEntry.href.startsWith('#')) { if (location.pathname === '/') { const el = document.querySelector(navEntry.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); } else { navigate(`/${navEntry.href}`); } }
+                        closeMobileMenu();
+                      }}
+                      className="flex items-center w-full px-5 py-3.5 text-[15px] font-medium text-gray-800 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      {navEntry.name}
+                    </button>
+                  );
+                }
+                const accOpen = !!mobileAccordion[navEntry.name];
+                return (
+                  <div key={navEntry.name}>
+                    <button
+                      onClick={() => toggleMobileAccordion(navEntry.name)}
+                      className="flex items-center justify-between w-full px-5 py-3.5 text-[15px] font-medium text-gray-800 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      {navEntry.name}
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${accOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {accOpen && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }} className="overflow-hidden bg-gray-50/70">
+                          {navEntry.name === 'About' && aboutMenuItems.map((mi) => (
+                            <button key={mi.name} onClick={() => { mi.href.startsWith('/') ? navigate(mi.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(mi.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                              {mi.name}
+                            </button>
+                          ))}
+                          {navEntry.name === 'Placements' && placementsMenuItems.map((mi) => (
+                            <button key={mi.name} onClick={() => { navigate(mi.href); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                              {mi.name}
+                            </button>
+                          ))}
+                          {navEntry.name === 'Examinations' && examinationsMenuItems.map((mi) => (
+                            <button key={mi.name} onClick={() => { navigate(mi.href); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                              {mi.name}
+                            </button>
+                          ))}
+                          {navEntry.name === 'Admissions' && admissionsMenuItems.map((mi) => (
+                            <div key={mi.name}>
+                              {mi.name === 'Courses Offered' ? (
+                                <>
+                                  <button onClick={() => toggleMobileAccordion('mob-courses')} className="flex items-center justify-between w-full px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                    {mi.name}
+                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${mobileAccordion['mob-courses'] ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  <AnimatePresence initial={false}>
+                                    {mobileAccordion['mob-courses'] && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100/60">
+                                        {coursesSubmenuItems.map((ci) => (
+                                          <button key={ci.name} onClick={() => { navigate(ci.href); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{ci.name}</button>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </>
+                              ) : (
+                                <a href={mi.href} target={mi.href.startsWith('http') ? '_blank' : undefined} rel={mi.href.startsWith('http') ? 'noopener noreferrer' : undefined} onClick={(e) => { if (!mi.href.startsWith('http')) { e.preventDefault(); if (mi.href.startsWith('#')) { navigate('/'); setTimeout(() => { const el = document.querySelector(mi.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); } else navigate(mi.href); } closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                  {mi.name}
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                          {navEntry.name === 'Departments' && departmentsMenuItems.map((mi) => (
+                            <div key={mi.name}>
+                              <button onClick={() => toggleMobileAccordion(`mob-dept-${mi.name}`)} className="flex items-center justify-between w-full px-8 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                                {mi.name}
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${mobileAccordion[`mob-dept-${mi.name}`] ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence initial={false}>
+                                {mobileAccordion[`mob-dept-${mi.name}`] && (
+                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100/60">
+                                    {mi.name === 'DIPLOMA' && diplomaSubmenuItems.map((di) => (
+                                      <button key={di.name} onClick={() => { navigate(di.href); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{di.name}</button>
+                                    ))}
+                                    {mi.name === 'ENGINEERING' && engineeringSubmenuItems.map((ei) => (
+                                      <div key={ei.name}>
+                                        <button onClick={() => toggleMobileAccordion(`mob-eng-${ei.name}`)} className="flex items-center justify-between w-full pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                          {ei.name}
+                                          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${mobileAccordion[`mob-eng-${ei.name}`] ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <AnimatePresence initial={false}>
+                                          {mobileAccordion[`mob-eng-${ei.name}`] && (
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100">
+                                              {ei.name === 'UNDER GRADUATION (UG)' && ugEngineeringSubmenuItems.map((ui) => (
+                                                <button key={ui.name} onClick={() => { navigate(ui.href); closeMobileMenu(); }} className="block w-full text-left pl-16 pr-5 py-2 text-[13px] text-gray-500 hover:text-gray-900 hover:bg-gray-200/60 transition-colors">{ui.name}</button>
+                                              ))}
+                                              {ei.name === 'POST GRADUATION (PG)' && pgEngineeringSubmenuItems.map((pi) => (
+                                                <button key={pi.name} onClick={() => { navigate(pi.href); closeMobileMenu(); }} className="block w-full text-left pl-16 pr-5 py-2 text-[13px] text-gray-500 hover:text-gray-900 hover:bg-gray-200/60 transition-colors">{pi.name}</button>
+                                              ))}
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
+                                    ))}
+                                    {mi.name === 'MANAGEMENT' && (
+                                      <>
+                                        <div className="px-12 pt-2 pb-1 text-xs font-semibold uppercase text-[#E1731A] tracking-wider">Under Graduate</div>
+                                        {managementSubmenuItems.filter(m => m.category === 'UNDER GRADUATE').map((mg) => (
+                                          <button key={mg.name} onClick={() => { navigate(mg.href); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{mg.name}</button>
+                                        ))}
+                                        <div className="px-12 pt-3 pb-1 text-xs font-semibold uppercase text-[#E1731A] tracking-wider">Post Graduate</div>
+                                        {managementSubmenuItems.filter(m => m.category === 'POST GRADUATE').map((mg) => (
+                                          <button key={mg.name} onClick={() => { navigate(mg.href); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{mg.name}</button>
+                                        ))}
+                                      </>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          ))}
+                          {navEntry.name === 'Facilities' && facilitiesMenuItems.map((mi) => (
+                            <div key={mi.name}>
+                              {mi.name === 'Library' ? (
+                                <>
+                                  <button onClick={() => toggleMobileAccordion('mob-library')} className="flex items-center justify-between w-full px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                    {mi.name}
+                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${mobileAccordion['mob-library'] ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  <AnimatePresence initial={false}>
+                                    {mobileAccordion['mob-library'] && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100/60">
+                                        {librarySubmenuItems.map((li) => (
+                                          <button key={li.name} onClick={() => { li.href.startsWith('/') ? navigate(li.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(li.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{li.name}</button>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </>
+                              ) : (
+                                <button onClick={() => { if (mi.href.startsWith('/')) navigate(mi.href); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">{mi.name}</button>
+                              )}
+                            </div>
+                          ))}
+                          {navEntry.name === 'IQAC' && iqacMenuItems.map((mi) => (
+                            <div key={mi.name}>
+                              {(mi.name === 'NAAC' || mi.name === 'IQAC MOM') ? (
+                                <>
+                                  <button onClick={() => toggleMobileAccordion(`mob-iqac-${mi.name}`)} className="flex items-center justify-between w-full px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                    {mi.name}
+                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${mobileAccordion[`mob-iqac-${mi.name}`] ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  <AnimatePresence initial={false}>
+                                    {mobileAccordion[`mob-iqac-${mi.name}`] && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100/60">
+                                        {mi.name === 'IQAC MOM' && iqacMOMSubmenuItems.map((si) => (
+                                          <button key={si.name} onClick={() => { si.href.startsWith('/') ? navigate(si.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(si.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{si.name}</button>
+                                        ))}
+                                        {mi.name === 'NAAC' && naacSubmenuItems.map((si) => (
+                                          <div key={si.name}>
+                                            {(si.name === 'AQAR' || si.name === 'AQAR Reports') ? (
+                                              <>
+                                                <button onClick={() => toggleMobileAccordion(`mob-naac-${si.name}`)} className="flex items-center justify-between w-full pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                                                  {si.name}
+                                                  <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${mobileAccordion[`mob-naac-${si.name}`] ? 'rotate-180' : ''}`} />
+                                                </button>
+                                                <AnimatePresence initial={false}>
+                                                  {mobileAccordion[`mob-naac-${si.name}`] && (
+                                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100">
+                                                      {si.name === 'AQAR' && aqarSubmenuItems.map((ai) => (
+                                                        <button key={ai.name} onClick={() => { ai.href.startsWith('/') ? navigate(ai.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(ai.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-16 pr-5 py-2 text-[13px] text-gray-500 hover:text-gray-900 hover:bg-gray-200/60 transition-colors">{ai.name}</button>
+                                                      ))}
+                                                      {si.name === 'AQAR Reports' && aqarReportsSubmenuItems.map((ai) => (
+                                                        <button key={ai.name} onClick={() => { ai.href.startsWith('/') ? navigate(ai.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(ai.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-16 pr-5 py-2 text-[13px] text-gray-500 hover:text-gray-900 hover:bg-gray-200/60 transition-colors">{ai.name}</button>
+                                                      ))}
+                                                    </motion.div>
+                                                  )}
+                                                </AnimatePresence>
+                                              </>
+                                            ) : (
+                                              <button onClick={() => { si.href.startsWith('/') ? navigate(si.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(si.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{si.name}</button>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </>
+                              ) : (
+                                <button onClick={() => { mi.href.startsWith('/') ? navigate(mi.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(mi.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">{mi.name}</button>
+                              )}
+                            </div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100">
+              <Button className="w-full bg-gradient-primary text-white border-0 h-11 text-sm font-semibold rounded-xl">LOGIN</Button>
+              <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-400">
+                <a href="tel:+919959617476" className="flex items-center gap-1 hover:text-gray-600 transition-colors"><Phone className="w-3 h-3" /> Call Us</a>
+                <span className="text-gray-200">|</span>
+                <a href="mailto:website@viet.edu.in" className="flex items-center gap-1 hover:text-gray-600 transition-colors"><MessageCircle className="w-3 h-3" /> Email</a>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
     </>
   );
 };

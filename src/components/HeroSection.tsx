@@ -36,7 +36,6 @@ const ECAP_URL = 'https://webprosindia.com/viet/Default.aspx?ReturnUrl=%2fviet';
 const CAMU_STAFF_URL = 'https://camu.in/';
 const CAMU_STUDENT_URL = 'https://www.mycamu.co.in/#/';
 
-/** REVA-style hero quick links — sharp boxes, vivid colors, spaced stack on the right edge */
 const HERO_QUICK_LINKS = [
   { id: 'programmes', label: 'Programmes', bg: '#F58220', icon: 'plus' as const },
   { id: 'admissions', label: 'Admissions', bg: '#4D545D', icon: 'plus' as const },
@@ -169,77 +168,66 @@ function HeroQuickLinks({
         </Popover>
       </nav>
 
-      {/* Mobile — same vivid colors, sharp mini tiles */}
-      <div className="md:hidden absolute bottom-[4.5rem] left-0 right-0 z-20 px-3">
-        <div className="flex gap-[3px] overflow-x-auto pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
+      {/* Mobile — Same vertical stack on the right side, smaller size */}
+      <nav
+        className="md:hidden absolute right-0 top-[4.5rem] z-20 flex flex-col gap-[2px] w-[110px] sm:w-[130px]"
+        aria-label="Quick links"
+      >
+        {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
+          <button
+            key={link.id}
+            type="button"
+            onClick={actions[link.id]}
+            className="group relative w-full flex items-center justify-between gap-1.5 px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-white font-semibold text-[10px] sm:text-[11px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-300 active:scale-[0.97] active:brightness-95 touch-manipulation"
+            style={{ backgroundColor: link.bg }}
+          >
+            <span className="drop-shadow-sm">{link.label}</span>
+            {link.icon === 'chevron' ? (
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 opacity-90" strokeWidth={2.5} aria-hidden />
+            ) : (
+              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 opacity-90" strokeWidth={2.5} aria-hidden />
+            )}
+          </button>
+        ))}
+        <Popover>
+          <PopoverTrigger asChild>
             <button
-              key={link.id}
               type="button"
-              onClick={actions[link.id]}
-              className="group snap-start shrink-0 flex items-center justify-between gap-2 min-w-[7.5rem] px-3 py-2.5 text-white text-[11px] font-semibold shadow-md transition-transform duration-300 active:scale-[0.98]"
-              style={{ backgroundColor: link.bg }}
+              className="group relative w-full flex items-center justify-between gap-1.5 px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-white font-semibold text-[10px] sm:text-[11px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] touch-manipulation"
+              style={{ backgroundColor: portalLink.bg }}
             >
-              <span>{link.label}</span>
-              {link.icon === 'chevron' ? (
-                <ChevronRight
-                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5"
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              ) : (
-                <Plus
-                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-45"
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              )}
+              <span className="drop-shadow-sm">{portalLink.label}</span>
+              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 opacity-90" strokeWidth={2.5} aria-hidden />
             </button>
-          ))}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="group snap-start shrink-0 flex items-center justify-between gap-2 min-w-[6.5rem] px-3 py-2.5 text-white text-[11px] font-semibold shadow-md"
-                style={{ backgroundColor: portalLink.bg }}
-              >
-                <span>Portal</span>
-                <Plus
-                  className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-45"
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-52 p-2 z-[30] rounded-sm">
-              <a
-                href={CAMU_STUDENT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Student Login
-              </a>
-              <a
-                href={CAMU_STAFF_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Staff Login
-              </a>
-              <a
-                href={ECAP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                ECAP Login
-              </a>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+          </PopoverTrigger>
+          <PopoverContent align="end" side="left" sideOffset={4} className="w-48 p-2 z-[30] rounded-sm">
+            <a
+              href={CAMU_STUDENT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Student Login
+            </a>
+            <a
+              href={CAMU_STAFF_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Staff Login
+            </a>
+            <a
+              href={ECAP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-2 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              ECAP Login
+            </a>
+          </PopoverContent>
+        </Popover>
+      </nav>
     </>
   );
 }
@@ -683,7 +671,7 @@ const HeroSection = () => {
               <div className={`absolute inset-0 flex items-end transition-opacity duration-300 ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}>
-                <div className="w-full px-8 md:px-16 lg:px-24 pb-20 md:pb-28 lg:pb-28 md:pr-44 lg:pr-48">
+                <div className="w-full px-4 sm:px-8 md:px-16 lg:px-24 pb-24 sm:pb-20 md:pb-28 lg:pb-28 md:pr-44 lg:pr-48">
                   <div className="max-w-2xl">
                     {/* Badge */}
                     {slide.badge && (
@@ -774,7 +762,7 @@ const HeroSection = () => {
       <NewsAnnouncementsSection />
 
       {/* Explore Your Path – fixed height (Management size), course list scrolls when more items */}
-      <div id="whats-your-interest" className="relative overflow-hidden py-12 md:py-14 border-t border-slate-800 h-[520px] md:h-[560px] bg-slate-900">
+      <div id="whats-your-interest" className="relative overflow-hidden py-10 sm:py-12 md:py-14 border-t border-slate-800 h-[580px] sm:h-[520px] md:h-[560px] bg-slate-900">
         {/* Background video - use env override for CDN/Supabase, else /bgvideoexp.mp4 */}
         <ExplorePathVideo />
         {/* Lighter overlay so video is clearly visible */}
@@ -817,8 +805,8 @@ const HeroSection = () => {
             <div className="lg:col-span-8">
               {/* Android 16–style toggle: Diploma | B.Tech | M.Tech | Management */}
               <div className="flex justify-start lg:justify-end mb-6">
-                <div className="inline-flex p-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-lg">
-                  <div className="relative flex rounded-full" style={{ minWidth: 400 }}>
+                <div className="inline-flex p-1 sm:p-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-lg w-full sm:w-auto">
+                  <div className="relative flex rounded-full w-full sm:min-w-[400px]">
                     <motion.div
                       className="absolute top-1 bottom-1 rounded-full bg-white/95 shadow-md"
                       initial={false}
@@ -834,11 +822,11 @@ const HeroSection = () => {
                         key={stream}
                         type="button"
                         onClick={() => setExploreStream(stream)}
-                        className={`relative z-10 flex-1 min-w-0 px-3 py-2.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap overflow-hidden text-ellipsis ${
+                        className={`relative z-10 flex-1 min-w-0 px-2 sm:px-3 py-2.5 rounded-full text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap overflow-hidden text-ellipsis touch-manipulation ${
                           exploreStream === stream ? 'text-slate-900' : 'text-white/90 hover:text-white'
                         }`}
                       >
-                        {stream === 'diploma' ? 'Diploma' : stream === 'btech' ? 'B.Tech' : stream === 'mtech' ? 'M.Tech' : 'Management'}
+                        {stream === 'diploma' ? 'Diploma' : stream === 'btech' ? 'B.Tech' : stream === 'mtech' ? 'M.Tech' : <><span className="sm:hidden">Mgmt</span><span className="hidden sm:inline">Management</span></>}
                       </button>
                     ))}
                   </div>
@@ -848,7 +836,7 @@ const HeroSection = () => {
               {/* Course listings – fixed height, scroll when Diploma/Engineering have more cards */}
               <div className="h-[320px] md:h-[360px] overflow-y-auto overflow-x-hidden pr-1">
             {exploreStream === 'diploma' && interestCategories.diploma.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {interestCategories.diploma.map((category, idx) => {
                   const IconComponent = ProgramIcons[category.icon];
                   return (
@@ -896,7 +884,7 @@ const HeroSection = () => {
             )}
 
             {exploreStream === 'mtech' && interestCategories.engineering.pg.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {interestCategories.engineering.pg.map((category, idx) => {
                   const IconComponent = ProgramIcons[category.icon];
                   return (
@@ -923,8 +911,8 @@ const HeroSection = () => {
               <div className="space-y-6">
                 {interestCategories.management.ug.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Undergraduate</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">Undergraduate</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {interestCategories.management.ug.map((category, idx) => {
                         const IconComponent = ProgramIcons[category.icon];
                         return (
@@ -949,8 +937,8 @@ const HeroSection = () => {
                 )}
                 {interestCategories.management.pg.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 mt-4">Postgraduate</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3 mt-4">Postgraduate</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {interestCategories.management.pg.map((category, idx) => {
                         const IconComponent = ProgramIcons[category.icon];
                         return (
@@ -1028,8 +1016,8 @@ const HeroSection = () => {
                                 onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
                               >
-                                <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                  <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                <div className="shrink-0 w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-500">
+                                  <IconComponent className="w-4 h-4" strokeWidth={1.5} />
                                 </div>
                                 <span className="font-medium text-slate-800">{category.name}</span>
                               </button>
@@ -1055,8 +1043,8 @@ const HeroSection = () => {
                                     onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
                                   >
-                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    <div className="shrink-0 w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-500">
+                                  <IconComponent className="w-4 h-4" strokeWidth={1.5} />
                                     </div>
                                     <span className="font-medium text-slate-800">{category.name}</span>
                                   </button>
@@ -1079,8 +1067,8 @@ const HeroSection = () => {
                                     onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
                                   >
-                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    <div className="shrink-0 w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-500">
+                                  <IconComponent className="w-4 h-4" strokeWidth={1.5} />
                                     </div>
                                     <span className="font-medium text-slate-800">{category.name}</span>
                                   </button>
@@ -1108,8 +1096,8 @@ const HeroSection = () => {
                                     onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
                                   >
-                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    <div className="shrink-0 w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-500">
+                                  <IconComponent className="w-4 h-4" strokeWidth={1.5} />
                                     </div>
                                     <span className="font-medium text-slate-800">{category.name}</span>
                                   </button>
@@ -1132,8 +1120,8 @@ const HeroSection = () => {
                                     onClick={() => { setProgramFinderOpen(false); setProgramSearchQuery(''); window.scrollTo(0, 0); navigate(category.href); }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-slate-100 transition-colors"
                                   >
-                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                      <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                                    <div className="shrink-0 w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-500">
+                                  <IconComponent className="w-4 h-4" strokeWidth={1.5} />
                                     </div>
                                     <span className="font-medium text-slate-800">{category.name}</span>
                                   </button>

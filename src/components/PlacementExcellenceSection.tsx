@@ -174,11 +174,10 @@ const PlacementExcellenceSection = () => {
 
   return (
     <section className="relative py-12 md:py-16 overflow-visible bg-gradient-to-b from-[#1e2270] via-[#252b8a] to-[#251755]">
-      {/* Gloss overlay – light reflection from top */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 25%, transparent 50%)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 40%)',
         }}
       />
       <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12">

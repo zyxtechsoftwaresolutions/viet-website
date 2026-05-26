@@ -207,8 +207,47 @@ const VibeAtViet = () => {
             <p>No photos in Vibe@Viet yet. Add some from the admin panel.</p>
           </div>
         ) : (
+          <>
+          {/* Mobile: 2-column simple grid */}
+          <div className="grid grid-cols-2 gap-2 md:hidden">
+            {orderedSlots.filter(Boolean).slice(0, 8).map((item, idx) => {
+              if (!item) return null;
+              const tall = idx === 0 || idx === 3 || idx === 5;
+              return (
+                <div
+                  key={`vibe-mobile-${idx}-${item.id}`}
+                  className={`vibe-gallery-item relative group cursor-pointer rounded-xl overflow-hidden ${tall ? 'row-span-2 min-h-[200px]' : 'min-h-[120px]'}`}
+                >
+                  {item.video ? (
+                    shouldUseIframeEmbed(item.video) ? (
+                      (() => {
+                        const { platform } = getVideoEmbedUrl(item.video);
+                        if (platform === 'youtube') {
+                          return <VibeYoutubeEmbed videoUrl={item.video} title={item.caption} />;
+                        }
+                        const { embedUrl } = getVideoEmbedUrl(item.video);
+                        return (
+                          <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
+                            <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="vibe-gallery-iframe border-0 pointer-events-none" title={item.caption} loading="lazy" tabIndex={-1} />
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <VibeGalleryVideo slotIndex={idx} videoPath={item.video} poster={imageSrc(item.image)} caption={item.caption} videoRefs={videoRefs} />
+                    )
+                  ) : (
+                    <img src={imageSrc(item.image)} alt={item.caption} className="w-full h-full object-cover" loading="lazy" />
+                  )}
+                  <div className="vibe-caption">
+                    <p className="text-[#0a192f] text-xs font-medium leading-snug">{item.caption}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Desktop: Original 5-column complex grid */}
           <div
-            className="grid grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5"
+            className="hidden md:grid grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5"
             style={{
               gridTemplateRows: 'repeat(5, minmax(90px, 1fr))',
               maxHeight: 'calc(100vh - 180px)',
@@ -273,6 +312,7 @@ const VibeAtViet = () => {
               );
             })}
           </div>
+          </>
         )}
 
         {/* View More Button - Amrita Style */}

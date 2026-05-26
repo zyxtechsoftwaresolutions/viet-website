@@ -824,3 +824,57 @@ html {
     padding: 1rem;
   }
 }
+
+/* ========== Mobile-first responsive enhancements ========== */
+/* Ensure viewport units account for mobile browser chrome (address bar) */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+/* Mobile: prevent horizontal overflow on body */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Mobile: reduce container padding for more content space */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Mobile: footer grid stacks to single column */
+@media (max-width: 767px) {
+  footer .grid {
+    gap: 2rem;
+  }
+}
+
+/* Mobile: smooth momentum scrolling for all overflow areas */
+@media (max-width: 767px) {
+  [class*="overflow-y-auto"],
+  [class*="overflow-x-auto"] {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile hamburger menu accordion animations */
+@media (max-width: 767px) {
+  .mobile-accordion-enter {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .mobile-accordion-enter-active {
+    max-height: 2000px;
+    opacity: 1;
+    transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in;
+  }
+}

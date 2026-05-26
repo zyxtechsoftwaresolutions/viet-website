@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Facebook, Linkedin, Instagram, Mail, Phone, MapPin, Eye } from 'lucide-react';
+import { Facebook, Linkedin, Instagram, Mail, Phone, MapPin, Eye, ArrowUp } from 'lucide-react';
 import { visitorCountAPI } from '@/lib/api';
 
 const SESSION_KEY = 'viet_visit_counted';
 
 const Footer = () => {
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -28,23 +29,31 @@ const Footer = () => {
     return () => { isMounted = false; };
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
   const quickLinks = [
     { name: 'About Us', href: '/about' },
     { name: 'Vision & Mission', href: '/vision-mission' },
     { name: 'Chairman', href: '/chairman' },
-    { name: 'HR', href: '/hr' },
     { name: 'Principal', href: '/principal' },
+    { name: 'HR', href: '/hr' },
     { name: 'Accreditation', href: '/accreditation' },
-    { name: 'Organizational Chart', href: '/organizational-chart' }
+    { name: 'Organizational Chart', href: '/organizational-chart' },
   ];
 
   const academics = [
     { name: 'Diploma Programs', href: '#' },
     { name: 'B.Tech Programs', href: '#' },
     { name: 'M.Tech Programs', href: '#' },
-    { name: 'BBA/MBA', href: '#' },
-    { name: 'BCA/MCA', href: '#' },
-    { name: 'Online Admission Form', href: '#' }
+    { name: 'BBA / MBA', href: '#' },
+    { name: 'BCA / MCA', href: '#' },
+    { name: 'Online Admission Form', href: '#' },
   ];
 
   const resources = [
@@ -53,70 +62,68 @@ const Footer = () => {
     { name: 'IQAC', href: '#' },
     { name: 'Facilities', href: '#' },
     { name: 'Grievance Redressal', href: '/grievance-redressal' },
-    { name: 'Committees', href: '/committees' }
+    { name: 'Committees', href: '/committees' },
   ];
 
   const socialLinks = [
     { icon: Facebook, href: 'https://www.facebook.com/vietvizag', label: 'Facebook' },
     { icon: Linkedin, href: 'https://in.linkedin.com/school/visakha-institute-of-engineering-&-technology-57th-division-narava-pin--530027-cc-nt-/', label: 'LinkedIn' },
-    { icon: Instagram, href: 'https://www.instagram.com/visakha_college_official?igsh=MXcydnJ4ajMwd2MzMw==', label: 'Instagram' }
+    { icon: Instagram, href: 'https://www.instagram.com/visakha_college_official?igsh=MXcydnJ4ajMwd2MzMw==', label: 'Instagram' },
   ];
 
   return (
-    <footer className="text-white bg-black border-t border-transparent shadow-2xl relative overflow-hidden -mt-1">
-      <div className="container mx-auto px-4 md:px-10 lg:px-12 py-16 relative z-10">
-        <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
-          {/* Brand Section */}
-          <div>
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <img 
-                  src="/logo-viet.png" 
-                  alt="VIET Logo" 
-                  className="w-6 h-6 object-contain"
-                  width={24}
-                  height={24}
-                  loading="lazy"
-                  decoding="async"
-                  fetchpriority="auto"
-                />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">VIET</div>
-                <div className="text-sm text-primary-foreground/80">Excellence in Education</div>
-              </div>
-            </div>
-            <p className="text-primary-foreground/80 leading-relaxed mb-6">
-              Visakha Institute of Engineering & Technology - Empowering minds, fostering innovation, 
-              and building tomorrow's leaders through world-class education and research excellence since 2008.
+    <footer className="bg-black text-white -mt-1">
+      {/* ── Main Content ── */}
+      <div className="container mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-14 pb-6 sm:pt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+
+          {/* ── Brand Column ── */}
+          <div className="lg:col-span-4">
+            <img
+              src="/logo-viet.png"
+              alt="VIET Logo"
+              className="w-24 h-24 sm:w-28 sm:h-28 object-contain mb-5"
+              width={112}
+              height={112}
+              loading="lazy"
+              decoding="async"
+            />
+            <h2 className="text-xl font-bold tracking-wide mb-1">
+              Visakha Institute of Engineering & Technology
+            </h2>
+            <p className="text-neutral-500 text-sm leading-relaxed mt-3 max-w-sm">
+              Empowering minds, fostering innovation, and building tomorrow's leaders
+              through world-class education and research excellence since 2008.
             </p>
-            
-            {/* Contact Info */}
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4" />
-                <span>88th Division, Narava, GVMC, Visakhapatnam, Andhra Pradesh 530027, India</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>+91-9959617476, +91-9959617477, +91-9550957054</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4" />
-                <span>website@viet.edu.in</span>
-              </div>
+
+            {/* Social */}
+            <div className="flex gap-3 mt-6">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="w-9 h-9 rounded-full border border-neutral-800 flex items-center justify-center text-neutral-500 hover:text-white hover:border-neutral-500 transition-colors duration-200"
+                >
+                  <social.icon className="w-4 h-4" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-6">Quick Links</h3>
+          {/* ── Quick Links ── */}
+          <div className="lg:col-span-2 lg:col-start-6">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-400 mb-5">
+              Quick Links
+            </h3>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-primary-foreground/80 hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block"
+                    className="text-neutral-500 text-sm hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </a>
@@ -125,15 +132,17 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Academics */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-6">Academics</h3>
+          {/* ── Academics ── */}
+          <div className="lg:col-span-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-400 mb-5">
+              Academics
+            </h3>
             <ul className="space-y-3">
               {academics.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-primary-foreground/80 hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block"
+                    className="text-neutral-500 text-sm hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </a>
@@ -142,15 +151,17 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Resources */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-6">Resources</h3>
+          {/* ── Resources + Contact ── */}
+          <div className="lg:col-span-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-400 mb-5">
+              Resources
+            </h3>
             <ul className="space-y-3 mb-8">
               {resources.map((link) => (
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-primary-foreground/80 hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block"
+                    className="text-neutral-500 text-sm hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </a>
@@ -158,66 +169,74 @@ const Footer = () => {
               ))}
             </ul>
 
-            {/* Social Links */}
-            <div>
-              <h4 className="text-white font-semibold mb-4">Follow Us</h4>
-              <div className="flex space-x-4">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    aria-label={social.label}
-                    className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-110"
-                  >
-                    <social.icon className="w-5 h-5" />
-                  </a>
-                ))}
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-400 mb-4">
+              Contact
+            </h3>
+            <div className="space-y-3 text-sm text-neutral-500">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-neutral-600" />
+                <span>88th Division, Narava, GVMC, Visakhapatnam, AP 530027</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 flex-shrink-0 text-neutral-600" />
+                <span>+91 9959617476 / 9959617477</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 flex-shrink-0 text-neutral-600" />
+                <span>website@viet.edu.in</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-white/20 mt-12 pt-8 space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0">
-            <div className="text-primary-foreground/80 text-sm">
-              © {new Date().getFullYear()} Visakha Institute of Engineering and Technology. All rights reserved.
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-                Anti Ragging Policy
+        {/* ── Divider ── */}
+        <div className="border-t border-neutral-900 mt-12 pt-6">
+          {/* Policies */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
+            {['Anti Ragging Policy', 'AICTE Feedback', 'Mandatory Disclosure', 'Privacy Policy', 'Terms of Service'].map((name) => (
+              <a
+                key={name}
+                href="#"
+                className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors duration-200"
+              >
+                {name}
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-                AICTE Feedback
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-                Mandatory Disclosure
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-white transition-colors">
-                Terms of Service
-              </a>
-            </div>
+            ))}
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-primary-foreground/70">
-            <span className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 shrink-0" aria-hidden />
-              <span>Visitors: {visitorCount != null ? visitorCount.toLocaleString() : '—'}</span>
-            </span>
-            <span className="hidden sm:inline text-white/30">|</span>
-            <a
-              href="https://www.zyxtechsolutions.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              Developed by ZYX TECH SOLUTIONS in collaboration with CSE Department
-            </a>
+
+          {/* Bottom Row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-600">
+            <p>© {new Date().getFullYear()} Visakha Institute of Engineering and Technology. All rights reserved.</p>
+
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5" aria-hidden />
+                Visitors: {visitorCount != null ? visitorCount.toLocaleString() : '—'}
+              </span>
+              <span className="text-neutral-800">|</span>
+              <a
+                href="https://www.zyxtechsolutions.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-neutral-400 transition-colors"
+              >
+                Developed by ZYX Tech Solutions in collaboration with CSE Department
+              </a>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── Scroll to Top ── */}
+      <button
+        onClick={scrollToTop}
+        aria-label="Scroll to top"
+        className={`fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 flex items-center justify-center hover:text-white hover:border-neutral-600 transition-all duration-300 ${
+          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
+        <ArrowUp className="w-4 h-4" />
+      </button>
     </footer>
   );
 };

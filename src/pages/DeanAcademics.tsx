@@ -40,48 +40,74 @@ const DeanAcademics = () => {
   const name = pageContent?.profile?.name || 'Dr. D. Santha Rao';
   const qualification = pageContent?.profile?.qualification || 'Ph.D. (AU.), M.E. (NIT Tiruchirapalli)';
   const introText = pageContent?.hero?.description || 'Leading academic excellence and curriculum development.';
-  const buttonText = pageContent?.hero?.buttonText || 'Read message';
 
   return (
     <div className="min-h-screen bg-slate-100 font-poppins">
       <LeaderPageNavbar backHref="/about" />
 
       {/* Hero Section — image as full background */}
-      <section
-        className="relative min-h-[85vh] md:min-h-[90vh] pt-24 md:pt-28 pb-12 md:pb-16 text-white flex items-center bg-[#5a5a5a] bg-cover bg-center bg-no-repeat"
-        style={profileImageSrc ? { backgroundImage: `url(${profileImageSrc})` } : undefined}
-      >
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-black/75 from-40% via-black/50 to-transparent"
-          aria-hidden
-        />
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="max-w-2xl">
+      <section className="relative text-white bg-[#1a1a1a]">
+        {/* Mobile: full image visible, text overlay at bottom */}
+        <div className="md:hidden relative">
+          <img
+            src={profileImageSrc || '/chairmanedit.jpeg'}
+            alt={name}
+            className="w-full h-auto block"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 z-10">
             <motion.div
-              className="space-y-4 md:space-y-6"
+              className="space-y-2"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full">
+              <p className="inline-block px-3 py-1 text-xs font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full">
                 {designation}
               </p>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm">
+              <h1 className="text-2xl font-bold text-white leading-tight drop-shadow-sm">
                 {name}
               </h1>
-              <p className="text-lg md:text-xl font-semibold text-white/95">
+              <p className="text-base font-semibold text-white/95">
                 {qualification}
               </p>
-              <p className="text-base md:text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+              <p className="text-sm text-white/90 leading-relaxed font-poppins">
                 {introText}
               </p>
-              <a
-                href="#message"
-                className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg"
-              >
-                {buttonText}
-              </a>
             </motion.div>
+          </div>
+        </div>
+        {/* Desktop: full background image with overlay */}
+        <div
+          className="hidden md:flex relative min-h-[90vh] pt-28 pb-16 items-center bg-cover bg-center bg-no-repeat"
+          style={profileImageSrc ? { backgroundImage: `url(${profileImageSrc})` } : undefined}
+        >
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-black/75 from-40% via-black/50 to-transparent"
+            aria-hidden
+          />
+          <div className="container mx-auto px-4 md:px-8 relative z-10">
+            <div className="max-w-2xl">
+              <motion.div
+                className="space-y-6"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <p className="inline-block px-4 py-1.5 text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full">
+                  {designation}
+                </p>
+                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm">
+                  {name}
+                </h1>
+                <p className="text-xl font-semibold text-white/95">
+                  {qualification}
+                </p>
+                <p className="text-lg text-white/90 leading-relaxed font-poppins max-w-xl">
+                  {introText}
+                </p>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>

@@ -113,27 +113,27 @@ const NewsAnnouncementsSection = () => {
                                 const isExternal = hasLink && /^https?:\/\//i.test(item.link!);
                                 return (
                                 <tr key={`${copy}-${item.id}`} className="border-b border-green-100 hover:bg-green-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
-                                  <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[100px]">{formatDate(item.date)}</td>
-                                  <td className="px-4 py-2">
+                                  <td className="px-2 sm:px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[70px] sm:w-[100px]">{formatDate(item.date)}</td>
+                                  <td className="px-2 sm:px-4 py-2">
                                     {hasLink ? (
                                       <a
                                         href={item.link}
                                         target={isExternal ? '_blank' : undefined}
                                         rel={isExternal ? 'noopener noreferrer' : undefined}
-                                        className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-sm"
+                                        className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-xs sm:text-sm"
                                       >
                                         {item.title}
                                       </a>
                                     ) : (
-                                      <span className="font-medium text-slate-800 line-clamp-2 text-sm">
+                                      <span className="font-medium text-slate-800 line-clamp-2 text-xs sm:text-sm">
                                         {item.title}
                                       </span>
                                     )}
                                     {item.description && (
-                                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{item.description.slice(0, 50)}…</p>
+                                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 hidden sm:block">{item.description.slice(0, 50)}…</p>
                                     )}
                                   </td>
-                                  <td className="px-2 py-2 w-8">
+                                  <td className="px-1 sm:px-2 py-2 w-6 sm:w-8">
                                     {hasLink ? (
                                       <a
                                         href={item.link}
@@ -187,18 +187,18 @@ const NewsAnnouncementsSection = () => {
                             <tbody>
                               {announcements.map((item) => (
                                 <tr key={`${copy}-${item.id}`} className="border-b border-sky-100 hover:bg-sky-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
-                                  <td className="px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[100px]">{formatDate(item.date)}</td>
-                                  <td className="px-4 py-2">
+                                  <td className="px-2 sm:px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[70px] sm:w-[100px]">{formatDate(item.date)}</td>
+                                  <td className="px-2 sm:px-4 py-2">
                                     <a
                                       href={item.link || '#'}
                                       target={item.isExternal ? '_blank' : undefined}
                                       rel={item.isExternal ? 'noopener noreferrer' : undefined}
-                                      className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-sm"
+                                      className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-xs sm:text-sm"
                                     >
                                       {item.title}
                                     </a>
                                   </td>
-                                  <td className="px-4 py-2 w-[90px]">
+                                  <td className="px-2 sm:px-4 py-2 w-[70px] sm:w-[90px] hidden sm:table-cell">
                                     <span
                                       className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                                         item.type === 'result' ? 'bg-green-50 text-green-700' : item.type === 'notification' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700'
@@ -207,7 +207,7 @@ const NewsAnnouncementsSection = () => {
                                       {item.type}
                                     </span>
                                   </td>
-                                  <td className="px-2 py-2 w-8">
+                                  <td className="px-1 sm:px-2 py-2 w-6 sm:w-8">
                                     <a
                                       href={item.link || '#'}
                                       target={item.isExternal ? '_blank' : undefined}

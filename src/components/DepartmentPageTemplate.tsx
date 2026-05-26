@@ -45,10 +45,8 @@ const NAV_SECTIONS = [
   { id: 'hod', label: 'Head of Department' },
   { id: 'courses', label: 'Programs Offered' },
   { id: 'curriculum', label: 'Curriculum' },
-  { id: 'fee', label: 'Fee Structure' },
   { id: 'program-overview', label: 'Program Overview' },
   { id: 'facilities', label: 'Facilities' },
-  { id: 'why-viet', label: 'Why VIET' },
   { id: 'faculty', label: 'Faculty' },
   { id: 'projects', label: 'Projects' },
   { id: 'placements', label: 'Placements' },
@@ -56,7 +54,6 @@ const NAV_SECTIONS = [
   { id: 'idea-cell', label: 'Idea Cell' },
   { id: 'club-activities', label: 'Club Activities' },
   { id: 'gallery', label: 'Gallery' },
-  { id: 'alumni', label: 'Alumni' },
 ] as const;
 
 function SectionHead({ label, title, accent = 'blue' }: { label: string; title: string; accent?: 'blue' | 'emerald' | 'violet' | 'amber' }) {
@@ -281,8 +278,14 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         const [f, h] = await Promise.all([facultyAPI.getAll(), hodsAPI.getAll()]);
         const data = await departmentPagesAPI.getBySlug(slug);
         const facultyIds = Array.isArray(data?.sections?.faculty?.facultyIds) ? data.sections.faculty.facultyIds : [];
-        const deptFilter = facultyFilter ?? (() => true);
-        setHods(h.filter((x: any) => deptFilter(x.department || '')));
+        const deptFilter = facultyFilter ?? (() => false);
+        const hodIds = Array.isArray(data?.sections?.hod?.hodIds) ? data.sections.hod.hodIds : [];
+        if (hodIds.length > 0) {
+          const idSet = new Set(hodIds);
+          setHods(h.filter((x: any) => idSet.has(x.id)));
+        } else {
+          setHods(h.filter((x: any) => deptFilter(x.department || '')));
+        }
         if (facultyIds.length > 0) {
           const idSet = new Set(facultyIds);
           setFaculty(f.filter((x: any) => idSet.has(x.id)));
@@ -825,24 +828,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         </div>
       </section>
 
-      {/* Fee */}
-      <section id="fee" ref={(el) => { sectionRefs.current['fee'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Fee Structure" title={s.fee?.title || 'Fee at a glance'} accent="emerald" />
-          {feeItems.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {feeItems.map((item: any, i: number) => (
-                <div key={i} className="p-6 rounded-2xl border border-emerald-200 bg-white shadow-sm text-left">
-                  <p className="text-slate-600 text-sm">{item.programName || '—'}</p>
-                  <p className="text-2xl font-bold mt-2 text-emerald-700">{item.fee || '—'}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm">Fee cards can be added in the Admin → Department Pages → Fee At Glance.</p>
-          )}
-        </div>
-      </section>
 
       {/* Program Overview */}
       <section id="program-overview" ref={(el) => { sectionRefs.current['program-overview'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
@@ -963,98 +948,48 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         </div>
       </section>
 
-      {/* Why VIET */}
-      <section id="why-viet" ref={(el) => { sectionRefs.current['why-viet'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-amber-50/50 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Why VIET" title="Why VIET" accent="blue" />
-          {Array.isArray(s.whyViet?.cards) && s.whyViet.cards.length > 0 ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {s.whyViet.cards.map((card: any, i: number) => {
-                const iconUrl = card.icon ? (card.icon.startsWith('http') ? card.icon : `${API_BASE}${card.icon}`) : null;
-                const accentColors = ['blue', 'emerald', 'violet'];
-                const accent = accentColors[i % accentColors.length];
-                return (
-                  <div key={card.id || i} className={`p-6 rounded-2xl border bg-white shadow-sm text-left ${accent === 'blue' ? 'border-blue-200' : accent === 'emerald' ? 'border-emerald-200' : 'border-violet-200'}`}>
-                    {iconUrl && (
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${accent === 'blue' ? 'bg-blue-100' : accent === 'emerald' ? 'bg-emerald-100' : 'bg-violet-100'}`}>
-                        <img src={iconUrl} alt={card.title} className="w-6 h-6 object-contain" />
-                      </div>
-                    )}
-                    <h3 className="font-semibold text-slate-900">{card.title || '—'}</h3>
-                    <p className="text-slate-600 text-sm mt-2">{card.subtitle || '—'}</p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : s.whyViet?.content ? (
-            renderContent(s.whyViet.content)
-          ) : slug === 'cse' ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { icon: Award, title: "NAAC 'A' Grade", desc: 'Accredited institution committed to quality education.', accent: 'blue' },
-                { icon: Building2, title: 'Industry connect', desc: 'Placements, internships and industry-aligned curriculum.', accent: 'emerald' },
-                { icon: Sparkles, title: 'Research & innovation', desc: 'Projects, labs and opportunities for research and startups.', accent: 'violet' },
-              ].map(({ icon: Icon, title, desc, accent }, i) => (
-                <div key={i} className={`p-6 rounded-2xl border bg-white shadow-sm text-left ${accent === 'blue' ? 'border-blue-200' : accent === 'emerald' ? 'border-emerald-200' : 'border-violet-200'}`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${accent === 'blue' ? 'bg-blue-100' : accent === 'emerald' ? 'bg-emerald-100' : 'bg-violet-100'}`}>
-                    <Icon className={`w-6 h-6 ${accent === 'blue' ? 'text-blue-700' : accent === 'emerald' ? 'text-emerald-700' : 'text-violet-700'}`} />
-                  </div>
-                  <h3 className="font-semibold text-slate-900">{title}</h3>
-                  <p className="text-slate-600 text-sm mt-2">{desc}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm">Add Why VIET cards in Admin → Department Pages → Why VIET.</p>
-          )}
-        </div>
-      </section>
 
       {/* Faculty */}
       <section id="faculty" ref={(el) => { sectionRefs.current['faculty'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Faculty" title="Faculty" accent="emerald" />
           {sortedFacultyWithHods.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
               {sortedFacultyWithHods.map((f: any) => (
-                <div key={f._listKey ?? f.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm text-left">
-                  <div className="w-16 h-16 rounded-full mb-3 overflow-hidden border border-slate-200 bg-slate-100">
+                <div key={f._listKey ?? f.id} className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100">
+                  <div className="aspect-[3/4] w-full overflow-hidden bg-gradient-to-b from-slate-100 to-slate-200">
                     {f.image ? (
                       <img
                         src={imgUrl(f.image)}
                         alt={f.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
-                          // Fallback to placeholder if image fails to load
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
                           const parent = target.parentElement;
                           if (parent && !parent.querySelector('.placeholder-icon')) {
                             const placeholder = document.createElement('div');
-                            placeholder.className = 'placeholder-icon w-full h-full flex items-center justify-center text-slate-400';
-                            placeholder.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
+                            placeholder.className = 'placeholder-icon w-full h-full flex items-center justify-center text-slate-300';
+                            placeholder.innerHTML = '<svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
                             parent.appendChild(placeholder);
                           }
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <Users className="w-6 h-6" />
+                      <div className="w-full h-full flex items-center justify-center text-slate-300">
+                        <Users className="w-10 h-10" />
                       </div>
                     )}
                   </div>
-                  <p className="font-medium text-slate-900 text-sm">{f.name}</p>
-                  <p className="text-xs text-slate-600">{f.designation}</p>
-                  {f.qualification && (
-                    <p className="text-xs text-slate-500 mt-0.5 truncate" title={f.qualification}>
-                      {f.qualification}
-                    </p>
-                  )}
-                  {f.experience && (
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Experience: {f.experience}
-                    </p>
-                  )}
+                  <div className="px-2 py-2 md:px-3 md:py-2.5">
+                    <p className="font-semibold text-slate-900 text-[11px] md:text-xs leading-tight truncate">{f.name}</p>
+                    <p className="text-[10px] md:text-[11px] text-emerald-700 font-medium mt-0.5 truncate">{f.designation}</p>
+                    {f.qualification && (
+                      <p className="text-[9px] md:text-[10px] text-slate-500 mt-0.5 truncate" title={f.qualification}>
+                        {f.qualification}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1673,31 +1608,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         </div>
       </section>
 
-      {/* Alumni */}
-      <section id="alumni" ref={(el) => { sectionRefs.current['alumni'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-emerald-50/40 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Alumni" title="Alumni" accent="emerald" />
-          {s.alumni?.content ? (
-            renderContent(s.alumni.content)
-          ) : slug === 'cse' ? (
-            <div className="p-8 rounded-2xl border border-emerald-200 bg-white shadow-sm text-left">
-              <GraduationCap className="w-12 h-12 text-emerald-500 mb-4" />
-              <p className="text-slate-600 text-sm mb-6">Stay connected with the CSE alumni network.</p>
-              <Button variant="outline" className="rounded-full border-emerald-300 text-emerald-700 hover:bg-emerald-50" asChild>
-                <a href="#contact">Alumni portal / Contact</a>
-              </Button>
-            </div>
-          ) : (
-            <div className="p-8 rounded-2xl border border-emerald-200 bg-white shadow-sm text-left">
-              <GraduationCap className="w-12 h-12 text-emerald-500 mb-4" />
-              <p className="text-slate-600 text-sm mb-6">Alumni content can be edited in the Admin → Department Pages.</p>
-              <Button variant="outline" className="rounded-full border-emerald-300 text-emerald-700 hover:bg-emerald-50" asChild>
-                <a href="#contact">Contact</a>
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
 
 
       <Dialog open={isModalOpen} onOpenChange={closeImageModal}>

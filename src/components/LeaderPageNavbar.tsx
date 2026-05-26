@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowLeft, Plus, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import SearchBar from '@/components/SearchBar';
 
 interface LeaderPageNavbarProps {
   backHref?: string;
@@ -409,7 +410,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
       <AnimatePresence>
         {!isMenuOpen && (
           <motion.header
-            className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between px-4 py-2 transition-all duration-300 pointer-events-none"
+            className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50 flex items-center justify-between px-3 sm:px-4 py-1.5 sm:py-2 transition-all duration-300 pointer-events-none"
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
@@ -439,7 +440,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                 <img
                   src="/viet-logo-new.png"
                   alt="VIET Logo"
-                  className="h-16 md:h-20 w-auto object-contain"
+                  className="h-12 sm:h-16 md:h-20 w-auto object-contain"
                   width={160}
                   height={64}
                   loading="eager"
@@ -487,7 +488,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                 onMouseEnter={() => setIsBackHovered(true)}
                 onMouseLeave={() => setIsBackHovered(false)}
                 className={cn(
-                  "flex items-center justify-center gap-2 min-w-[7.5rem] px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2",
+                  "flex items-center justify-center gap-1.5 sm:gap-2 min-w-[5.5rem] sm:min-w-[7.5rem] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all duration-300 border-2 touch-manipulation",
                   isHomePage
                     ? cn(
                         "font-bold tracking-[0.12em] uppercase shadow-[0_0_20px_rgba(225,115,26,0.55)] ring-2 ring-yellow-300/90",
@@ -539,7 +540,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               <motion.button
                 onClick={() => setIsMenuOpen(true)}
                 className={cn(
-                  "flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 text-white border-2",
+                  "flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full transition-all duration-300 text-white border-2 touch-manipulation",
                   isScrolled
                     ? "bg-gray-800 hover:bg-gray-700 border-gray-800"
                     : "border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg"
@@ -573,8 +574,8 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            {/* Top Ribbon */}
-            <div className="text-white flex-shrink-0 pt-4 pb-1" style={{ backgroundColor: '#000000' }}>
+            {/* Top Ribbon - hidden on mobile */}
+            <div className="text-white flex-shrink-0 pt-4 pb-1 hidden md:block" style={{ backgroundColor: '#000000' }}>
               <div className="w-full px-4 md:px-8">
                 <div className="flex items-center justify-between py-2">
                   <div className="hidden md:flex items-center gap-3 lg:gap-5">
@@ -589,7 +590,10 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 lg:gap-5 ml-auto">
+                  <div className="hidden md:flex items-center justify-center flex-1 mx-4 lg:mx-6 max-w-[280px]">
+                    <SearchBar />
+                  </div>
+                  <div className="flex items-center gap-3 lg:gap-5">
                     {topRibbonRightLinksBeforeLogin.map((link) => (
                       <button
                         key={link.name}
@@ -605,346 +609,542 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               </div>
             </div>
 
-            {/* Main Content Area - White Card centered on BLACK */}
+            {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-h-0" style={{ backgroundColor: '#000000' }}>
-              <div className="flex-1 px-4 md:px-8 py-2 overflow-hidden">
-                <motion.div 
-                  className="bg-white rounded-[20px] h-full flex flex-col overflow-hidden shadow-2xl"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.35, delay: 0.05 }}
-                >
-                  {/* Inner Header with Logo and Navigation */}
-                  <div className="px-4 md:px-8 py-4 flex-shrink-0">
-                    <div className="flex items-start gap-3 md:gap-4">
-                      {/* Logo - background fill #E1731A in dialog menu only */}
-                      <motion.div 
-                        className="border-2 border-[#E1731A] p-2 md:p-2.5 rounded-xl cursor-pointer flex-shrink-0"
-                        style={{ backgroundColor: '#E1731A' }}
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          handleNavigation('/');
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <img
-                          src="/viet-logo-new.png"
-                          alt="VIET Logo"
-                          width={120}
-                          height={48}
-                          loading="lazy"
-                          fetchpriority="auto"
-                          decoding="async"
-                          className="h-10 md:h-12 w-auto object-contain"
-                        />
-                      </motion.div>
+              {/* MOBILE LAYOUT (<md) - Vertical accordion navigation */}
+              <div className="md:hidden flex-1 flex flex-col min-h-0 overflow-hidden">
+                {/* Mobile Header - Logo + Admissions + Close */}
+                <div className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0 safe-area-top">
+                  <motion.div
+                    className="border-2 border-[#E1731A] p-1.5 rounded-lg cursor-pointer flex-shrink-0 touch-manipulation"
+                    style={{ backgroundColor: '#E1731A' }}
+                    onClick={() => { setIsMenuOpen(false); handleNavigation('/'); }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <img src="/viet-logo-new.png" alt="VIET Logo" className="h-8 w-auto object-contain" loading="lazy" decoding="async" />
+                  </motion.div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleAdmissionsClick}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full font-semibold text-xs border-2 border-[#E1731A] text-white touch-manipulation min-h-[40px]"
+                      style={{ backgroundColor: '#E1731A' }}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Admissions
+                    </button>
+                    <button
+                      onClick={() => { setIsMenuOpen(false); setActiveNavItem(null); }}
+                      className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E1731A] text-white touch-manipulation"
+                      style={{ backgroundColor: '#E1731A' }}
+                      aria-label="Close menu"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
 
-                      {/* Navigation Tabs */}
-                      <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5 md:gap-2">
-                        {mainNavItems.map((item) =>
-                          item.href ? (
+                {/* Mobile Search Bar */}
+                <div className="px-4 pb-3 flex-shrink-0">
+                  <SearchBar />
+                </div>
+
+                {/* Mobile Navigation - Vertical Accordion */}
+                <div className="flex-1 overflow-y-auto px-4 pb-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+                    {mainNavItems.map((item) => (
+                      <div key={item.name} className="border-b border-gray-100 last:border-b-0">
+                        {item.href ? (
+                          <button
+                            onClick={() => handleNavigation(item.href!)}
+                            className="w-full flex items-center justify-between px-5 py-4 text-left text-[15px] font-medium text-gray-800 active:bg-gray-50 touch-manipulation"
+                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                          >
+                            {item.name}
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                          </button>
+                        ) : (
+                          <>
                             <button
-                              key={item.name}
-                              onClick={() => handleNavigation(item.href!)}
-                              className="px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-100 transition-all whitespace-nowrap"
-                              style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
-                            >
-                              {item.name}
-                            </button>
-                          ) : (
-                            <button
-                              key={item.id}
                               onClick={() => setActiveNavItem(activeNavItem === item.id ? null : item.id!)}
                               className={cn(
-                                "px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                                "w-full flex items-center justify-between px-5 py-4 text-left text-[15px] font-medium touch-manipulation transition-colors",
                                 activeNavItem === item.id
-                                  ? "text-[#0a192f] bg-primary/10 border-b-2 border-primary"
-                                  : "text-gray-600 hover:text-primary hover:bg-gray-100 border-b-2 border-transparent"
+                                  ? "text-[#E1731A] bg-orange-50/50"
+                                  : "text-gray-800 active:bg-gray-50"
                               )}
                               style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                             >
                               {item.name}
-                              {activeNavItem === item.id && (
-                                <span className="ml-0.5 text-primary">•</span>
-                              )}
+                              <motion.div
+                                animate={{ rotate: activeNavItem === item.id ? 90 : 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <ChevronRight className={cn(
+                                  "w-4 h-4 transition-colors",
+                                  activeNavItem === item.id ? "text-[#E1731A]" : "text-gray-400"
+                                )} />
+                              </motion.div>
                             </button>
-                          )
-                        )}
-                      </div>
-
-                      {/* Admissions (back) + Close (menu) - #E1731A in dialog menu only */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <motion.button
-                          onClick={handleAdmissionsClick}
-                          className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2 border-[#E1731A] shadow-md text-white"
-                          style={{ backgroundColor: '#E1731A' }}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Plus className="w-4 h-4" style={{ color: 'white' }} />
-                          <span className="hidden sm:inline">Admissions</span>
-                        </motion.button>
-
-                        <button
-                          onClick={() => {
-                            setIsMenuOpen(false);
-                            setActiveNavItem(null);
-                          }}
-                          className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E1731A] shadow-md hover:opacity-90 transition-all duration-300 text-white"
-                          style={{ backgroundColor: '#E1731A' }}
-                        >
-                          <X className="w-5 h-5" style={{ color: 'white' }} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-gray-200" />
-
-                  {/* Mega Menu Content - Scrollable */}
-                  <div className="flex-1 overflow-y-auto">
-                    <AnimatePresence mode="wait">
-                      {activeNavItem && subMenuData[activeNavItem] && (
-                        <motion.div
-                          key={activeNavItem}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.25 }}
-                          className="h-full"
-                        >
-                          {/* Custom 3-Column Layout for Departments */}
-                          {activeNavItem === 'departments' ? (
-                            <div className="px-8 md:px-12 py-9 md:py-11 h-full">
-                              <div className="flex h-full gap-0">
-                                {/* Column 1 - Stream Selection */}
-                                <div className="w-48 border-r border-gray-200 flex-shrink-0">
-                                  <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4 border-l-2 border-transparent"
-                                      style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                    {selectedStream ? streamOptions.find(s => s.id === selectedStream)?.name : ''}
-                                  </h4>
-                                  <div className="space-y-1">
-                                    {streamOptions.map((stream) => (
-                                      <button
-                                        key={stream.id}
-                                        onClick={() => handleStreamSelect(stream.id)}
-                                        className={cn(
-                                          "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
-                                          selectedStream === stream.id
-                                            ? "text-primary border-primary bg-primary/10 font-medium"
-                                            : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
-                                        )}
-                                        style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
-                                      >
-                                        {stream.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Column 2 - Level Selection */}
-                                <div className={cn(
-                                  "w-48 border-r border-gray-200 flex-shrink-0 transition-all duration-300",
-                                  (selectedStream === 'diploma' || !selectedStream) ? "opacity-30" : "opacity-100"
-                                )}>
-                                  {selectedStream && selectedStream !== 'diploma' && (
-                                    <>
-                                      <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4"
-                                          style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                        {selectedLevel ? getLevelOptions().find(l => l.id === selectedLevel)?.name : ''}
-                                      </h4>
-                                      <div className="space-y-1">
-                                        {getLevelOptions().map((level) => (
+                            {/* Expandable submenu */}
+                            <AnimatePresence>
+                              {activeNavItem === item.id && subMenuData[item.id!] && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                  className="overflow-hidden"
+                                >
+                                  {item.id === 'departments' ? (
+                                    <div className="px-4 pb-4 space-y-3">
+                                      {/* Stream pills */}
+                                      <div className="flex gap-2 flex-wrap">
+                                        {streamOptions.map((stream) => (
                                           <button
-                                            key={level.id}
-                                            onClick={() => setSelectedLevel(level.id)}
+                                            key={stream.id}
+                                            onClick={() => handleStreamSelect(stream.id)}
                                             className={cn(
-                                              "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
-                                              selectedLevel === level.id
-                                                ? "text-primary border-primary bg-primary/10 font-medium"
-                                                : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
+                                              "px-3 py-1.5 rounded-full text-xs font-semibold transition-all touch-manipulation",
+                                              selectedStream === stream.id
+                                                ? "bg-[#E1731A] text-white"
+                                                : "bg-gray-100 text-gray-600 active:bg-gray-200"
                                             )}
-                                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                                           >
-                                            {level.name}
+                                            {stream.name}
                                           </button>
                                         ))}
                                       </div>
-                                    </>
-                                  )}
-                                </div>
-
-                                {/* Column 3 - Courses/Departments */}
-                                <div className="flex-1 pl-6 md:pl-8 overflow-y-auto">
-                                  {getCourses().length > 0 ? (
-                                    <>
-                                      <h4 className="text-gray-500 text-xs uppercase tracking-wider mb-4"
-                                          style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                        {selectedStream === 'diploma' ? 'Diploma Courses' : 
-                                         selectedStream === 'engineering' ? (selectedLevel === 'ug' ? 'B.Tech Programs' : 'M.Tech Programs') :
-                                         selectedStream === 'management' ? (selectedLevel === 'ug' ? 'UG Programs' : 'PG Programs') : 'Select a stream'}
-                                      </h4>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
-                                        {getCourses().map((course, index) => (
-                                          <motion.button
+                                      {/* Level pills (for engineering/management) */}
+                                      {selectedStream && selectedStream !== 'diploma' && (
+                                        <div className="flex gap-2">
+                                          {getLevelOptions().map((level) => (
+                                            <button
+                                              key={level.id}
+                                              onClick={() => setSelectedLevel(level.id)}
+                                              className={cn(
+                                                "px-3 py-1.5 rounded-full text-xs font-medium transition-all touch-manipulation",
+                                                selectedLevel === level.id
+                                                  ? "bg-[#0d47a1] text-white"
+                                                  : "bg-blue-50 text-[#0d47a1] active:bg-blue-100"
+                                              )}
+                                            >
+                                              {level.name}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {/* Course list */}
+                                      <div className="space-y-1">
+                                        {getCourses().map((course) => (
+                                          <button
                                             key={course.name}
-                                            initial={{ opacity: 0, x: 10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.03 }}
                                             onClick={() => handleNavigation(course.href)}
-                                            className="text-left group py-2 pr-4"
-                                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                                            className="w-full flex items-center justify-between px-3 py-2.5 text-left rounded-lg active:bg-gray-50 touch-manipulation"
                                           >
-                                            <h5 className="text-sm font-medium text-gray-800 group-hover:text-[#0d47a1] transition-colors mb-1">
-                                              {course.name}
-                                            </h5>
-                                            {course.description && (
-                                              <p className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors line-clamp-2 leading-relaxed">
-                                                {course.description}
-                                              </p>
-                                            )}
-                                          </motion.button>
+                                            <span className="text-sm text-gray-700 font-medium">{course.name}</span>
+                                            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                          </button>
                                         ))}
                                       </div>
-                                    </>
-                                  ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                                      {!selectedStream 
-                                        ? 'Select a stream to view courses' 
-                                        : selectedStream !== 'diploma' && !selectedLevel 
-                                          ? 'Select a level to view courses'
-                                          : 'No courses available'}
                                     </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Default Layout for other sections */
-                            <div className="px-8 md:px-12 py-9 md:py-11">
-                              <div className="flex flex-col md:flex-row gap-8 md:gap-10">
-                                {/* Left Column - Title & Description */}
-                                <div className="md:w-1/4 md:border-r border-gray-200 md:pr-10 pb-6 md:pb-0 border-b md:border-b-0 flex-shrink-0">
-                                  <h3 
-                                    className="text-lg md:text-xl text-[#0a192f] mb-3 leading-tight"
-                                    style={{ 
-                                      fontFamily: activeNavItem === 'about' 
-                                        ? "'Anton', sans-serif" 
-                                        : "'Cinzel', 'Times New Roman', Georgia, serif",
-                                      fontWeight: activeNavItem === 'about' ? 400 : 700,
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.01em'
-                                    }}
-                                  >
-                                    {subMenuData[activeNavItem].title}
-                                  </h3>
-                                  <p className="text-sm text-gray-600 leading-relaxed mb-5" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-                                    {subMenuData[activeNavItem].description}
-                                  </p>
-                                  <button
-                                    onClick={() => handleNavigation(subMenuData[activeNavItem].knowMoreLink)}
-                                    className="inline-flex items-center gap-2 text-primary hover:text-[#0a192f] font-medium text-sm transition-colors group"
-                                    style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
-                                  >
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                    Know More
-                                  </button>
-                                </div>
-
-                                {/* Right Section - Links Grid */}
-                                <div className="flex-1">
-                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-4 md:gap-x-7 md:gap-y-5">
-                                    {subMenuData[activeNavItem].columns.map((col, index) => {
-                                      // Handle academics menu items to open departments dialog
-                                      const handleAcademicsClick = () => {
-                                        if (activeNavItem === 'academics') {
-                                          // Set flag to prevent useEffect from overriding our selection
-                                          isProgrammaticSelection.current = true;
-                                          
-                                          // Set appropriate stream and level based on the clicked item
-                                          if (col.title === 'Diploma Programs') {
-                                            setSelectedStream('diploma');
-                                            setSelectedLevel(null);
-                                            setActiveNavItem('departments');
-                                          } else if (col.title === 'B.Tech Programs') {
-                                            setSelectedStream('engineering');
-                                            setSelectedLevel('ug');
-                                            setActiveNavItem('departments');
-                                          } else if (col.title === 'M.Tech Programs') {
-                                            setSelectedStream('engineering');
-                                            setSelectedLevel('pg');
-                                            setActiveNavItem('departments');
-                                          } else if (col.title === 'BBA' || col.title === 'BCA') {
-                                            setSelectedStream('management');
-                                            setSelectedLevel('ug');
-                                            setActiveNavItem('departments');
-                                          } else if (col.title === 'MBA' || col.title === 'MCA') {
-                                            setSelectedStream('management');
-                                            setSelectedLevel('pg');
-                                            setActiveNavItem('departments');
+                                  ) : (
+                                    <div className="px-4 pb-4 space-y-1">
+                                      {subMenuData[item.id!].columns.map((col) => {
+                                        const handleMobileAcademicsClick = () => {
+                                          if (item.id === 'academics') {
+                                            isProgrammaticSelection.current = true;
+                                            if (col.title === 'Diploma Programs') {
+                                              setSelectedStream('diploma');
+                                              setSelectedLevel(null);
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'B.Tech Programs') {
+                                              setSelectedStream('engineering');
+                                              setSelectedLevel('ug');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'M.Tech Programs') {
+                                              setSelectedStream('engineering');
+                                              setSelectedLevel('pg');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'BBA' || col.title === 'BCA') {
+                                              setSelectedStream('management');
+                                              setSelectedLevel('ug');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'MBA' || col.title === 'MCA') {
+                                              setSelectedStream('management');
+                                              setSelectedLevel('pg');
+                                              setActiveNavItem('departments');
+                                            } else {
+                                              isProgrammaticSelection.current = false;
+                                              handleNavigation(col.link);
+                                            }
                                           } else {
-                                            // For other items like Examinations, use normal navigation
-                                            isProgrammaticSelection.current = false;
                                             handleNavigation(col.link);
                                           }
-                                        } else {
-                                          // For non-academics items, use normal navigation
-                                          handleNavigation(col.link);
-                                        }
-                                      };
+                                        };
+                                        return (
+                                          <button
+                                            key={col.title}
+                                            onClick={handleMobileAcademicsClick}
+                                            className="w-full flex items-center justify-between px-3 py-2.5 text-left rounded-lg active:bg-gray-50 touch-manipulation"
+                                          >
+                                            <span className="text-sm text-gray-700 font-medium">{col.title}</span>
+                                            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
 
-                                      return (
-                                        <motion.button
-                                          key={col.title}
-                                          initial={{ opacity: 0, y: 10 }}
-                                          animate={{ opacity: 1, y: 0 }}
-                                          transition={{ delay: index * 0.02 }}
-                                          onClick={handleAcademicsClick}
-                                          className="text-left group p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  {/* Mobile Quick Links - Login buttons */}
+                  <div className="mt-4 bg-white/5 rounded-2xl p-4 space-y-2">
+                    {topRibbonRightLinksBeforeLogin.map((link) => (
+                      <button
+                        key={link.name}
+                        onClick={() => handleNavigation(link.href)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-white/80 active:text-white rounded-lg active:bg-white/5 touch-manipulation"
+                        style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                      >
+                        {link.name}
+                        <ChevronRight className="w-4 h-4 text-white/40" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile Contact Footer */}
+                <div className="flex-shrink-0 px-4 py-3 safe-area-bottom" style={{ backgroundColor: '#000000' }}>
+                  <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
+                    <a href="tel:+919959617476" className="flex items-center gap-1.5 touch-manipulation min-h-[40px]">
+                      <Phone className="w-3.5 h-3.5" />
+                      +91-9959617476
+                    </a>
+                    <a href="mailto:vietvsp@gmail.com" className="flex items-center gap-1.5 touch-manipulation min-h-[40px]">
+                      <Mail className="w-3.5 h-3.5" />
+                      vietvsp@gmail.com
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* DESKTOP LAYOUT (md+) - Original horizontal tab navigation */}
+              <div className="hidden md:flex flex-1 flex-col min-h-0">
+                <div className="flex-1 px-4 md:px-8 py-2 overflow-hidden">
+                  <motion.div 
+                    className="bg-white rounded-[20px] h-full flex flex-col overflow-hidden shadow-2xl"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.35, delay: 0.05 }}
+                  >
+                    {/* Inner Header with Logo and Navigation */}
+                    <div className="px-4 md:px-8 py-4 flex-shrink-0">
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <motion.div 
+                          className="border-2 border-[#E1731A] p-2 md:p-2.5 rounded-xl cursor-pointer flex-shrink-0"
+                          style={{ backgroundColor: '#E1731A' }}
+                          onClick={() => { setIsMenuOpen(false); handleNavigation('/'); }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <img src="/viet-logo-new.png" alt="VIET Logo" width={120} height={48} loading="lazy" decoding="async" className="h-10 md:h-12 w-auto object-contain" />
+                        </motion.div>
+
+                        {/* Navigation Tabs */}
+                        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5 md:gap-2">
+                          {mainNavItems.map((item) =>
+                            item.href ? (
+                              <button
+                                key={item.name}
+                                onClick={() => handleNavigation(item.href!)}
+                                className="px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-100 transition-all whitespace-nowrap"
+                                style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                              >
+                                {item.name}
+                              </button>
+                            ) : (
+                              <button
+                                key={item.id}
+                                onClick={() => setActiveNavItem(activeNavItem === item.id ? null : item.id!)}
+                                className={cn(
+                                  "px-2.5 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                                  activeNavItem === item.id
+                                    ? "text-[#0a192f] bg-primary/10 border-b-2 border-primary"
+                                    : "text-gray-600 hover:text-primary hover:bg-gray-100 border-b-2 border-transparent"
+                                )}
+                                style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                              >
+                                {item.name}
+                                {activeNavItem === item.id && (
+                                  <span className="ml-0.5 text-primary">•</span>
+                                )}
+                              </button>
+                            )
+                          )}
+                        </div>
+
+                        {/* Admissions + Close */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <motion.button
+                            onClick={handleAdmissionsClick}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2 border-[#E1731A] shadow-md text-white"
+                            style={{ backgroundColor: '#E1731A' }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Plus className="w-4 h-4" style={{ color: 'white' }} />
+                            <span>Admissions</span>
+                          </motion.button>
+                          <button
+                            onClick={() => { setIsMenuOpen(false); setActiveNavItem(null); }}
+                            className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E1731A] shadow-md hover:opacity-90 transition-all duration-300 text-white"
+                            style={{ backgroundColor: '#E1731A' }}
+                          >
+                            <X className="w-5 h-5" style={{ color: 'white' }} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200" />
+
+                    {/* Mega Menu Content - Scrollable */}
+                    <div className="flex-1 overflow-y-auto">
+                      <AnimatePresence mode="wait">
+                        {activeNavItem && subMenuData[activeNavItem] && (
+                          <motion.div
+                            key={activeNavItem}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="h-full"
+                          >
+                            {activeNavItem === 'departments' ? (
+                              <div className="px-8 md:px-12 py-9 md:py-11 h-full">
+                                <div className="flex h-full gap-0">
+                                  <div className="w-48 border-r border-gray-200 flex-shrink-0">
+                                    <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4 border-l-2 border-transparent"
+                                        style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+                                      {selectedStream ? streamOptions.find(s => s.id === selectedStream)?.name : ''}
+                                    </h4>
+                                    <div className="space-y-1">
+                                      {streamOptions.map((stream) => (
+                                        <button
+                                          key={stream.id}
+                                          onClick={() => handleStreamSelect(stream.id)}
+                                          className={cn(
+                                            "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
+                                            selectedStream === stream.id
+                                              ? "text-primary border-primary bg-primary/10 font-medium"
+                                              : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
+                                          )}
                                           style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
                                         >
-                                          <h4 className="text-sm font-semibold text-gray-800 group-hover:text-primary transition-colors flex items-center gap-1.5">
-                                            {col.title}
-                                            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                          </h4>
-                                          {col.description && (
-                                            <p className="text-xs text-gray-500 mt-1.5 group-hover:text-gray-600 transition-colors line-clamp-2 leading-relaxed">
-                                              {col.description}
-                                            </p>
-                                          )}
-                                        </motion.button>
-                                      );
-                                    })}
+                                          {stream.name}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <div className={cn(
+                                    "w-48 border-r border-gray-200 flex-shrink-0 transition-all duration-300",
+                                    (selectedStream === 'diploma' || !selectedStream) ? "opacity-30" : "opacity-100"
+                                  )}>
+                                    {selectedStream && selectedStream !== 'diploma' && (
+                                      <>
+                                        <h4 className="text-[#0d47a1] font-semibold text-sm mb-4 px-4"
+                                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+                                          {selectedLevel ? getLevelOptions().find(l => l.id === selectedLevel)?.name : ''}
+                                        </h4>
+                                        <div className="space-y-1">
+                                          {getLevelOptions().map((level) => (
+                                            <button
+                                              key={level.id}
+                                              onClick={() => setSelectedLevel(level.id)}
+                                              className={cn(
+                                                "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-l-2",
+                                                selectedLevel === level.id
+                                                  ? "text-primary border-primary bg-primary/10 font-medium"
+                                                  : "text-gray-700 border-transparent hover:text-[#0d47a1] hover:bg-gray-50"
+                                              )}
+                                              style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                                            >
+                                              {level.name}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  <div className="flex-1 pl-6 md:pl-8 overflow-y-auto">
+                                    {getCourses().length > 0 ? (
+                                      <>
+                                        <h4 className="text-gray-500 text-xs uppercase tracking-wider mb-4"
+                                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+                                          {selectedStream === 'diploma' ? 'Diploma Courses' : 
+                                           selectedStream === 'engineering' ? (selectedLevel === 'ug' ? 'B.Tech Programs' : 'M.Tech Programs') :
+                                           selectedStream === 'management' ? (selectedLevel === 'ug' ? 'UG Programs' : 'PG Programs') : 'Select a stream'}
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                                          {getCourses().map((course, index) => (
+                                            <motion.button
+                                              key={course.name}
+                                              initial={{ opacity: 0, x: 10 }}
+                                              animate={{ opacity: 1, x: 0 }}
+                                              transition={{ delay: index * 0.03 }}
+                                              onClick={() => handleNavigation(course.href)}
+                                              className="text-left group py-2 pr-4"
+                                              style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                                            >
+                                              <h5 className="text-sm font-medium text-gray-800 group-hover:text-[#0d47a1] transition-colors mb-1">
+                                                {course.name}
+                                              </h5>
+                                              {course.description && (
+                                                <p className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors line-clamp-2 leading-relaxed">
+                                                  {course.description}
+                                                </p>
+                                              )}
+                                            </motion.button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                                        {!selectedStream 
+                                          ? 'Select a stream to view courses' 
+                                          : selectedStream !== 'diploma' && !selectedLevel 
+                                            ? 'Select a level to view courses'
+                                            : 'No courses available'}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              </div>
+                            ) : (
+                              <div className="px-8 md:px-12 py-9 md:py-11">
+                                <div className="flex flex-col md:flex-row gap-8 md:gap-10">
+                                  <div className="md:w-1/4 md:border-r border-gray-200 md:pr-10 pb-6 md:pb-0 border-b md:border-b-0 flex-shrink-0">
+                                    <h3 
+                                      className="text-lg md:text-xl text-[#0a192f] mb-3 leading-tight"
+                                      style={{ 
+                                        fontFamily: activeNavItem === 'about' 
+                                          ? "'Anton', sans-serif" 
+                                          : "'Cinzel', 'Times New Roman', Georgia, serif",
+                                        fontWeight: activeNavItem === 'about' ? 400 : 700,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.01em'
+                                      }}
+                                    >
+                                      {subMenuData[activeNavItem].title}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-5" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+                                      {subMenuData[activeNavItem].description}
+                                    </p>
+                                    <button
+                                      onClick={() => handleNavigation(subMenuData[activeNavItem].knowMoreLink)}
+                                      className="inline-flex items-center gap-2 text-primary hover:text-[#0a192f] font-medium text-sm transition-colors group"
+                                      style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                                    >
+                                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                      Know More
+                                    </button>
+                                  </div>
 
-              {/* Quick Contact Info at Bottom */}
-              <div className="flex-shrink-0 py-4" style={{ backgroundColor: '#000000' }}>
-                <div className="px-4 md:px-8">
-                  <div className="flex flex-wrap items-center justify-center gap-5 md:gap-10 text-sm text-gray-400">
-                    <a href="tel:+919959617476" className="flex items-center gap-2 hover:text-white transition-colors">
-                      <Phone className="w-4 h-4" />
-                      +91-9959617476
-                    </a>
-                    <a href="mailto:vietvsp@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
-                      <Mail className="w-4 h-4" />
-                      vietvsp@gmail.com
-                    </a>
-                    <span className="hidden sm:flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      Narava, Visakhapatnam
-                    </span>
+                                  <div className="flex-1">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-4 md:gap-x-7 md:gap-y-5">
+                                      {subMenuData[activeNavItem].columns.map((col, index) => {
+                                        const handleAcademicsClick = () => {
+                                          if (activeNavItem === 'academics') {
+                                            isProgrammaticSelection.current = true;
+                                            if (col.title === 'Diploma Programs') {
+                                              setSelectedStream('diploma');
+                                              setSelectedLevel(null);
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'B.Tech Programs') {
+                                              setSelectedStream('engineering');
+                                              setSelectedLevel('ug');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'M.Tech Programs') {
+                                              setSelectedStream('engineering');
+                                              setSelectedLevel('pg');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'BBA' || col.title === 'BCA') {
+                                              setSelectedStream('management');
+                                              setSelectedLevel('ug');
+                                              setActiveNavItem('departments');
+                                            } else if (col.title === 'MBA' || col.title === 'MCA') {
+                                              setSelectedStream('management');
+                                              setSelectedLevel('pg');
+                                              setActiveNavItem('departments');
+                                            } else {
+                                              isProgrammaticSelection.current = false;
+                                              handleNavigation(col.link);
+                                            }
+                                          } else {
+                                            handleNavigation(col.link);
+                                          }
+                                        };
+
+                                        return (
+                                          <motion.button
+                                            key={col.title}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.02 }}
+                                            onClick={handleAcademicsClick}
+                                            className="text-left group p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                                            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+                                          >
+                                            <h4 className="text-sm font-semibold text-gray-800 group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                              {col.title}
+                                              <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                            </h4>
+                                            {col.description && (
+                                              <p className="text-xs text-gray-500 mt-1.5 group-hover:text-gray-600 transition-colors line-clamp-2 leading-relaxed">
+                                                {col.description}
+                                              </p>
+                                            )}
+                                          </motion.button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Quick Contact Info at Bottom */}
+                <div className="flex-shrink-0 py-4" style={{ backgroundColor: '#000000' }}>
+                  <div className="px-4 md:px-8">
+                    <div className="flex flex-wrap items-center justify-center gap-5 md:gap-10 text-sm text-gray-400">
+                      <a href="tel:+919959617476" className="flex items-center gap-2 hover:text-white transition-colors">
+                        <Phone className="w-4 h-4" />
+                        +91-9959617476
+                      </a>
+                      <a href="mailto:vietvsp@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                        <Mail className="w-4 h-4" />
+                        vietvsp@gmail.com
+                      </a>
+                      <span className="hidden sm:flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Narava, Visakhapatnam
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
