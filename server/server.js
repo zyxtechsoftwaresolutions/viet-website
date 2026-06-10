@@ -41,6 +41,11 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
+  'https://viet-website-gamma.vercel.app',
+  'https://pragna.info',
+  'https://www.pragna.info',
+  'https://vietvsp.com',
+  'https://www.vietvsp.com',
   process.env.FRONTEND_URL, // Your Vercel URL (set in Render env vars)
 ].filter(Boolean);
 
