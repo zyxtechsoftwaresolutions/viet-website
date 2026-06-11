@@ -5,7 +5,7 @@ services:
   - type: web
     name: viet-website
     runtime: node
-    buildCommand: npm install && npm run build && cd server && npm install
+    buildCommand: git lfs install && git lfs pull && npm install && npm run build && cd server && npm install
     startCommand: cd server && node server.js
     envVars:
       - key: NODE_ENV

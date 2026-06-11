@@ -60,23 +60,25 @@ const RANKED_ITEMS = [
   },
 ];
 
+/** Continues from Placement section (#FC4921) → deep orange → black (footer) */
+const RANKED_TOP_GRADIENT =
+  'linear-gradient(to bottom, #FC4921 0%, #FC4921 12%, #D93D15 35%, #A82E0F 55%, #6B1C09 75%, #2E0C04 90%, #000000 100%)';
+
 const RankedTopSection = () => {
   const navigate = useNavigate();
 
   return (
     <section
       className="relative py-12 md:py-16 overflow-hidden mb-0 -mt-px"
-      style={{
-        background: 'linear-gradient(to bottom, #251755 0%, #251755 12%, #1a1040 50%, #0a0a0a 100%)',
-      }}
+      style={{ background: RANKED_TOP_GRADIENT }}
     >
-      {/* Gloss overlay – starts below seam so Placement/Ranked Top meet at same #251755 */}
+      {/* Gloss overlay – starts below seam so Placement/Ranked Top meet at same #FC4921 */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
           background: `
-            linear-gradient(180deg, transparent 0%, transparent 18%, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.02) 40%, transparent 60%),
-            linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 100%)
+            linear-gradient(180deg, transparent 0%, transparent 18%, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.02) 40%, transparent 60%),
+            linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.35) 100%)
           `,
         }}
       />

@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ChevronRight,
   Plus,
-  Search,
   Sprout,
   Building2,
   Cpu,
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { heroVideosAPI, departmentsAPI } from '@/lib/api';
+import { heroVideosAPI, departmentsAPI, explorePathVideoSettingsAPI } from '@/lib/api';
 import { convertGoogleDriveLink, convertGoogleDriveToDownload, getGoogleDrivePreviewEmbedUrl, isGoogleDriveLink } from '@/lib/googleDriveUtils';
 import NewsAnnouncementsSection from '@/components/NewsAnnouncementsSection';
 import ScrollingTicker from '@/components/ScrollingTicker';
@@ -253,12 +252,28 @@ const ProgramIcons = {
 
 const INTRO_COMPLETE_EVENT = 'introComplete';
 
-/** Video URL: env override for CDN/Supabase, else relative path for same-origin serving */
-const EXPLORE_PATH_VIDEO_SRC = import.meta.env.VITE_BGVIDEOEXP_URL || '/bgvideoexp.mp4';
+const EXPLORE_PATH_VIDEO_FALLBACK =
+  import.meta.env.VITE_BGVIDEOEXP_URL || `${import.meta.env.BASE_URL}bgvideoexp.mp4`.replace(/\/{2,}/g, '/');
 
 function ExplorePathVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoSrc, setVideoSrc] = useState(EXPLORE_PATH_VIDEO_FALLBACK);
   const [useFallback, setUseFallback] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    explorePathVideoSettingsAPI
+      .get()
+      .then((settings: { video_url?: string | null }) => {
+        if (!cancelled && settings?.video_url) {
+          setVideoSrc(settings.video_url);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -266,16 +281,18 @@ function ExplorePathVideo() {
     const play = () => v.play().catch(() => {});
     v.addEventListener('loadeddata', play);
     v.addEventListener('canplay', play);
+    v.load();
     return () => {
       v.removeEventListener('loadeddata', play);
       v.removeEventListener('canplay', play);
     };
-  }, []);
+  }, [videoSrc]);
 
-  if (useFallback) return null; // Rely on bg-slate-900 from parent
+  if (useFallback) return null;
 
   return (
     <video
+      key={videoSrc}
       ref={videoRef}
       autoPlay
       muted
@@ -284,11 +301,143 @@ function ExplorePathVideo() {
       preload="auto"
       className="absolute inset-0 w-full h-full object-cover z-0"
       aria-hidden
-      src={EXPLORE_PATH_VIDEO_SRC}
-      onError={() => setUseFallback(true)}
+      src={videoSrc}
+      onError={() => {
+        if (videoSrc !== EXPLORE_PATH_VIDEO_FALLBACK) {
+          setVideoSrc(EXPLORE_PATH_VIDEO_FALLBACK);
+          return;
+        }
+        setUseFallback(true);
+      }}
     >
-      <source src={EXPLORE_PATH_VIDEO_SRC} type="video/mp4" />
+      <source src={videoSrc} type="video/mp4" />
     </video>
+  );
+}
+
+type ExploreProgram = { name: string; icon: keyof typeof ProgramIcons; href: string };
+type ExploreProgramGroup = { label?: string; items: ExploreProgram[] };
+
+function getExploreDensity(count: number) {
+  if (count >= 11) {
+    return {
+      heading: 'text-sm md:text-base',
+      sublabel: 'text-[9px]',
+      item: 'text-[10px] leading-tight',
+      gap: 'gap-0.5',
+      iconBox: 'w-5 h-5',
+      icon: 'w-2.5 h-2.5',
+      itemPad: 'py-1 px-1.5',
+    };
+  }
+  if (count >= 8) {
+    return {
+      heading: 'text-base md:text-lg',
+      sublabel: 'text-[10px]',
+      item: 'text-[11px] leading-snug',
+      gap: 'gap-1',
+      iconBox: 'w-6 h-6',
+      icon: 'w-3 h-3',
+      itemPad: 'py-1 px-2',
+    };
+  }
+  if (count >= 5) {
+    return {
+      heading: 'text-lg md:text-xl',
+      sublabel: 'text-[11px]',
+      item: 'text-xs leading-snug',
+      gap: 'gap-1.5',
+      iconBox: 'w-7 h-7',
+      icon: 'w-3.5 h-3.5',
+      itemPad: 'py-1.5 px-2',
+    };
+  }
+  return {
+    heading: 'text-xl md:text-2xl',
+    sublabel: 'text-xs',
+    item: 'text-sm leading-snug',
+    gap: 'gap-2',
+    iconBox: 'w-8 h-8',
+    icon: 'w-4 h-4',
+    itemPad: 'py-2 px-2.5',
+  };
+}
+
+const EXPLORE_COLUMN_BORDERS = [
+  'border-b sm:border-b sm:border-r lg:border-b-0 lg:border-r border-white/20',
+  'border-b sm:border-b lg:border-b-0 lg:border-r border-white/20',
+  'border-b sm:border-r lg:border-b-0 lg:border-r border-white/20',
+  '',
+] as const;
+
+function ExplorePathStreamColumn({
+  title,
+  groups,
+  columnIndex,
+  onSelect,
+}: {
+  title: string;
+  groups: ExploreProgramGroup[];
+  columnIndex: number;
+  onSelect: (href: string) => void;
+}) {
+  const totalCount = groups.reduce((sum, group) => sum + group.items.length, 0);
+  const density = getExploreDensity(totalCount);
+
+  return (
+    <div
+      className={`flex flex-1 flex-col min-h-0 min-w-0 px-3 sm:px-4 lg:px-5 py-4 lg:py-3 ${EXPLORE_COLUMN_BORDERS[columnIndex] ?? ''}`}
+    >
+      <div className="text-center mb-3 shrink-0">
+        <h3
+          className={`${density.heading} font-bold text-white uppercase tracking-[0.12em]`}
+          style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+        >
+          {title}
+        </h3>
+        <div className="mt-2 h-px w-full bg-gradient-to-r from-transparent via-white/50 to-transparent" aria-hidden />
+      </div>
+
+      <div className={`flex flex-col flex-1 min-h-0 ${density.gap}`}>
+        {totalCount === 0 ? (
+          <p className={`${density.item} text-white/40 text-center py-4`}>Coming soon</p>
+        ) : (
+          groups.map((group, groupIdx) => (
+            <div key={group.label ?? groupIdx} className={groupIdx > 0 ? 'mt-1' : ''}>
+              {group.label && (
+                <p className={`${density.sublabel} font-medium text-white/45 uppercase tracking-wider mb-1 text-center`}>
+                  {group.label}
+                </p>
+              )}
+              <ul className={`flex flex-col ${density.gap}`}>
+                {group.items.map((program) => {
+                  const IconComponent = ProgramIcons[program.icon];
+                  return (
+                    <li key={program.name}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(program.href)}
+                        className={`group w-full flex items-center gap-2 rounded-lg ${density.itemPad} text-left bg-white/[0.04] border border-white/[0.08] hover:bg-white/10 hover:border-white/20 transition-all duration-200`}
+                      >
+                        <span
+                          className={`shrink-0 ${density.iconBox} rounded-md bg-white/10 border border-white/15 flex items-center justify-center text-white/80 group-hover:bg-white/20 group-hover:text-white transition-colors`}
+                        >
+                          <IconComponent className={density.icon} strokeWidth={2} />
+                        </span>
+                        <span className={`flex-1 min-w-0 ${density.item} font-medium text-white/90 group-hover:text-white line-clamp-2`}>
+                          {program.name}
+                        </span>
+                        <ChevronRight className="w-3 h-3 shrink-0 text-white/30 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -300,22 +449,20 @@ const HeroSection = () => {
   const [unsupportedVideoSlides, setUnsupportedVideoSlides] = useState<Set<number>>(new Set());
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [heroSlides, setHeroSlides] = useState<Array<{
-    type: 'video';
+    type: 'video' | 'image';
     src: string;
     /** When set (e.g. Drive link), use iframe instead of <video> so it plays without access screen */
     embedUrl?: string;
     poster?: string;
     badge?: string;
-    title: string;
-    subtitle: string;
-    buttonText: string;
+    title?: string;
+    subtitle?: string;
+    buttonText?: string;
     buttonAction: () => void;
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
-  type ExploreStream = 'diploma' | 'btech' | 'mtech' | 'management';
-  const [exploreStream, setExploreStream] = useState<ExploreStream>('diploma');
   const [interestCategories, setInterestCategories] = useState<{
     diploma: { name: string; icon: keyof typeof ProgramIcons; href: string }[];
     engineering: {
@@ -463,22 +610,51 @@ const HeroSection = () => {
         const videos = await heroVideosAPI.getAll();
         if (Array.isArray(videos) && videos.length > 0) {
           const sorted = videos.slice().sort((a: any, b: any) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
-          const slides = sorted.map((video) => {
-            const isDrive = isGoogleDriveLink(video.src);
-            return {
-              type: 'video' as const,
-              src: convertGoogleDriveToDownload(video.src),
-              embedUrl: isDrive ? getGoogleDrivePreviewEmbedUrl(video.src) : undefined,
-              poster: video.poster ? convertGoogleDriveLink(video.poster) : undefined,
-              badge: video.badge || undefined,
-              title: video.title || '',
-              subtitle: video.subtitle || '',
-              buttonText: video.buttonText || 'Apply Now',
-              buttonAction: video.buttonLink
-                ? () => window.open(video.buttonLink!, video.buttonLink!.startsWith('http') ? '_blank' : '_self')
-                : () => {},
-            };
-          });
+          const slides = sorted
+            .map((video) => {
+              const hasVideo = Boolean(video.src?.trim());
+              const photoUrl = video.poster?.trim()
+                ? convertGoogleDriveLink(video.poster)
+                : undefined;
+              const title = video.title?.trim() || undefined;
+              const subtitle = video.subtitle?.trim() || undefined;
+              const buttonText = video.buttonText?.trim() || undefined;
+              const buttonAction = video.buttonLink?.trim()
+                ? () => window.open(
+                    video.buttonLink!,
+                    video.buttonLink!.startsWith('http') ? '_blank' : '_self'
+                  )
+                : () => {};
+
+              if (!hasVideo && photoUrl) {
+                return {
+                  type: 'image' as const,
+                  src: photoUrl,
+                  poster: photoUrl,
+                  badge: video.badge || undefined,
+                  title,
+                  subtitle,
+                  buttonText,
+                  buttonAction,
+                };
+              }
+
+              if (!hasVideo) return null;
+
+              const isDrive = isGoogleDriveLink(video.src);
+              return {
+                type: 'video' as const,
+                src: convertGoogleDriveToDownload(video.src),
+                embedUrl: isDrive ? getGoogleDrivePreviewEmbedUrl(video.src) : undefined,
+                poster: photoUrl,
+                badge: video.badge || undefined,
+                title,
+                subtitle,
+                buttonText,
+                buttonAction,
+              };
+            })
+            .filter((slide): slide is NonNullable<typeof slide> => slide !== null);
           setHeroSlides(slides);
         } else {
           // Fallback to empty array if no videos
@@ -565,10 +741,6 @@ const HeroSection = () => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleAdmissionsClick = () => {
-    window.open(ADMISSIONS_FORM_URL, '_blank', 'noopener,noreferrer');
-  };
-
   // Show loading or empty state
   if (loading) {
     return (
@@ -586,7 +758,7 @@ const HeroSection = () => {
         <div className="relative h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center text-white">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Welcome to VIET</h1>
-            <p className="text-xl">Add hero videos through the admin panel</p>
+            <p className="text-xl">Add hero videos or photos through the admin panel</p>
           </div>
         </div>
       </section>
@@ -617,10 +789,10 @@ const HeroSection = () => {
                     allow="autoplay; encrypted-media; fullscreen"
                     allowFullScreen
                   />
-                ) : unsupportedVideoSlides.has(index) ? (
+                ) : unsupportedVideoSlides.has(index) && slide.poster ? (
                   <img
                     src={slide.poster}
-                    alt={slide.title}
+                    alt={slide.title || 'Hero slide'}
                     className="w-full h-full object-cover"
                     width={1920}
                     height={1080}
@@ -628,7 +800,7 @@ const HeroSection = () => {
                     fetchpriority={index === 0 ? "high" : "auto"}
                     decoding="async"
                   />
-                ) : (
+                ) : unsupportedVideoSlides.has(index) ? null : (
                   <video
                     ref={(el) => { videoRefs.current[index] = el; }}
                     className="w-full h-full object-cover bg-black"
@@ -649,25 +821,23 @@ const HeroSection = () => {
               ) : (
                 <img
                   src={slide.src}
-                  alt={slide.title}
+                  alt={slide.title || 'Hero slide'}
                   className="w-full h-full object-cover"
                   width={1920}
                   height={1080}
                   loading={index === 0 ? "eager" : "lazy"}
                   fetchpriority={index === 0 ? "high" : "auto"}
                   decoding="async"
-                  onError={(e) => {
-                    // Fallback to poster if GIF fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.src = slide.poster;
-                  }}
                 />
               )}
               
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+              {/* Gradient overlay – only when slide has text content */}
+              {(slide.badge || slide.title || slide.subtitle || slide.buttonText) && (
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+              )}
               
               {/* Content Overlay - Left Bottom Corner */}
+              {(slide.badge || slide.title || slide.subtitle || slide.buttonText) && (
               <div className={`absolute inset-0 flex items-end transition-opacity duration-300 ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}>
@@ -683,34 +853,41 @@ const HeroSection = () => {
                     )}
                     
                     {/* Title */}
-                    <h1
-                      className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight"
-                      style={{ fontFamily: "'Anton', sans-serif", letterSpacing: '0.02em' }}
-                    >
-                      {slide.title}
-                    </h1>
+                    {slide.title && (
+                      <h1
+                        className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight"
+                        style={{ fontFamily: "'Anton', sans-serif", letterSpacing: '0.02em' }}
+                      >
+                        {slide.title}
+                      </h1>
+                    )}
                     
                     {/* Subtitle */}
-                    <p
-                      className="text-base md:text-lg lg:text-xl text-white/90 mb-6 md:mb-8 leading-relaxed max-w-xl"
-                      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                    >
-                      {slide.subtitle}
-                    </p>
+                    {slide.subtitle && (
+                      <p
+                        className="text-base md:text-lg lg:text-xl text-white/90 mb-6 md:mb-8 leading-relaxed max-w-xl"
+                        style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                      >
+                        {slide.subtitle}
+                      </p>
+                    )}
                     
                     {/* CTA Button */}
-                    <button
-                      onClick={slide.buttonAction}
-                      className="group relative px-8 py-3.5 bg-white text-[#0a192f] font-semibold text-base rounded-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-white/25"
-                    >
-                      <span className="relative z-10 flex items-center gap-2">
-                        {slide.buttonText}
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </button>
+                    {slide.buttonText && (
+                      <button
+                        onClick={slide.buttonAction}
+                        className="group relative px-8 py-3.5 bg-white text-[#0a192f] font-semibold text-base rounded-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-white/25"
+                      >
+                        <span className="relative z-10 flex items-center gap-2">
+                          {slide.buttonText}
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
+              )}
             </div>
           ))}
 
@@ -761,216 +938,61 @@ const HeroSection = () => {
       {/* News & Announcements - below hero, above EXPLORE YOUR PATH */}
       <NewsAnnouncementsSection />
 
-      {/* Explore Your Path – fixed height (Management size), course list scrolls when more items */}
-      <div id="whats-your-interest" className="relative overflow-hidden py-10 sm:py-12 md:py-14 border-t border-slate-800 h-[580px] sm:h-[520px] md:h-[560px] bg-slate-900">
-        {/* Background video - use env override for CDN/Supabase, else /bgvideoexp.mp4 */}
+      {/* Explore Your Path – four streams visible at once */}
+      <div id="whats-your-interest" className="relative overflow-hidden py-8 md:py-10 border-t border-slate-800 min-h-[560px] md:min-h-[540px] lg:h-[580px] bg-slate-900">
         <ExplorePathVideo />
-        {/* Lighter overlay so video is clearly visible */}
-        <div className="absolute inset-0 bg-black/35 z-[1]" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30 z-[1]" aria-hidden />
+        <div className="absolute inset-0 bg-black/40 z-[1]" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 z-[1]" aria-hidden />
 
-        <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
-          {/* Left: Section name | Right: Toggle + courses */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            {/* LEFT – Section name */}
-            <div className="lg:col-span-4 lg:sticky lg:top-24">
-              <h2
-                className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight uppercase text-left"
-                style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: '0.05em' }}
-              >
-                EXPLORE YOUR PATH
-              </h2>
-              <p className="text-base md:text-lg text-slate-300 max-w-md text-left">
-                Explore our diverse range of programs designed to shape your future
-              </p>
-              <div className="flex flex-wrap gap-3 mt-6">
-                <button
-                  onClick={() => setProgramFinderOpen(true)}
-                  className="px-4 py-2 rounded-full border border-white/40 text-white font-medium text-sm hover:bg-white/15 transition-colors flex items-center gap-2"
-                >
-                  <Search className="w-4 h-4" />
-                  Search Programs
-                </button>
-                <button
-                  onClick={handleAdmissionsClick}
-                  className="px-5 py-2 rounded-full bg-red-600 text-white font-semibold text-sm hover:bg-red-500 transition-colors flex items-center gap-2"
-                >
-                  Apply Now
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+        <div className="container mx-auto px-4 md:px-8 lg:px-10 relative z-10 h-full flex flex-col">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6 md:mb-8 shrink-0"
+          >
+            <h2
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white"
+              style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.06em' }}
+            >
+              Explore Your Path
+            </h2>
+            <div className="mt-3 h-px w-20 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" aria-hidden />
+          </motion.div>
 
-            {/* RIGHT – Toggle + course listings */}
-            <div className="lg:col-span-8">
-              {/* Android 16–style toggle: Diploma | B.Tech | M.Tech | Management */}
-              <div className="flex justify-start lg:justify-end mb-6">
-                <div className="inline-flex p-1 sm:p-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-lg w-full sm:w-auto">
-                  <div className="relative flex rounded-full w-full sm:min-w-[400px]">
-                    <motion.div
-                      className="absolute top-1 bottom-1 rounded-full bg-white/95 shadow-md"
-                      initial={false}
-                      animate={{
-                        width: 'calc(25% - 4px)',
-                        left: exploreStream === 'diploma' ? 4 : exploreStream === 'btech' ? 'calc(25% + 2px)' : exploreStream === 'mtech' ? 'calc(50% + 2px)' : 'calc(75% + 2px)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      style={{ top: 4, bottom: 4 }}
-                    />
-                    {(['diploma', 'btech', 'mtech', 'management'] as const).map((stream) => (
-                      <button
-                        key={stream}
-                        type="button"
-                        onClick={() => setExploreStream(stream)}
-                        className={`relative z-10 flex-1 min-w-0 px-2 sm:px-3 py-2.5 rounded-full text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap overflow-hidden text-ellipsis touch-manipulation ${
-                          exploreStream === stream ? 'text-slate-900' : 'text-white/90 hover:text-white'
-                        }`}
-                      >
-                        {stream === 'diploma' ? 'Diploma' : stream === 'btech' ? 'B.Tech' : stream === 'mtech' ? 'M.Tech' : <><span className="sm:hidden">Mgmt</span><span className="hidden sm:inline">Management</span></>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/25 backdrop-blur-md shadow-2xl shadow-black/30 overflow-hidden">
+            <div className="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row h-full min-h-0">
+              {(() => {
+                const managementGroups: ExploreProgramGroup[] = [];
+                if (interestCategories.management.ug.length > 0) {
+                  managementGroups.push({ label: 'Undergraduate', items: interestCategories.management.ug });
+                }
+                if (interestCategories.management.pg.length > 0) {
+                  managementGroups.push({ label: 'Postgraduate', items: interestCategories.management.pg });
+                }
 
-              {/* Course listings – fixed height, scroll when Diploma/Engineering have more cards */}
-              <div className="h-[320px] md:h-[360px] overflow-y-auto overflow-x-hidden pr-1">
-            {exploreStream === 'diploma' && interestCategories.diploma.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {interestCategories.diploma.map((category, idx) => {
-                  const IconComponent = ProgramIcons[category.icon];
-                  return (
-                    <motion.button
-                      key={category.name}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: idx * 0.02 }}
-                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
-                        <IconComponent className="w-6 h-6" strokeWidth={2} />
-                      </div>
-                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
-                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
+                const streams = [
+                  { id: 'diploma', title: 'Diploma', groups: [{ items: interestCategories.diploma }] },
+                  { id: 'btech', title: 'B.Tech', groups: [{ items: interestCategories.engineering.ug }] },
+                  { id: 'mtech', title: 'M.Tech', groups: [{ items: interestCategories.engineering.pg }] },
+                  { id: 'management', title: 'Management', groups: managementGroups },
+                ];
 
-            {exploreStream === 'btech' && interestCategories.engineering.ug.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {interestCategories.engineering.ug.map((category, idx) => {
-                  const IconComponent = ProgramIcons[category.icon];
-                  return (
-                    <motion.button
-                      key={category.name}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: idx * 0.02 }}
-                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
-                        <IconComponent className="w-6 h-6" strokeWidth={2} />
-                      </div>
-                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
-                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
+                const handleProgramSelect = (href: string) => {
+                  window.scrollTo(0, 0);
+                  navigate(href);
+                };
 
-            {exploreStream === 'mtech' && interestCategories.engineering.pg.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {interestCategories.engineering.pg.map((category, idx) => {
-                  const IconComponent = ProgramIcons[category.icon];
-                  return (
-                    <motion.button
-                      key={category.name}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: idx * 0.02 }}
-                      onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                      className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
-                        <IconComponent className="w-6 h-6" strokeWidth={2} />
-                      </div>
-                      <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
-                      <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
-
-            {exploreStream === 'management' && (interestCategories.management.ug.length > 0 || interestCategories.management.pg.length > 0) && (
-              <div className="space-y-6">
-                {interestCategories.management.ug.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">Undergraduate</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {interestCategories.management.ug.map((category, idx) => {
-                        const IconComponent = ProgramIcons[category.icon];
-                        return (
-                          <motion.button
-                            key={category.name}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.25, delay: idx * 0.02 }}
-                            onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                            className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
-                          >
-                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
-                              <IconComponent className="w-6 h-6" strokeWidth={2} />
-                            </div>
-                            <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
-                            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                {interestCategories.management.pg.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3 mt-4">Postgraduate</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {interestCategories.management.pg.map((category, idx) => {
-                        const IconComponent = ProgramIcons[category.icon];
-                        return (
-                          <motion.button
-                            key={category.name}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.25, delay: idx * 0.02 }}
-                            onClick={() => { window.scrollTo(0, 0); navigate(category.href); }}
-                            className="group flex items-center gap-4 w-full rounded-2xl p-4 text-left bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/10 hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-black/20 transition-all duration-300"
-                          >
-                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white group-hover:bg-white/20 group-hover:scale-105 transition-all duration-300">
-                              <IconComponent className="w-6 h-6" strokeWidth={2} />
-                            </div>
-                            <span className="flex-1 text-sm font-semibold text-white/95 group-hover:text-white leading-snug line-clamp-2">{category.name}</span>
-                            <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 flex-shrink-0 transition-all duration-300" />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {((exploreStream === 'diploma' && interestCategories.diploma.length === 0) ||
-              (exploreStream === 'btech' && interestCategories.engineering.ug.length === 0) ||
-              (exploreStream === 'mtech' && interestCategories.engineering.pg.length === 0) ||
-              (exploreStream === 'management' && interestCategories.management.ug.length === 0 && interestCategories.management.pg.length === 0)) && (
-              <p className="text-slate-400 text-sm py-8">No programs in this category at the moment.</p>
-            )}
-              </div>
+                return streams.map((stream, index) => (
+                  <ExplorePathStreamColumn
+                    key={stream.id}
+                    title={stream.title}
+                    groups={stream.groups}
+                    columnIndex={index}
+                    onSelect={handleProgramSelect}
+                  />
+                ));
+              })()}
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "server": "npm run dev --prefix server",
-    "build": "vite build && node -e \"const fs=require('fs');const p='public/bgvideoexp.mp4';const d='dist/bgvideoexp.mp4';if(fs.existsSync(p)){try{fs.copyFileSync(p,d);console.log('Ensured bgvideoexp.mp4 in dist');}catch(e){}}\"",
+    "build": "vite build && node scripts/ensure-explore-video.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

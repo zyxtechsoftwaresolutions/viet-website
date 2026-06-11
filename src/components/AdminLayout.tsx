@@ -46,7 +46,7 @@ const AdminLayout = () => {
 
   const allMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', section: 'dashboard', adminOnly: false },
-    { icon: PlayCircle, label: 'Hero Videos', path: '/admin/hero-videos', section: 'hero-videos', adminOnly: false },
+    { icon: PlayCircle, label: 'Hero Slides', path: '/admin/hero-videos', section: 'hero-videos', adminOnly: false },
     { icon: Film, label: 'Intro Video', path: '/admin/intro-video', section: 'intro-video', adminOnly: false },
     { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker', section: 'ticker', adminOnly: false },
     { icon: Newspaper, label: 'News & Announcements', path: '/admin/news-announcements', section: 'news-announcements', adminOnly: false },

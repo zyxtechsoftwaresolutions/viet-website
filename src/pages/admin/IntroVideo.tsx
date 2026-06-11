@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Video, Upload, Trash2, Play, X } from 'lucide-react';
-import { introVideoSettingsAPI } from '@/lib/api';
+import { introVideoSettingsAPI, explorePathVideoSettingsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 
@@ -32,24 +32,41 @@ interface IntroVideoSettings {
   is_enabled: boolean;
 }
 
+interface ExplorePathVideoSettings {
+  id: number;
+  video_url: string | null;
+}
+
 const IntroVideo = () => {
   const [settings, setSettings] = useState<IntroVideoSettings | null>(null);
+  const [exploreSettings, setExploreSettings] = useState<ExplorePathVideoSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [exploreVideoFile, setExploreVideoFile] = useState<File | null>(null);
+  const [explorePreviewUrl, setExplorePreviewUrl] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteExploreDialogOpen, setDeleteExploreDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isExploreUploading, setIsExploreUploading] = useState(false);
 
   const fetchSettings = async () => {
     try {
-      const data = await introVideoSettingsAPI.get();
+      const [data, exploreData] = await Promise.all([
+        introVideoSettingsAPI.get(),
+        explorePathVideoSettingsAPI.get(),
+      ]);
       setSettings(data);
+      setExploreSettings(exploreData);
       if (data.video_url) {
         setPreviewUrl(data.video_url);
       }
+      if (exploreData.video_url) {
+        setExplorePreviewUrl(exploreData.video_url);
+      }
     } catch (error: any) {
-      console.error('Error fetching intro video settings:', error);
-      toast.error(error.message || 'Failed to fetch intro video settings');
+      console.error('Error fetching video settings:', error);
+      toast.error(error.message || 'Failed to fetch video settings');
     } finally {
       setLoading(false);
     }
@@ -138,6 +155,61 @@ const IntroVideo = () => {
     setVideoFile(null);
   };
 
+  const handleExploreVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('video/')) {
+        toast.error('Please select a valid video file');
+        return;
+      }
+      setExploreVideoFile(file);
+      setExplorePreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleExploreSave = async () => {
+    if (!exploreSettings) return;
+    try {
+      setIsExploreUploading(true);
+      let videoUrl: string | null = exploreSettings.video_url;
+      if (exploreVideoFile) {
+        toast.info('Uploading Explore Your Path video…');
+        videoUrl = await uploadToSupabase(exploreVideoFile, 'explore-path', 'videos');
+        toast.success('Explore Your Path video uploaded');
+      }
+      const updated = await explorePathVideoSettingsAPI.update({ video_url: videoUrl });
+      setExploreSettings(updated);
+      setExploreVideoFile(null);
+      if (videoUrl) setExplorePreviewUrl(videoUrl);
+      toast.success('Explore Your Path video saved');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save Explore Your Path video');
+    } finally {
+      setIsExploreUploading(false);
+    }
+  };
+
+  const handleExploreDelete = async () => {
+    try {
+      await explorePathVideoSettingsAPI.delete();
+      setExploreSettings({ id: 1, video_url: null });
+      setExplorePreviewUrl('');
+      setExploreVideoFile(null);
+      setDeleteExploreDialogOpen(false);
+      toast.success('Explore Your Path video removed');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete Explore Your Path video');
+    }
+  };
+
+  const clearExplorePreview = () => {
+    if (explorePreviewUrl && explorePreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(explorePreviewUrl);
+    }
+    setExplorePreviewUrl('');
+    setExploreVideoFile(null);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -149,9 +221,9 @@ const IntroVideo = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Intro Video Settings</h1>
+        <h1 className="text-3xl font-bold">Video Settings</h1>
         <p className="text-muted-foreground mt-2">
-          Manage the intro video that plays when users first visit the website
+          Manage the intro video and the Explore Your Path background video
         </p>
       </div>
 
@@ -255,6 +327,56 @@ const IntroVideo = () => {
         </div>
       </div>
 
+      {/* Explore Your Path background video */}
+      {exploreSettings && (
+        <div className="border rounded-lg p-6 space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">Explore Your Path Background Video</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Background video for the Explore Your Path section on the homepage. Upload here for reliable playback in production (recommended over bundled files).
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Input
+              type="file"
+              accept="video/*"
+              onChange={handleExploreVideoChange}
+              className="cursor-pointer max-w-md"
+              disabled={isExploreUploading}
+            />
+            {explorePreviewUrl && (
+              <Button variant="outline" size="icon" onClick={clearExplorePreview} disabled={isExploreUploading}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {explorePreviewUrl && (
+            <div className="relative border rounded-lg overflow-hidden bg-black max-w-2xl">
+              <video src={explorePreviewUrl} controls className="w-full h-auto max-h-64" />
+            </div>
+          )}
+          <div className="flex items-center gap-4 pt-2 border-t">
+            <Button
+              onClick={handleExploreSave}
+              disabled={isExploreUploading || (!exploreVideoFile && !exploreSettings.video_url)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {isExploreUploading ? 'Uploading...' : exploreVideoFile ? 'Upload & Save' : 'Save'}
+            </Button>
+            {exploreSettings.video_url && (
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteExploreDialogOpen(true)}
+                disabled={isExploreUploading}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Info Box */}
       <div className="border rounded-lg p-4 bg-muted/50">
         <h3 className="font-medium mb-2">About Intro Video</h3>
@@ -266,6 +388,23 @@ const IntroVideo = () => {
           <li>Video will be stored in Supabase Storage</li>
         </ul>
       </div>
+
+      <AlertDialog open={deleteExploreDialogOpen} onOpenChange={setDeleteExploreDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Explore Your Path Video</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remove the uploaded background video? The site will fall back to the bundled file if available.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExploreDelete} className="bg-destructive">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

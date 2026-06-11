@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import * as db from './lib/db.js';
 import { deleteFromStorage } from './lib/storage.js';
 import { supabase } from './lib/supabase.js';
@@ -15,12 +15,24 @@ function isValidStorageUrl(url) {
   return url && typeof url === 'string' && url.trim().length > 0 && url.includes('supabase.co/storage');
 }
 
+/** Department images: Supabase URLs or legacy bundled/upload paths. */
+function isValidDepartmentImageUrl(url) {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  const u = url.trim();
+  if (isValidStorageUrl(u)) return true;
+  if (u.startsWith('/assets/') || u.startsWith('/uploads/')) return true;
+  return false;
+}
+
 /** Validate media URL: Supabase Storage or Google Drive file link (so Drive links can be used for hero/gallery). */
 function isValidMediaUrl(url) {
   if (!url || typeof url !== 'string' || !url.trim()) return false;
-  if (url.includes('supabase.co/storage')) return true;
-  if (url.includes('drive.google.com')) {
-    return /\/file\/d\/[a-zA-Z0-9_-]+/.test(url) || /[?&]id=[a-zA-Z0-9_-]+/.test(url);
+  const u = url.trim();
+  if (u.startsWith('/uploads/')) return true;
+  if (u.includes('supabase.co/storage') || u.includes('storage.supabase.co')) return true;
+  if (u.includes('/storage/v1/object/public/')) return true;
+  if (u.includes('drive.google.com')) {
+    return /\/file\/d\/[a-zA-Z0-9_-]+/.test(u) || /[?&]id=[a-zA-Z0-9_-]+/.test(u);
   }
   return false;
 }
@@ -165,6 +177,7 @@ async function initializeData() {
     accreditations: { items: [] },
     'aicte-affiliation-letters': { letters: [] },
     'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } },
+    'explore-path-video-settings': { settings: { id: 1, video_url: null } },
     'faculty-settings': { settings: { id: 1, sort_by: 'custom' } }
   };
 
@@ -257,6 +270,7 @@ const API_TO_SECTION = [
   [/^\/api\/ticker/, 'ticker'],
   [/^\/api\/hero-videos/, 'hero-videos'],
   [/^\/api\/intro-video-settings/, 'intro-video'],
+  [/^\/api\/explore-path-video-settings/, 'intro-video'],
   [/^\/api\/carousel/, 'hero-videos'],
   [/^\/api\/departments/, 'departments'],
   [/^\/api\/department-pages/, 'department-pages'],
@@ -872,23 +886,25 @@ app.get('/api/hero-videos', async (req, res) => {
 app.post('/api/hero-videos', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
-    if (!src || typeof src !== 'string' || !src.trim()) {
-      return res.status(400).json({ error: 'Video URL (src) is required. Upload video to Supabase Storage first.' });
+    const videoUrl = typeof src === 'string' ? src.trim() : '';
+    const photoUrl = typeof poster === 'string' ? poster.trim() : '';
+    if (!videoUrl && !photoUrl) {
+      return res.status(400).json({ error: 'At least one of video or photo is required. Upload to Supabase Storage first.' });
     }
-    if (!isValidMediaUrl(src)) {
+    if (videoUrl && !isValidMediaUrl(videoUrl)) {
       return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
     }
-    if (poster && typeof poster === 'string' && poster.trim() && !isValidMediaUrl(poster)) {
+    if (photoUrl && !isValidMediaUrl(photoUrl)) {
       return res.status(400).json({ error: 'poster must be a Supabase Storage URL or Google Drive file link' });
     }
     const existing = await db.getHeroVideos();
     const newVideo = await db.createHeroVideo({
-      src: src.trim(),
-      poster: poster && typeof poster === 'string' ? poster.trim() : null,
+      src: videoUrl || '',
+      poster: photoUrl || null,
       badge: badge || '',
       title: title || '',
       subtitle: subtitle || '',
-      buttonText: buttonText || 'Apply Now',
+      buttonText: buttonText || '',
       buttonLink: buttonLink || '',
       order: (existing?.length || 0)
     });
@@ -949,8 +965,8 @@ app.post('/api/departments', authenticateToken, checkSectionAccess, async (req, 
   try {
     const body = req.body || {};
     const image = typeof body.image === 'string' ? body.image.trim() : null;
-    if (image && !isValidStorageUrl(image)) {
-      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    if (image && !isValidDepartmentImageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL or site asset path' });
     }
     const newDept = await db.createDepartment({ name: body.name || '', stream: body.stream || '', level: body.level || '', image: image || null });
     res.json(newDept);
@@ -965,8 +981,8 @@ app.put('/api/departments/:id', authenticateToken, checkSectionAccess, async (re
     const updateData = { ...body };
     if (body.image !== undefined) {
       const image = typeof body.image === 'string' ? body.image.trim() : null;
-      if (image && !isValidStorageUrl(image)) {
-        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      if (image && !isValidDepartmentImageUrl(image)) {
+        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL or site asset path' });
       }
       updateData.image = image;
     }
@@ -1604,13 +1620,76 @@ app.put('/api/intro-video-settings', authenticateToken, checkSectionAccess, asyn
 
 app.delete('/api/intro-video-settings', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
-    // Delete video from storage if exists
     const settings = await db.getIntroVideoSettings();
     if (settings && settings.video_url && settings.video_url.includes('supabase.co/storage')) {
       await deleteFromStorage(settings.video_url).catch(() => {});
     }
-    // Reset to default (disabled, no video)
     const updated = await db.updateIntroVideoSettings({ video_url: null, is_enabled: false });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== EXPLORE PATH VIDEO SETTINGS ROUTES ====================
+
+function resolveExplorePathVideoUrl(settings) {
+  return (
+    settings?.video_url ||
+    process.env.EXPLORE_PATH_VIDEO_URL ||
+    process.env.VITE_BGVIDEOEXP_URL ||
+    null
+  );
+}
+
+function isValidExplorePathVideoFile(filePath) {
+  if (!existsSync(filePath)) return false;
+  try {
+    const buf = readFileSync(filePath);
+    if (buf.length < 12) return false;
+    if (buf.slice(0, 22).toString('utf8').startsWith('version https://git-lfs')) return false;
+    return buf.slice(4, 8).toString('ascii') === 'ftyp';
+  } catch {
+    return false;
+  }
+}
+
+app.get('/api/explore-path-video-settings', async (req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const settings = await db.getExplorePathVideoSettings();
+    const video_url = resolveExplorePathVideoUrl(settings);
+    res.json({ ...settings, video_url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/explore-path-video-settings', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const updateData = {};
+    if (body.video_url !== undefined) {
+      const videoUrl = body.video_url === null ? null : (typeof body.video_url === 'string' ? body.video_url.trim() : undefined);
+      if (videoUrl !== undefined && videoUrl !== null && !isValidStorageUrl(videoUrl)) {
+        return res.status(400).json({ error: 'video_url must be a valid Supabase Storage URL' });
+      }
+      updateData.video_url = videoUrl;
+    }
+    const updated = await db.updateExplorePathVideoSettings(updateData);
+    res.json({ ...updated, video_url: resolveExplorePathVideoUrl(updated) });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to update explore path video settings' });
+  }
+});
+
+app.delete('/api/explore-path-video-settings', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const settings = await db.getExplorePathVideoSettings();
+    if (settings?.video_url?.includes('supabase.co/storage')) {
+      await deleteFromStorage(settings.video_url).catch(() => {});
+    }
+    const updated = await db.updateExplorePathVideoSettings({ video_url: null });
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1822,7 +1901,8 @@ app.delete('/api/department-pages/:slug/curriculum/:program/:regulation', authen
 // Serve built frontend (Vite dist) when running as single service (e.g. Render)
 if (existsSync(distDir)) {
   app.use(express.static(distDir, { index: false }));
-  app.get('*', (req, res) => {
+  app.get('*', (req, res, next) => {
+    if (req.path.includes('.')) return res.status(404).send('Not found');
     res.sendFile(resolve(distDir, 'index.html'));
   });
 }
@@ -1831,11 +1911,31 @@ if (existsSync(distDir)) {
 async function startServer() {
   await ensureDirectories();
   await initializeData();
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Server accessible at http://localhost:${PORT} and http://10.110.70.194:${PORT}`);
     console.log(`Database: ${supabase ? 'Supabase ✓' : 'JSON files (fallback)'}`);
     console.log(`Default admin credentials: username: admin, password: admin123`);
+    try {
+      const exploreSettings = await db.getExplorePathVideoSettings();
+      const remoteUrl = resolveExplorePathVideoUrl(exploreSettings);
+      const localCandidates = [
+        resolve(distDir, 'bgvideoexp.mp4'),
+        resolve(publicDir, 'bgvideoexp.mp4'),
+      ];
+      const localVideo = localCandidates.find((p) => isValidExplorePathVideoFile(p));
+      if (remoteUrl) {
+        console.log(`Explore path video: Supabase/env URL configured`);
+      } else if (localVideo) {
+        console.log(`Explore path video: serving local file (${localVideo})`);
+      } else {
+        console.warn(
+          'Explore path video: no valid video found. Upload via Admin → Intro Video, or set EXPLORE_PATH_VIDEO_URL / run git lfs pull before build.'
+        );
+      }
+    } catch (e) {
+      console.warn('Explore path video: could not verify video source');
+    }
   });
 }
 

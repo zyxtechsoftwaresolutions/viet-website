@@ -24,6 +24,10 @@ const DEFAULT_CONFIG: PlacementSectionConfig = {
   companiesVisited: 53,
 };
 
+/** Orange brand palette – light (top) → dark (bottom), seams with RankedTopSection */
+const PLACEMENT_GRADIENT =
+  'linear-gradient(to bottom, #FB7D0E 0%, #FC5B23 28%, #FC5322 55%, #FC4D20 82%, #FC4921 100%)';
+
 const PlacementExcellenceSection = () => {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -173,7 +177,10 @@ const PlacementExcellenceSection = () => {
   }, [studentCarousel.length, studentSlide, goToSlide]);
 
   return (
-    <section className="relative py-12 md:py-16 overflow-visible bg-gradient-to-b from-[#1e2270] via-[#252b8a] to-[#251755]">
+    <section
+      className="relative py-12 md:py-16 overflow-visible"
+      style={{ background: PLACEMENT_GRADIENT }}
+    >
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
@@ -374,8 +381,8 @@ const PlacementExcellenceSection = () => {
                 </div>
               ))}
             </div>
-            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-[#1e2270] to-transparent pointer-events-none z-10" />
-            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-[#251755] to-transparent pointer-events-none z-10" />
+            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-[#FC5322] to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-[#FC4921] to-transparent pointer-events-none z-10" />
           </div>
 
           {loadingRecruiters && logos.length === 0 ? null : (

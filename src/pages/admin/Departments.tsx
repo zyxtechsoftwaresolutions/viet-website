@@ -125,16 +125,18 @@ const Departments = () => {
         toast.info('Uploading image…');
         imageUrl = await uploadToSupabase(imageFile, 'departments', 'images');
       }
-      const payload = { ...formData, image: imageUrl ?? (selectedItem?.image ?? null) };
+
       if (selectedItem) {
+        const payload: { name: string; stream: string; level: string; image?: string | null } = { ...formData };
+        if (imageUrl) payload.image = imageUrl;
         await departmentsAPI.update(selectedItem.id, payload);
         toast.success('Department updated successfully');
       } else {
-        if (!imageUrl && !selectedItem?.image) {
+        if (!imageUrl) {
           toast.error('Please select an image');
           return;
         }
-        await departmentsAPI.create(payload);
+        await departmentsAPI.create({ ...formData, image: imageUrl });
         toast.success('Department created successfully');
       }
       setDialogOpen(false);

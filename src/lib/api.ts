@@ -144,21 +144,21 @@ export const carouselAPI = {
 // Hero Videos API (backend only stores video_url and poster URL; admin uploads to Supabase Storage first)
 export const heroVideosAPI = {
   getAll: () => apiCall('/hero-videos'),
-  create: (data: { src: string; poster?: string | null; badge?: string; title: string; subtitle: string; buttonText?: string; buttonLink?: string }) => {
+  create: (data: { src?: string | null; poster?: string | null; badge?: string; title?: string; subtitle?: string; buttonText?: string; buttonLink?: string }) => {
     return apiCall('/hero-videos', {
       method: 'POST',
       body: JSON.stringify({
-        src: data.src,
-        poster: data.poster ?? null,
+        src: data.src?.trim() ? data.src.trim() : null,
+        poster: data.poster?.trim() ? data.poster.trim() : null,
         badge: data.badge ?? '',
-        title: data.title,
-        subtitle: data.subtitle,
-        buttonText: data.buttonText ?? 'Apply Now',
+        title: data.title ?? '',
+        subtitle: data.subtitle ?? '',
+        buttonText: data.buttonText ?? '',
         buttonLink: data.buttonLink ?? '',
       }),
     });
   },
-  update: (id: number, data: { src?: string; poster?: string | null; badge?: string; title?: string; subtitle?: string; buttonText?: string; buttonLink?: string }) => {
+  update: (id: number, data: { src?: string | null; poster?: string | null; badge?: string; title?: string; subtitle?: string; buttonText?: string; buttonLink?: string }) => {
     return apiCall(`/hero-videos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -241,6 +241,14 @@ export const introVideoSettingsAPI = {
   update: (data: { video_url?: string | null; is_enabled?: boolean }) =>
     apiCall('/intro-video-settings', { method: 'PUT', body: JSON.stringify(data) }),
   delete: () => apiCall('/intro-video-settings', { method: 'DELETE' }),
+};
+
+// Explore Your Path background video settings API
+export const explorePathVideoSettingsAPI = {
+  get: () => apiCall('/explore-path-video-settings'),
+  update: (data: { video_url?: string | null }) =>
+    apiCall('/explore-path-video-settings', { method: 'PUT', body: JSON.stringify(data) }),
+  delete: () => apiCall('/explore-path-video-settings', { method: 'DELETE' }),
 };
 
 // Gallery API (src = Supabase Storage URL)

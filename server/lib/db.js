@@ -537,12 +537,12 @@ export async function getHeroVideos() {
 
 export async function createHeroVideo(item) {
   const dbItem = {
-    src: item.src,
+    src: item.src ?? '',
     poster: item.poster,
     badge: item.badge,
     title: item.title,
     subtitle: item.subtitle,
-    button_text: item.buttonText ?? item.button_text ?? 'Apply Now',
+    button_text: item.buttonText ?? item.button_text ?? '',
     button_link: item.buttonLink ?? item.button_link,
     order: item.order ?? 0
   };
@@ -628,7 +628,7 @@ export async function updateDepartment(id, item) {
     await writeJsonFile('departments', d);
     return d.departments[idx];
   }
-  const { data, error } = await supabase.from('departments').update(item).eq('id', id).select().single();
+  const { data, error } = await supabase.from('departments').update(toSnake(item)).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
@@ -1426,6 +1426,51 @@ export async function updateIntroVideoSettings(item) {
   // Upsert (insert or update) since we only have one row
   const { data, error } = await supabase
     .from('intro_video_settings')
+    .upsert({ id: 1, ...payload }, { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ==================== EXPLORE PATH VIDEO SETTINGS ====================
+export async function getExplorePathVideoSettings() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('explore-path-video-settings');
+      return d.settings || { id: 1, video_url: null };
+    } catch (e) {
+      return { id: 1, video_url: null };
+    }
+  }
+  const { data, error } = await supabase
+    .from('explore_path_video_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return { id: 1, video_url: null };
+    }
+    throw error;
+  }
+  return data || { id: 1, video_url: null };
+}
+
+export async function updateExplorePathVideoSettings(item) {
+  const payload = {
+    updated_at: new Date().toISOString(),
+  };
+  if (item.video_url !== undefined) payload.video_url = item.video_url;
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('explore-path-video-settings');
+    d.settings = { id: 1, ...(d.settings || {}), ...payload };
+    await writeJsonFile('explore-path-video-settings', d);
+    return d.settings;
+  }
+  const { data, error } = await supabase
+    .from('explore_path_video_settings')
     .upsert({ id: 1, ...payload }, { onConflict: 'id' })
     .select()
     .single();

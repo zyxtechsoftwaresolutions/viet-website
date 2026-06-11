@@ -22,17 +22,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { heroVideosAPI } from '@/lib/api';
-import { uploadVideoToSupabase, uploadPosterToSupabase } from '@/lib/storage';
+import { uploadVideoToSupabase, uploadImageToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { Video } from 'lucide-react';
 
 interface HeroVideo {
   id: number;
-  src: string;
+  src?: string | null;
   poster?: string | null;
   badge?: string;
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   buttonText?: string;
   buttonLink?: string;
   order?: number;
@@ -48,7 +48,7 @@ const HeroVideos = () => {
     badge: '',
     title: '',
     subtitle: '',
-    buttonText: 'Apply Now',
+    buttonText: '',
     buttonLink: '',
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -75,7 +75,7 @@ const HeroVideos = () => {
 
   const handleAdd = () => {
     setSelectedItem(null);
-    setFormData({ badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' });
+    setFormData({ badge: '', title: '', subtitle: '', buttonText: '', buttonLink: '' });
     setVideoFile(null);
     setPosterFile(null);
     setVideoPreview('');
@@ -89,7 +89,7 @@ const HeroVideos = () => {
       badge: item.badge || '',
       title: item.title || '',
       subtitle: item.subtitle || '',
-      buttonText: item.buttonText || 'Apply Now',
+      buttonText: item.buttonText || '',
       buttonLink: item.buttonLink || '',
     });
     setVideoFile(null);
@@ -130,12 +130,17 @@ const HeroVideos = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!selectedItem && !videoFile) {
-        toast.error('Please select a video file');
+      const existingVideo = selectedItem?.src?.trim();
+      const existingPhoto = selectedItem?.poster?.trim();
+      const willHaveVideo = Boolean(videoFile || existingVideo);
+      const willHavePhoto = Boolean(posterFile || existingPhoto);
+
+      if (!willHaveVideo && !willHavePhoto) {
+        toast.error('Please select a video or photo');
         return;
       }
 
-      let src: string | undefined;
+      let src: string | null | undefined;
       let poster: string | null | undefined;
 
       if (videoFile) {
@@ -143,27 +148,32 @@ const HeroVideos = () => {
         src = await uploadVideoToSupabase(videoFile);
       }
       if (posterFile) {
-        poster = await uploadPosterToSupabase(posterFile);
+        toast.info('Uploading photo to storage…');
+        poster = await uploadImageToSupabase(posterFile, 'hero-videos');
+      }
+
+      const finalSrc = src?.trim() || '';
+      const finalPoster = poster?.trim() || '';
+
+      if (!finalSrc && !finalPoster) {
+        toast.error('Please select a video or photo');
+        return;
       }
 
       if (selectedItem) {
         await heroVideosAPI.update(selectedItem.id, {
           ...formData,
-          ...(src !== undefined && { src }),
-          ...(poster !== undefined && { poster }),
+          ...(src !== undefined && { src: finalSrc || null }),
+          ...(poster !== undefined && { poster: finalPoster || null }),
         });
-        toast.success('Hero video updated successfully');
+        toast.success('Hero slide updated successfully');
       } else {
-        if (!src) {
-          toast.error('Please select a video file');
-          return;
-        }
         await heroVideosAPI.create({
-          src,
-          poster: poster ?? null,
           ...formData,
+          src: finalSrc || null,
+          poster: finalPoster || null,
         });
-        toast.success('Hero video added successfully');
+        toast.success('Hero slide added successfully');
       }
       setDialogOpen(false);
       fetchVideos();
@@ -187,18 +197,22 @@ const HeroVideos = () => {
   const columns = [
     {
       key: 'src',
-      header: 'Video',
+      header: 'Media',
       render: (item: HeroVideo) => (
         <div className="flex items-center gap-2">
           {item.poster ? (
             <img
               src={thumbUrl(item.poster)}
-              alt={item.title}
+              alt={item.title || 'Hero slide'}
               className="w-20 h-12 object-cover rounded"
             />
-          ) : (
+          ) : item.src ? (
             <div className="w-20 h-12 bg-muted rounded flex items-center justify-center">
               <Video className="h-6 w-6 text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="w-20 h-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+              —
             </div>
           )}
         </div>
@@ -223,8 +237,8 @@ const HeroVideos = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Hero Videos</h1>
-        <p className="text-muted-foreground mt-2">Manage hero section videos displayed on the homepage</p>
+        <h1 className="text-3xl font-bold">Hero Slides</h1>
+        <p className="text-muted-foreground mt-2">Manage hero section videos and photos displayed on the homepage</p>
       </div>
 
       <DataTable
@@ -233,7 +247,7 @@ const HeroVideos = () => {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        addLabel="Add Hero Video"
+        addLabel="Add Hero Slide"
         getId={(item) => item.id}
       />
 
@@ -241,15 +255,15 @@ const HeroVideos = () => {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedItem ? 'Edit Hero Video' : 'Add Hero Video'}
+              {selectedItem ? 'Edit Hero Slide' : 'Add Hero Slide'}
             </DialogTitle>
             <DialogDescription>
-              {selectedItem ? 'Update hero video details' : 'Upload a new hero video for the homepage'}
+              {selectedItem ? 'Update hero slide details' : 'Upload a video or photo for the homepage hero section'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="video">Video File *</Label>
+              <Label htmlFor="video">Video File (optional if photo is provided)</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="video"
@@ -278,19 +292,14 @@ const HeroVideos = () => {
                   </div>
                 )}
               </div>
-              {selectedItem && (
-                <p className="text-sm text-muted-foreground">
-                  Leave empty to keep current video
-                </p>
-              )}
-              {!selectedItem && (
-                <p className="text-sm text-muted-foreground">
-                  Supported formats: MP4, WebM, MOV, AVI, MKV (max 200MB)
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">
+                {selectedItem
+                  ? 'Leave empty to keep the current video. Video takes priority when both video and photo are set.'
+                  : 'Supported formats: MP4, WebM, MOV, AVI, MKV (max 200MB). At least one of video or photo is required.'}
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="poster">Poster Image (Optional)</Label>
+              <Label htmlFor="poster">Photo Image (optional if video is provided)</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="poster"
@@ -308,7 +317,7 @@ const HeroVideos = () => {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Poster image shown before video loads (optional)
+                Used as the hero background when only a photo is added, or as fallback if the video cannot be displayed
               </p>
             </div>
             <div className="space-y-2">
@@ -324,7 +333,7 @@ const HeroVideos = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Title (Optional)</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -333,7 +342,7 @@ const HeroVideos = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="subtitle">Subtitle *</Label>
+              <Label htmlFor="subtitle">Subtitle (Optional)</Label>
               <Input
                 id="subtitle"
                 value={formData.subtitle}
@@ -343,16 +352,16 @@ const HeroVideos = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="buttonText">Button Text</Label>
+                <Label htmlFor="buttonText">Button Text (Optional)</Label>
                 <Input
                   id="buttonText"
                   value={formData.buttonText}
                   onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
-                  placeholder="Apply Now"
+                  placeholder="e.g., Apply Now"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="buttonLink">Button Link</Label>
+                <Label htmlFor="buttonLink">Button Link (Optional)</Label>
                 <Input
                   id="buttonLink"
                   value={formData.buttonLink}
@@ -376,9 +385,9 @@ const HeroVideos = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Hero Video</AlertDialogTitle>
+            <AlertDialogTitle>Delete Hero Slide</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this hero video? This will permanently delete the video file and poster image. This action cannot be undone.
+              Are you sure you want to delete this hero slide? This will permanently delete the video and photo files. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
