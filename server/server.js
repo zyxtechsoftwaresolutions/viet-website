@@ -883,24 +883,38 @@ app.get('/api/hero-videos', async (req, res) => {
 });
 
 // Hero videos: backend only stores URLs. Admin uploads video/poster to Supabase Storage, then sends URLs here.
+function validateHeroMediaUrl(url, field) {
+  if (url && !isValidMediaUrl(url)) {
+    return `${field} must be a Supabase Storage URL or Google Drive file link`;
+  }
+  return null;
+}
+
 app.post('/api/hero-videos', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
-    const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
-    const videoUrl = typeof src === 'string' ? src.trim() : '';
-    const photoUrl = typeof poster === 'string' ? poster.trim() : '';
-    if (!videoUrl && !photoUrl) {
-      return res.status(400).json({ error: 'At least one of video or photo is required. Upload to Supabase Storage first.' });
+    const { src, poster, mobileSrc, mobilePoster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
+    const desktopVideo = typeof src === 'string' ? src.trim() : '';
+    const desktopPhoto = typeof poster === 'string' ? poster.trim() : '';
+    const mobileVideo = typeof mobileSrc === 'string' ? mobileSrc.trim() : '';
+    const mobilePhoto = typeof mobilePoster === 'string' ? mobilePoster.trim() : '';
+    if (!desktopVideo && !desktopPhoto && !mobileVideo && !mobilePhoto) {
+      return res.status(400).json({ error: 'Upload at least one desktop or mobile video/photo.' });
     }
-    if (videoUrl && !isValidMediaUrl(videoUrl)) {
-      return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
-    }
-    if (photoUrl && !isValidMediaUrl(photoUrl)) {
-      return res.status(400).json({ error: 'poster must be a Supabase Storage URL or Google Drive file link' });
+    for (const [url, field] of [
+      [desktopVideo, 'src'],
+      [desktopPhoto, 'poster'],
+      [mobileVideo, 'mobileSrc'],
+      [mobilePhoto, 'mobilePoster'],
+    ]) {
+      const err = validateHeroMediaUrl(url, field);
+      if (err) return res.status(400).json({ error: err });
     }
     const existing = await db.getHeroVideos();
     const newVideo = await db.createHeroVideo({
-      src: videoUrl || '',
-      poster: photoUrl || null,
+      src: desktopVideo || '',
+      poster: desktopPhoto || null,
+      mobileSrc: mobileVideo || null,
+      mobilePoster: mobilePhoto || null,
       badge: badge || '',
       title: title || '',
       subtitle: subtitle || '',
@@ -917,16 +931,30 @@ app.post('/api/hero-videos', authenticateToken, checkSectionAccess, async (req, 
 app.put('/api/hero-videos/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const updateData = {};
-    const { src, poster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
+    const { src, poster, mobileSrc, mobilePoster, badge, title, subtitle, buttonText, buttonLink } = req.body || {};
     if (src !== undefined) {
       const s = typeof src === 'string' ? src.trim() : null;
-      if (s && !isValidMediaUrl(s)) return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
+      const err = validateHeroMediaUrl(s, 'src');
+      if (err) return res.status(400).json({ error: err });
       updateData.src = s;
     }
     if (poster !== undefined) {
       const p = typeof poster === 'string' ? poster.trim() || null : undefined;
-      if (p && !isValidMediaUrl(p)) return res.status(400).json({ error: 'poster must be a Supabase Storage URL or Google Drive file link' });
+      const err = validateHeroMediaUrl(p, 'poster');
+      if (err) return res.status(400).json({ error: err });
       updateData.poster = p;
+    }
+    if (mobileSrc !== undefined) {
+      const s = typeof mobileSrc === 'string' ? mobileSrc.trim() || null : undefined;
+      const err = validateHeroMediaUrl(s, 'mobileSrc');
+      if (err) return res.status(400).json({ error: err });
+      updateData.mobileSrc = s;
+    }
+    if (mobilePoster !== undefined) {
+      const p = typeof mobilePoster === 'string' ? mobilePoster.trim() || null : undefined;
+      const err = validateHeroMediaUrl(p, 'mobilePoster');
+      if (err) return res.status(400).json({ error: err });
+      updateData.mobilePoster = p;
     }
     if (badge !== undefined) updateData.badge = badge;
     if (title !== undefined) updateData.title = title;

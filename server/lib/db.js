@@ -526,6 +526,8 @@ export async function getHeroVideos() {
     id: row.id,
     src: row.src,
     poster: row.poster,
+    mobileSrc: row.mobile_src,
+    mobilePoster: row.mobile_poster,
     badge: row.badge,
     title: row.title,
     subtitle: row.subtitle,
@@ -539,6 +541,8 @@ export async function createHeroVideo(item) {
   const dbItem = {
     src: item.src ?? '',
     poster: item.poster,
+    mobile_src: item.mobileSrc ?? item.mobile_src ?? null,
+    mobile_poster: item.mobilePoster ?? item.mobile_poster ?? null,
     badge: item.badge,
     title: item.title,
     subtitle: item.subtitle,
@@ -558,13 +562,21 @@ export async function createHeroVideo(item) {
   }
   const { data, error } = await supabase.from('hero_videos').insert(dbItem).select().single();
   if (error) throw error;
-  return { ...data, buttonText: data.button_text, buttonLink: data.button_link };
+  return {
+    ...data,
+    buttonText: data.button_text,
+    buttonLink: data.button_link,
+    mobileSrc: data.mobile_src,
+    mobilePoster: data.mobile_poster,
+  };
 }
 
 export async function updateHeroVideo(id, item) {
   const dbItem = {};
   if (item.src !== undefined) dbItem.src = item.src;
   if (item.poster !== undefined) dbItem.poster = item.poster;
+  if (item.mobileSrc !== undefined) dbItem.mobile_src = item.mobileSrc;
+  if (item.mobilePoster !== undefined) dbItem.mobile_poster = item.mobilePoster;
   if (item.badge !== undefined) dbItem.badge = item.badge;
   if (item.title !== undefined) dbItem.title = item.title;
   if (item.subtitle !== undefined) dbItem.subtitle = item.subtitle;
@@ -581,7 +593,15 @@ export async function updateHeroVideo(id, item) {
   }
   const { data, error } = await supabase.from('hero_videos').update(dbItem).eq('id', id).select().single();
   if (error) throw error;
-  return data ? { ...data, buttonText: data.button_text, buttonLink: data.button_link } : null;
+  return data
+    ? {
+        ...data,
+        buttonText: data.button_text,
+        buttonLink: data.button_link,
+        mobileSrc: data.mobile_src,
+        mobilePoster: data.mobile_poster,
+      }
+    : null;
 }
 
 export async function deleteHeroVideo(id) {
@@ -1449,7 +1469,7 @@ export async function getExplorePathVideoSettings() {
     .eq('id', 1)
     .single();
   if (error) {
-    if (error.code === 'PGRST116') {
+    if (error.code === 'PGRST116' || error.code === '42P01') {
       return { id: 1, video_url: null };
     }
     throw error;

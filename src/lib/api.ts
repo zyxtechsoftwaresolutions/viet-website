@@ -144,12 +144,24 @@ export const carouselAPI = {
 // Hero Videos API (backend only stores video_url and poster URL; admin uploads to Supabase Storage first)
 export const heroVideosAPI = {
   getAll: () => apiCall('/hero-videos'),
-  create: (data: { src?: string | null; poster?: string | null; badge?: string; title?: string; subtitle?: string; buttonText?: string; buttonLink?: string }) => {
+  create: (data: {
+    src?: string | null;
+    poster?: string | null;
+    mobileSrc?: string | null;
+    mobilePoster?: string | null;
+    badge?: string;
+    title?: string;
+    subtitle?: string;
+    buttonText?: string;
+    buttonLink?: string;
+  }) => {
     return apiCall('/hero-videos', {
       method: 'POST',
       body: JSON.stringify({
         src: data.src?.trim() ? data.src.trim() : null,
         poster: data.poster?.trim() ? data.poster.trim() : null,
+        mobileSrc: data.mobileSrc?.trim() ? data.mobileSrc.trim() : null,
+        mobilePoster: data.mobilePoster?.trim() ? data.mobilePoster.trim() : null,
         badge: data.badge ?? '',
         title: data.title ?? '',
         subtitle: data.subtitle ?? '',
@@ -158,7 +170,17 @@ export const heroVideosAPI = {
       }),
     });
   },
-  update: (id: number, data: { src?: string | null; poster?: string | null; badge?: string; title?: string; subtitle?: string; buttonText?: string; buttonLink?: string }) => {
+  update: (id: number, data: {
+    src?: string | null;
+    poster?: string | null;
+    mobileSrc?: string | null;
+    mobilePoster?: string | null;
+    badge?: string;
+    title?: string;
+    subtitle?: string;
+    buttonText?: string;
+    buttonLink?: string;
+  }) => {
     return apiCall(`/hero-videos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

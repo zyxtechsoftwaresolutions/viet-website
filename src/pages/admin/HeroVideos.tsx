@@ -24,18 +24,80 @@ import { Label } from '@/components/ui/label';
 import { heroVideosAPI } from '@/lib/api';
 import { uploadVideoToSupabase, uploadImageToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
-import { Video } from 'lucide-react';
+import { Monitor, Smartphone, Video } from 'lucide-react';
 
 interface HeroVideo {
   id: number;
   src?: string | null;
   poster?: string | null;
+  mobileSrc?: string | null;
+  mobilePoster?: string | null;
   badge?: string;
   title?: string;
   subtitle?: string;
   buttonText?: string;
   buttonLink?: string;
   order?: number;
+}
+
+function MediaThumb({ video, photo }: { video?: string | null; photo?: string | null }) {
+  if (photo) {
+    return <img src={photo} alt="" className="w-16 h-10 object-cover rounded" />;
+  }
+  if (video) {
+    return (
+      <div className="w-16 h-10 bg-muted rounded flex items-center justify-center">
+        <Video className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
+  return <div className="w-16 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground">—</div>;
+}
+
+function HeroMediaFields({
+  label,
+  icon: Icon,
+  videoPreview,
+  photoPreview,
+  onVideoChange,
+  onPhotoChange,
+  hint,
+}: {
+  label: string;
+  icon: typeof Monitor;
+  videoPreview: string;
+  photoPreview: string;
+  onVideoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
+      <div className="flex items-center gap-2 font-medium">
+        <Icon className="h-4 w-4" />
+        {label}
+      </div>
+      <div className="space-y-2">
+        <Label>Video (optional)</Label>
+        <div className="flex items-center gap-4 flex-wrap">
+          <Input type="file" accept="video/*" onChange={onVideoChange} className="cursor-pointer max-w-md" />
+          {videoPreview && (
+            <video src={videoPreview} className="w-40 h-24 object-cover rounded bg-black" controls muted />
+          )}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Photo (optional fallback)</Label>
+        <div className="flex items-center gap-4 flex-wrap">
+          <Input type="file" accept="image/*" onChange={onPhotoChange} className="cursor-pointer max-w-md" />
+          {photoPreview && (
+            <img src={photoPreview} alt="" className="w-32 h-20 object-cover rounded" />
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
 }
 
 const HeroVideos = () => {
@@ -53,10 +115,12 @@ const HeroVideos = () => {
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string>('');
-  const [posterPreview, setPosterPreview] = useState<string>('');
-
-  const thumbUrl = (url: string) => url || '';
+  const [mobileVideoFile, setMobileVideoFile] = useState<File | null>(null);
+  const [mobilePosterFile, setMobilePosterFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState('');
+  const [posterPreview, setPosterPreview] = useState('');
+  const [mobileVideoPreview, setMobileVideoPreview] = useState('');
+  const [mobilePosterPreview, setMobilePosterPreview] = useState('');
 
   useEffect(() => {
     fetchVideos();
@@ -73,13 +137,21 @@ const HeroVideos = () => {
     }
   };
 
+  const resetMediaState = () => {
+    setVideoFile(null);
+    setPosterFile(null);
+    setMobileVideoFile(null);
+    setMobilePosterFile(null);
+    setVideoPreview('');
+    setPosterPreview('');
+    setMobileVideoPreview('');
+    setMobilePosterPreview('');
+  };
+
   const handleAdd = () => {
     setSelectedItem(null);
     setFormData({ badge: '', title: '', subtitle: '', buttonText: '', buttonLink: '' });
-    setVideoFile(null);
-    setPosterFile(null);
-    setVideoPreview('');
-    setPosterPreview('');
+    resetMediaState();
     setDialogOpen(true);
   };
 
@@ -92,10 +164,11 @@ const HeroVideos = () => {
       buttonText: item.buttonText || '',
       buttonLink: item.buttonLink || '',
     });
-    setVideoFile(null);
-    setPosterFile(null);
-    setVideoPreview(thumbUrl(item.src) || '');
-    setPosterPreview(thumbUrl(item.poster || '') || '');
+    resetMediaState();
+    setVideoPreview(item.src || '');
+    setPosterPreview(item.poster || '');
+    setMobileVideoPreview(item.mobileSrc || '');
+    setMobilePosterPreview(item.mobilePoster || '');
     setDialogOpen(true);
   };
 
@@ -103,11 +176,7 @@ const HeroVideos = () => {
     const file = e.target.files?.[0];
     if (file) {
       setVideoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setVideoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setVideoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -115,11 +184,23 @@ const HeroVideos = () => {
     const file = e.target.files?.[0];
     if (file) {
       setPosterFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPosterPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setPosterPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleMobileVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMobileVideoFile(file);
+      setMobileVideoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleMobilePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMobilePosterFile(file);
+      setMobilePosterPreview(URL.createObjectURL(file));
     }
   };
 
@@ -128,50 +209,64 @@ const HeroVideos = () => {
     setDeleteDialogOpen(true);
   };
 
+  const hasMedia = (
+    file: File | null,
+    existing?: string | null,
+    otherFile?: File | null,
+    otherExisting?: string | null
+  ) => Boolean(file || existing?.trim() || otherFile || otherExisting?.trim());
+
   const handleSubmit = async () => {
     try {
-      const existingVideo = selectedItem?.src?.trim();
-      const existingPhoto = selectedItem?.poster?.trim();
-      const willHaveVideo = Boolean(videoFile || existingVideo);
-      const willHavePhoto = Boolean(posterFile || existingPhoto);
+      const desktopOk = hasMedia(videoFile, selectedItem?.src, posterFile, selectedItem?.poster);
+      const mobileOk = hasMedia(mobileVideoFile, selectedItem?.mobileSrc, mobilePosterFile, selectedItem?.mobilePoster);
 
-      if (!willHaveVideo && !willHavePhoto) {
-        toast.error('Please select a video or photo');
+      if (!desktopOk && !mobileOk) {
+        toast.error('Upload at least one desktop or mobile video/photo');
         return;
       }
 
-      let src: string | null | undefined;
-      let poster: string | null | undefined;
+      let src: string | undefined;
+      let poster: string | undefined;
+      let mobileSrc: string | undefined;
+      let mobilePoster: string | undefined;
 
       if (videoFile) {
-        toast.info('Uploading video to storage…');
+        toast.info('Uploading desktop video…');
         src = await uploadVideoToSupabase(videoFile);
       }
       if (posterFile) {
-        toast.info('Uploading photo to storage…');
+        toast.info('Uploading desktop photo…');
         poster = await uploadImageToSupabase(posterFile, 'hero-videos');
       }
-
-      const finalSrc = src?.trim() || '';
-      const finalPoster = poster?.trim() || '';
-
-      if (!finalSrc && !finalPoster) {
-        toast.error('Please select a video or photo');
-        return;
+      if (mobileVideoFile) {
+        toast.info('Uploading mobile video…');
+        mobileSrc = await uploadVideoToSupabase(mobileVideoFile, 'hero-videos/mobile');
+      }
+      if (mobilePosterFile) {
+        toast.info('Uploading mobile photo…');
+        mobilePoster = await uploadImageToSupabase(mobilePosterFile, 'hero-videos/mobile');
       }
 
       if (selectedItem) {
-        await heroVideosAPI.update(selectedItem.id, {
-          ...formData,
-          ...(src !== undefined && { src: finalSrc || null }),
-          ...(poster !== undefined && { poster: finalPoster || null }),
-        });
+        const payload: Record<string, unknown> = { ...formData };
+        if (src !== undefined) payload.src = src;
+        if (poster !== undefined) payload.poster = poster;
+        if (mobileSrc !== undefined) payload.mobileSrc = mobileSrc;
+        if (mobilePoster !== undefined) payload.mobilePoster = mobilePoster;
+        await heroVideosAPI.update(selectedItem.id, payload);
         toast.success('Hero slide updated successfully');
       } else {
+        if (!src && !poster && !mobileSrc && !mobilePoster) {
+          toast.error('Please upload at least one video or photo');
+          return;
+        }
         await heroVideosAPI.create({
           ...formData,
-          src: finalSrc || null,
-          poster: finalPoster || null,
+          src: src || null,
+          poster: poster || null,
+          mobileSrc: mobileSrc || null,
+          mobilePoster: mobilePoster || null,
         });
         toast.success('Hero slide added successfully');
       }
@@ -196,25 +291,18 @@ const HeroVideos = () => {
 
   const columns = [
     {
-      key: 'src',
+      key: 'media',
       header: 'Media',
       render: (item: HeroVideo) => (
-        <div className="flex items-center gap-2">
-          {item.poster ? (
-            <img
-              src={thumbUrl(item.poster)}
-              alt={item.title || 'Hero slide'}
-              className="w-20 h-12 object-cover rounded"
-            />
-          ) : item.src ? (
-            <div className="w-20 h-12 bg-muted rounded flex items-center justify-center">
-              <Video className="h-6 w-6 text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="w-20 h-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-              —
-            </div>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground mb-1">Desktop</p>
+            <MediaThumb video={item.src} photo={item.poster} />
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground mb-1">Mobile</p>
+            <MediaThumb video={item.mobileSrc} photo={item.mobilePoster} />
+          </div>
         </div>
       ),
     },
@@ -238,7 +326,9 @@ const HeroVideos = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Hero Slides</h1>
-        <p className="text-muted-foreground mt-2">Manage hero section videos and photos displayed on the homepage</p>
+        <p className="text-muted-foreground mt-2">
+          Upload separate desktop and mobile media. Video is shown first; photo is used only if video is missing or cannot play.
+        </p>
       </div>
 
       <DataTable
@@ -254,72 +344,30 @@ const HeroVideos = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {selectedItem ? 'Edit Hero Slide' : 'Add Hero Slide'}
-            </DialogTitle>
+            <DialogTitle>{selectedItem ? 'Edit Hero Slide' : 'Add Hero Slide'}</DialogTitle>
             <DialogDescription>
-              {selectedItem ? 'Update hero slide details' : 'Upload a video or photo for the homepage hero section'}
+              Desktop media is shown on tablets/desktops only. Mobile media is shown on phones only.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="video">Video File (optional if photo is provided)</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="video"
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoChange}
-                  className="cursor-pointer"
-                />
-                {videoPreview && (
-                  <div className="relative w-48 h-32 bg-muted rounded overflow-hidden">
-                    {videoFile ? (
-                      <video
-                        src={videoPreview}
-                        className="w-full h-full object-cover"
-                        controls
-                        muted
-                      />
-                    ) : (
-                      <video
-                        src={videoPreview}
-                        className="w-full h-full object-cover"
-                        controls
-                        muted
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {selectedItem
-                  ? 'Leave empty to keep the current video. Video takes priority when both video and photo are set.'
-                  : 'Supported formats: MP4, WebM, MOV, AVI, MKV (max 200MB). At least one of video or photo is required.'}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="poster">Photo Image (optional if video is provided)</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="poster"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePosterChange}
-                  className="cursor-pointer"
-                />
-                {posterPreview && (
-                  <img
-                    src={posterPreview}
-                    alt="Poster preview"
-                    className="w-32 h-20 object-cover rounded"
-                  />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Used as the hero background when only a photo is added, or as fallback if the video cannot be displayed
-              </p>
-            </div>
+            <HeroMediaFields
+              label="Desktop view"
+              icon={Monitor}
+              videoPreview={videoPreview}
+              photoPreview={posterPreview}
+              onVideoChange={handleVideoChange}
+              onPhotoChange={handlePosterChange}
+              hint="Shown on screens 768px and wider. Video takes priority; photo is fallback."
+            />
+            <HeroMediaFields
+              label="Mobile view"
+              icon={Smartphone}
+              videoPreview={mobileVideoPreview}
+              photoPreview={mobilePosterPreview}
+              onVideoChange={handleMobileVideoChange}
+              onPhotoChange={handleMobilePosterChange}
+              hint="Shown on screens below 768px. Video takes priority; photo is fallback."
+            />
             <div className="space-y-2">
               <Label htmlFor="badge">Badge Text (Optional)</Label>
               <Input
@@ -328,9 +376,6 @@ const HeroVideos = () => {
                 onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                 placeholder="e.g., Admissions Open 2026"
               />
-              <p className="text-sm text-muted-foreground">
-                Glass effect badge text shown above the title
-              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Title (Optional)</Label>
@@ -338,7 +383,6 @@ const HeroVideos = () => {
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g., ADMISSIONS OPEN 2026"
               />
             </div>
             <div className="space-y-2">
@@ -347,7 +391,6 @@ const HeroVideos = () => {
                 id="subtitle"
                 value={formData.subtitle}
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                placeholder="e.g., Join VIET, begin your Journey of Excellence..."
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -357,7 +400,6 @@ const HeroVideos = () => {
                   id="buttonText"
                   value={formData.buttonText}
                   onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
-                  placeholder="e.g., Apply Now"
                 />
               </div>
               <div className="space-y-2">
@@ -372,12 +414,8 @@ const HeroVideos = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit}>
-              {selectedItem ? 'Update' : 'Upload'}
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit}>{selectedItem ? 'Update' : 'Upload'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -387,7 +425,7 @@ const HeroVideos = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Hero Slide</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this hero slide? This will permanently delete the video and photo files. This action cannot be undone.
+              Delete this hero slide and all associated desktop and mobile media?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -19,7 +19,8 @@ import {
   LineChart,
   LayoutGrid,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { heroVideosAPI, departmentsAPI, explorePathVideoSettingsAPI } from '@/lib/api';
 import { convertGoogleDriveLink, convertGoogleDriveToDownload, getGoogleDrivePreviewEmbedUrl, isGoogleDriveLink } from '@/lib/googleDriveUtils';
@@ -252,6 +253,90 @@ const ProgramIcons = {
 
 const INTRO_COMPLETE_EVENT = 'introComplete';
 
+type HeroVideoRecord = {
+  src?: string | null;
+  poster?: string | null;
+  mobileSrc?: string | null;
+  mobilePoster?: string | null;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  order?: number;
+};
+
+type HeroSlide = {
+  type: 'video' | 'image';
+  src: string;
+  embedUrl?: string;
+  poster?: string;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  buttonAction: () => void;
+};
+
+function buildHeroSlide(
+  videoRaw: string | undefined,
+  photoRaw: string | undefined,
+  meta: Omit<HeroVideoRecord, 'src' | 'poster' | 'mobileSrc' | 'mobilePoster' | 'order'>
+): HeroSlide | null {
+  const hasVideo = Boolean(videoRaw?.trim());
+  const photoUrl = photoRaw?.trim() ? convertGoogleDriveLink(photoRaw) : undefined;
+  const title = meta.title?.trim() || undefined;
+  const subtitle = meta.subtitle?.trim() || undefined;
+  const buttonText = meta.buttonText?.trim() || undefined;
+  const buttonAction = meta.buttonLink?.trim()
+    ? () => window.open(
+        meta.buttonLink!,
+        meta.buttonLink!.startsWith('http') ? '_blank' : '_self'
+      )
+    : () => {};
+
+  if (!hasVideo && photoUrl) {
+    return {
+      type: 'image',
+      src: photoUrl,
+      poster: photoUrl,
+      badge: meta.badge || undefined,
+      title,
+      subtitle,
+      buttonText,
+      buttonAction,
+    };
+  }
+
+  if (!hasVideo) return null;
+
+  const isDrive = isGoogleDriveLink(videoRaw!);
+  return {
+    type: 'video',
+    src: convertGoogleDriveToDownload(videoRaw!),
+    embedUrl: isDrive ? getGoogleDrivePreviewEmbedUrl(videoRaw!) : undefined,
+    poster: photoUrl,
+    badge: meta.badge || undefined,
+    title,
+    subtitle,
+    buttonText,
+    buttonAction,
+  };
+}
+
+function buildHeroSlidesForViewport(videos: HeroVideoRecord[], isMobile: boolean): HeroSlide[] {
+  const sorted = videos.slice().sort((a, b) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
+  return sorted
+    .map((video) =>
+      buildHeroSlide(
+        isMobile ? video.mobileSrc?.trim() : video.src?.trim(),
+        isMobile ? video.mobilePoster?.trim() : video.poster?.trim(),
+        video
+      )
+    )
+    .filter((slide): slide is HeroSlide => slide !== null);
+}
+
 const EXPLORE_PATH_VIDEO_FALLBACK =
   import.meta.env.VITE_BGVIDEOEXP_URL || `${import.meta.env.BASE_URL}bgvideoexp.mp4`.replace(/\/{2,}/g, '/');
 
@@ -443,23 +528,17 @@ function ExplorePathStreamColumn({
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   /** Fallback image shown only when video is unsupported (e.g. format not playable). */
   const [unsupportedVideoSlides, setUnsupportedVideoSlides] = useState<Set<number>>(new Set());
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const [heroSlides, setHeroSlides] = useState<Array<{
-    type: 'video' | 'image';
-    src: string;
-    /** When set (e.g. Drive link), use iframe instead of <video> so it plays without access screen */
-    embedUrl?: string;
-    poster?: string;
-    badge?: string;
-    title?: string;
-    subtitle?: string;
-    buttonText?: string;
-    buttonAction: () => void;
-  }>>([]);
+  const [heroVideoRecords, setHeroVideoRecords] = useState<HeroVideoRecord[]>([]);
+  const heroSlides = useMemo(
+    () => buildHeroSlidesForViewport(heroVideoRecords, isMobile),
+    [heroVideoRecords, isMobile]
+  );
   const [loading, setLoading] = useState(true);
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
@@ -603,72 +682,26 @@ const HeroSection = () => {
     fetchDepartments();
   }, []);
 
-  // Video/poster URLs from API are full Supabase Storage URLs; use as-is. Sort by order so first added = first, new = last.
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         const videos = await heroVideosAPI.getAll();
-        if (Array.isArray(videos) && videos.length > 0) {
-          const sorted = videos.slice().sort((a: any, b: any) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
-          const slides = sorted
-            .map((video) => {
-              const hasVideo = Boolean(video.src?.trim());
-              const photoUrl = video.poster?.trim()
-                ? convertGoogleDriveLink(video.poster)
-                : undefined;
-              const title = video.title?.trim() || undefined;
-              const subtitle = video.subtitle?.trim() || undefined;
-              const buttonText = video.buttonText?.trim() || undefined;
-              const buttonAction = video.buttonLink?.trim()
-                ? () => window.open(
-                    video.buttonLink!,
-                    video.buttonLink!.startsWith('http') ? '_blank' : '_self'
-                  )
-                : () => {};
-
-              if (!hasVideo && photoUrl) {
-                return {
-                  type: 'image' as const,
-                  src: photoUrl,
-                  poster: photoUrl,
-                  badge: video.badge || undefined,
-                  title,
-                  subtitle,
-                  buttonText,
-                  buttonAction,
-                };
-              }
-
-              if (!hasVideo) return null;
-
-              const isDrive = isGoogleDriveLink(video.src);
-              return {
-                type: 'video' as const,
-                src: convertGoogleDriveToDownload(video.src),
-                embedUrl: isDrive ? getGoogleDrivePreviewEmbedUrl(video.src) : undefined,
-                poster: photoUrl,
-                badge: video.badge || undefined,
-                title,
-                subtitle,
-                buttonText,
-                buttonAction,
-              };
-            })
-            .filter((slide): slide is NonNullable<typeof slide> => slide !== null);
-          setHeroSlides(slides);
-        } else {
-          // Fallback to empty array if no videos
-          setHeroSlides([]);
-        }
+        setHeroVideoRecords(Array.isArray(videos) ? videos : []);
       } catch (error) {
         console.error('Error fetching hero videos:', error);
-        setHeroSlides([]);
+        setHeroVideoRecords([]);
       } finally {
         setLoading(false);
       }
     };
     fetchVideos();
   }, []);
+
+  useEffect(() => {
+    setCurrentSlide(0);
+    setUnsupportedVideoSlides(new Set());
+    videoRefs.current = [];
+  }, [isMobile, heroVideoRecords]);
 
   // Auto-advance slides
   useEffect(() => {
