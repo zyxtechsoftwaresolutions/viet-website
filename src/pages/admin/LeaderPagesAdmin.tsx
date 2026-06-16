@@ -27,7 +27,7 @@ interface Page {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-const LEADER_SLUGS = ['principal', 'chairman', 'hr', 'dean-academics', 'dean-innovation'] as const;
+const LEADER_SLUGS = ['principal', 'diploma-principal', 'chairman', 'hr', 'dean-academics', 'dean-innovation'] as const;
 type LeaderSlug = (typeof LEADER_SLUGS)[number];
 
 const getHeroImageUrl = (content: any): string => {
@@ -196,6 +196,7 @@ const LeaderPagesAdmin = () => {
   };
 
   const principalPage = pages.find((p) => p.slug === 'principal');
+  const diplomaPrincipalPage = pages.find((p) => p.slug === 'diploma-principal');
   const chairmanPage = pages.find((p) => p.slug === 'chairman');
   const hrPage = pages.find((p) => p.slug === 'hr');
   const deanAcademicsPage = pages.find((p) => p.slug === 'dean-academics');
@@ -214,7 +215,7 @@ const LeaderPagesAdmin = () => {
       <div>
         <h1 className="text-3xl font-bold">Pages</h1>
         <p className="text-muted-foreground mt-1">
-          Edit Principal, Chairman, HR, Dean Academics, and Dean Innovation page content.
+          Edit Principal, Diploma Principal, Chairman, HR, Dean Academics, and Dean Innovation page content.
         </p>
       </div>
 
@@ -236,6 +237,28 @@ const LeaderPagesAdmin = () => {
             ) : (
               <p className="text-muted-foreground text-sm">
                 Principal page not found.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-6 w-6" />
+              Diploma Principal
+            </CardTitle>
+            <CardDescription>Edit Diploma Principal page content and sections</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {diplomaPrincipalPage ? (
+              <Button onClick={() => openEdit(diplomaPrincipalPage)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Diploma Principal Page
+              </Button>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Diploma Principal page not found.
               </p>
             )}
           </CardContent>

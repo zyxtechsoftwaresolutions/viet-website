@@ -45,6 +45,7 @@ const SearchBar = () => {
       { name: 'Chairman', href: '/chairman', category: 'About', type: 'dropdown' as const },
       { name: 'HR', href: '/hr', category: 'About', type: 'dropdown' as const },
       { name: 'Principal', href: '/principal', category: 'About', type: 'dropdown' as const },
+      { name: 'Diploma Principal', href: '/diploma-principal', category: 'About', type: 'dropdown' as const },
       { name: 'Dean Academics', href: '/dean-academics', category: 'About', type: 'dropdown' as const },
       { name: 'Dean Innovation & Student Projects', href: '/dean-innovation', category: 'About', type: 'dropdown' as const },
       { name: 'Dean Innovation', href: '/dean-innovation', category: 'About', type: 'dropdown' as const },

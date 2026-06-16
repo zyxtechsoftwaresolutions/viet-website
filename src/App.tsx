@@ -15,6 +15,7 @@ const VisionMission = lazy(() => import("./pages/VisionMission"));
 const Chairman = lazy(() => import("./pages/Chairman"));
 const HR = lazy(() => import("./pages/HR"));
 const Principal = lazy(() => import("./pages/Principal"));
+const DiplomaPrincipal = lazy(() => import("./pages/DiplomaPrincipal"));
 const DeanAcademics = lazy(() => import("./pages/DeanAcademics"));
 const DeanInnovation = lazy(() => import("./pages/DeanInnovation"));
 const OrganizationalChart = lazy(() => import("./pages/OrganizationalChart"));
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/chairman" element={<Chairman />} />
             <Route path="/hr" element={<HR />} />
             <Route path="/principal" element={<Principal />} />
+            <Route path="/diploma-principal" element={<DiplomaPrincipal />} />
             <Route path="/dean-academics" element={<DeanAcademics />} />
             <Route path="/dean-innovation" element={<DeanInnovation />} />
             <Route path="/organizational-chart" element={<OrganizationalChart />} />

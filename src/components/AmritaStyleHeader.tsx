@@ -233,6 +233,7 @@ const AmritaStyleHeader = () => {
         { title: 'Vision & Mission', description: 'Our guiding principles and goals for excellence in education', link: '/vision-mission' },
         { title: 'Chairman', description: 'Message from our visionary leader', link: '/chairman' },
         { title: 'Principal', description: 'Leadership and academic excellence', link: '/principal' },
+        { title: 'Diploma Principal', description: 'Diploma college leadership', link: '/diploma-principal' },
         { title: 'Dean Academics', description: 'Academic administration and curriculum', link: '/dean-academics' },
         { title: 'Dean Innovation', description: 'Innovation and student projects', link: '/dean-innovation' },
         { title: 'HR', description: 'Human Resources and institutional culture', link: '/hr' },

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -48,7 +48,9 @@ import {
 } from '@/components/ui/select';
 import { facultyAPI, facultySettingsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import { imgUrl } from '@/lib/imageUtils';
 import { toast } from 'sonner';
+import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
 
 interface Faculty {
   id: number;
@@ -170,6 +172,10 @@ const Faculty = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState('faculty-photo.jpg');
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [sortBy, setSortBy] = useState<'custom' | 'experience' | 'designation' | 'designation-experience'>('custom');
   const [customOrder, setCustomOrder] = useState<Faculty[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -340,17 +346,50 @@ const Faculty = () => {
     setDialogOpen(true);
   };
 
+  const openCropper = (src: string, name: string) => {
+    setCropImageSrc(src);
+    setCropFileName(name);
+    setCropDialogOpen(true);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      openCropper(reader.result as string, file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (file: File, previewUrl: string) => {
+    setImageFile(file);
+    setPreview(previewUrl);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const handleAdjustPhoto = () => {
+    if (preview) {
+      const src =
+        preview.startsWith('data:') || preview.startsWith('blob:')
+          ? preview
+          : imgUrl(preview);
+      openCropper(src, cropFileName);
     }
   };
+
+  const handleCropDialogChange = (open: boolean) => {
+    setCropDialogOpen(open);
+    if (!open) {
+      setCropImageSrc(null);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  const previewSrc =
+    preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http')
+      ? preview
+      : imgUrl(preview);
 
   const handleDelete = (item: Faculty) => {
     setSelectedItem(item);
@@ -628,6 +667,7 @@ const Faculty = () => {
               <div className="space-y-2">
                 <Label htmlFor="image">Profile Image</Label>
                 <Input
+                  ref={imageInputRef}
                   id="image"
                   type="file"
                   accept="image/*"
@@ -635,11 +675,28 @@ const Faculty = () => {
                   className="cursor-pointer"
                 />
                 {preview && (
-                  <img
-                    src={preview.startsWith('/') ? preview : `http://localhost:3001${preview}`}
-                    alt="Preview"
-                    className="w-24 h-24 object-cover rounded-full mt-2"
-                  />
+                  <div className="mt-2 space-y-2">
+                    <div className="max-w-[120px] border border-slate-200/80 rounded overflow-hidden bg-white">
+                      <div className="aspect-square w-full bg-slate-100 overflow-hidden">
+                        <img
+                          src={previewSrc}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-2 border-t border-slate-100">
+                        <p className="text-xs font-semibold text-slate-900 truncate">
+                          {formData.name || 'Name'}
+                        </p>
+                        <p className="text-[10px] text-slate-600 truncate">
+                          {formData.designation || 'Designation'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAdjustPhoto}>
+                      Adjust photo
+                    </Button>
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
@@ -728,6 +785,16 @@ const Faculty = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FacultyImageCropper
+        open={cropDialogOpen}
+        onOpenChange={handleCropDialogChange}
+        imageSrc={cropImageSrc}
+        fileName={cropFileName}
+        facultyName={formData.name}
+        facultyDesignation={formData.designation}
+        onCropComplete={handleCropComplete}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

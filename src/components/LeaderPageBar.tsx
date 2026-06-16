@@ -11,6 +11,7 @@ const LEADER_NAV_LINKS = [
   { name: 'Chairman', href: '/chairman' },
   { name: 'HR', href: '/hr' },
   { name: 'Principal', href: '/principal' },
+  { name: 'Diploma Principal', href: '/diploma-principal' },
   { name: 'Dean Academics', href: '/dean-academics' },
   { name: 'Dean Innovation', href: '/dean-innovation' },
   { name: 'Accreditations', href: '/accreditations' },

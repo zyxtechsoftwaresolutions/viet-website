@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-export type LeaderSlug = 'principal' | 'chairman' | 'hr' | 'dean-academics' | 'dean-innovation';
+export type LeaderSlug =
+  | 'principal'
+  | 'diploma-principal'
+  | 'chairman'
+  | 'hr'
+  | 'dean-academics'
+  | 'dean-innovation';
 
 const LEADERS: { slug: LeaderSlug; label: string; href: string }[] = [
   { slug: 'chairman', label: 'Chairman', href: '/chairman' },
   { slug: 'hr', label: 'HR', href: '/hr' },
   { slug: 'principal', label: 'Principal', href: '/principal' },
+  { slug: 'diploma-principal', label: 'Diploma Principal', href: '/diploma-principal' },
   { slug: 'dean-academics', label: 'Dean Academics', href: '/dean-academics' },
   { slug: 'dean-innovation', label: 'Dean Innovation', href: '/dean-innovation' },
 ];
@@ -25,7 +32,7 @@ const AlsoVisitLeaders = ({ currentSlug, className }: AlsoVisitLeadersProps) => 
         <h2 className="text-lg md:text-xl font-bold text-slate-800 mb-5 font-poppins text-center">
           Also visit
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 max-w-3xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 md:gap-3 max-w-4xl mx-auto">
           {others.map((leader) => (
             <Link
               key={leader.slug}

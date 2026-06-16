@@ -416,6 +416,36 @@
       "updatedAt": "2025-12-11T15:50:56.947Z",
       "uploadType": "page",
       "data": "{\"title\":\"Transport\",\"slug\":\"transport\",\"route\":\"/facilities/transport\",\"category\":\"Facilities\",\"content\":{\"hero\":{\"title\":\"Transport\",\"description\":\"Safe and comfortable transport facility for students and faculty\"},\"mainContent\":\"<p>Our College provides safe and comfortable Transport facility with own new Buses from every corner of the city which help the students and faculty to reach the college.</p>\\n<p>Transportation is available for conducting industrial visits, placement drives, campus conducted or organized outside the campus.</p>\\n<p>Our faculties monitor students to maintain discipline in buses.</p>\\n<p>Anti Ragging committee members will monitor students in every bus.</p>\\n<p>Comfortable seating as per allotments.</p>\",\"mapEmbed\":\"<iframe src=\\\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3799.8795881385568!2d83.1724448!3d17.7503119!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a39660599723385%3A0xa4c2993c71ff2b10!2sVisakha%20Institute%20of%20Engineering%20%26%20Technology!5e0!3m2!1sen!2sin!4v1765462928526!5m2!1sen!2sin\\\" width=\\\"600\\\" height=\\\"450\\\" style=\\\"border:0;\\\" allowfullscreen=\\\"\\\" loading=\\\"lazy\\\" referrerpolicy=\\\"no-referrer-when-downgrade\\\"></iframe>\",\"tables\":{\"Contact Numbers for Transport\":{\"headers\":[\"Name\",\"Contact Number\"],\"rows\":[[\"VVV.SATYANARAYANA\",\"9959617469\"],[\"D.ANIL KUMAR\",\"9440491541\"]]}},\"additional\":{\"distances\":[{\"location\":\"RTC Complex\",\"distance\":\"14kms\",\"available\":true},{\"location\":\"Madhurawada\",\"distance\":\"30kms\",\"available\":true},{\"location\":\"Gajuwaka\",\"distance\":\"11kms\",\"available\":true},{\"location\":\"Pendurthi\",\"distance\":\"10kms\",\"available\":true},{\"location\":\"Chodavaram\",\"distance\":\"33kms\",\"available\":true},{\"location\":\"Anakapalli\",\"distance\":\"28kms\",\"available\":true},{\"location\":\"Sabbavaram\",\"distance\":\"10kms\",\"available\":true}]},\"heroImage\":\"/uploads/pages/image_heroImage-1765465755995-302597148.jpg\",\"image1\":\"/uploads/pages/image_image1-1765463093855-856106145.jpg\",\"image2\":\"/uploads/pages/image_image2-1765464328724-275457723.jpg\",\"image3\":\"/uploads/pages/image_image3-1765464328730-562728592.jpg\",\"image1_preview\":null,\"image2_preview\":null,\"image3_preview\":null,\"image_1765464156335_preview\":null,\"image_1765464156837_preview\":null,\"image_1765464157428_preview\":null,\"image_1765464309812_preview\":null,\"image_1765464156335\":null,\"image_1765464156837\":null,\"image_1765464157428\":null,\"image_1765464309812\":null,\"image_1765464156837_preview_preview\":null,\"image_1765464157428_preview_preview\":null,\"image_1765464309812_preview_preview\":null,\"image_1765466844520_preview\":null,\"image_1765466887467_preview\":null,\"image_1765466897487_preview\":null,\"image_1765466909451_preview\":null,\"image_1765466844520\":null,\"image_1765466887467\":null,\"image_1765466897487\":null,\"image_1765466909451\":null}}"
+    },
+    {
+      "id": 1781581234538,
+      "slug": "diploma-principal",
+      "title": "Diploma Principal",
+      "route": "/diploma-principal",
+      "category": "About",
+      "content": {
+        "hero": {
+          "title": "Diploma Principal",
+          "description": "Leadership in diploma education and skill-based technical training",
+          "buttonText": "Read message"
+        },
+        "profile": {
+          "name": "Mr. P. Prasad",
+          "qualification": "",
+          "designation": "Diploma Principal",
+          "badge": "Diploma Leadership"
+        },
+        "message": "<p>VIET Diploma College is committed to providing quality technical education through SBTET-approved programmes that equip students with practical skills and industry-ready knowledge. Our diploma programmes focus on hands-on learning, laboratory training, and real-world application of engineering concepts.</p>\n<p>With excellent infrastructure, experienced faculty, and strong industry connections, we nurture young minds to become competent technicians and engineers who contribute meaningfully to society and the nation's development.</p>\n<p><strong>Building skilled professionals for tomorrow!</strong></p>",
+        "inspiration": {
+          "quote": "The best way to predict the future is to create it with skill, dedication, and hard work.",
+          "author": "Dr. A.P.J. Abdul Kalam"
+        },
+        "greetings": {
+          "text": "Wish you all the best,"
+        }
+      },
+      "createdAt": "2026-06-16T03:40:34.538Z",
+      "updatedAt": "2026-06-16T03:40:34.540Z"
     }
   ]
 }

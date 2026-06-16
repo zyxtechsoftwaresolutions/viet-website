@@ -42,6 +42,7 @@ const Footer = () => {
     { name: 'Vision & Mission', href: '/vision-mission' },
     { name: 'Chairman', href: '/chairman' },
     { name: 'Principal', href: '/principal' },
+    { name: 'Diploma Principal', href: '/diploma-principal' },
     { name: 'HR', href: '/hr' },
     { name: 'Accreditation', href: '/accreditation' },
     { name: 'Organizational Chart', href: '/organizational-chart' },
