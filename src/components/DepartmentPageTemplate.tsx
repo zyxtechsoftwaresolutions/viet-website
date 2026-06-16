@@ -353,6 +353,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
 
   const s = deptPage?.sections ?? {};
   const hero = s.hero ?? {};
+  const hodMessageImage = (s.hod as { messageImage?: string } | undefined)?.messageImage;
   const heroImage = hero.image;
   const heroImageUrl = heroImage ? (heroImage.startsWith('http') ? convertGoogleDriveLink(heroImage) : `${API_BASE}${heroImage}`) : null;
   const heroVideoRaw = (hero as { video?: string }).video?.trim() || '';
@@ -540,17 +541,17 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                   {hero.subtitle}
                 </motion.p>
               )}
-              {(hero.buttonText || hero.buttonLink) && (
+              {hero.buttonText?.trim() && (
                 <motion.a
-                  href={hero.buttonLink || admissionLink}
+                  href={hero.buttonLink?.trim() || admissionLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-white bg-primary hover:bg-primary/90 transition-colors text-sm"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-white bg-[#E1731A] hover:bg-[#c96215] transition-colors text-sm"
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                  {hero.buttonText || 'Apply Now'}
+                  {hero.buttonText.trim()}
                   <ExternalLink className="w-4 h-4" />
                 </motion.a>
               )}
@@ -660,15 +661,18 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           <SectionHead label="Head of Department" title="Head of Department" accent="violet" />
           {hods.length > 0 ? (
             <div className="space-y-12">
-              {hods.map((hod: any, index: number) => (
+              {hods.map((hod: any, index: number) => {
+                const messagePhoto =
+                  index === 0 && hodMessageImage ? hodMessageImage : hod.image;
+                return (
                 <div key={hod.id} className={`grid md:grid-cols-[auto_1fr] gap-6 md:gap-8 items-start ${index === 0 && s.hod?.message ? '' : 'md:grid-cols-1'}`}>
                   {/* Left: HOD Image and Details */}
                   <div className="flex flex-col items-center md:items-start">
-                    {/* Large HOD Image */}
-                    <div className="w-48 h-48 md:w-64 md:h-64 rounded-lg mb-6 overflow-hidden bg-slate-100 shadow-lg">
-                      {hod.image ? (
+                    {/* HOD message photo — 16:9 when set per department; general HOD photo otherwise */}
+                    <div className="w-full max-w-sm md:max-w-md aspect-video mb-6 overflow-hidden bg-slate-100 shadow-lg">
+                      {messagePhoto ? (
                         <img
-                          src={imgUrl(hod.image)}
+                          src={imgUrl(messagePhoto)}
                           alt={hod.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -726,7 +730,8 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -1556,7 +1561,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                       return (
                         <div
                           key={i}
-                          className={`vibe-gallery-item relative group cursor-pointer ${itemLayout.colSpan} ${itemLayout.rowSpan} min-h-[150px] md:min-h-[200px]`}
+                          className={`vibe-gallery-item department-gallery-item relative group cursor-pointer ${itemLayout.colSpan} ${itemLayout.rowSpan} min-h-[150px] md:min-h-[200px]`}
                           onClick={() => openImageModal(img.src)}
                         >
                           <img
@@ -1627,8 +1632,8 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
               <ChevronRight className="w-6 h-6" />
             </Button>
             {selectedImage && (
-              <div className="flex justify-center bg-black/80 rounded-lg">
-                <img src={selectedImage} alt={galleryImages[currentImageIndex]?.alt || 'Gallery'} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+              <div className="flex justify-center bg-black/80">
+                <img src={selectedImage} alt={galleryImages[currentImageIndex]?.alt || 'Gallery'} className="max-w-full max-h-[80vh] object-contain" />
               </div>
             )}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">

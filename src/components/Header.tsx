@@ -272,7 +272,6 @@ const Header = () => {
 
   // DIPLOMA submenu items
   const diplomaSubmenuItems = [
-    { name: 'AGRICULTURAL ENGINEERING', href: '/agricultural-engineering' },
     { name: 'CIVIL ENGINEERING', href: '/civil-engineering' },
     { name: 'COMPUTER ENGINEERING', href: '/computer-engineering' },
     { name: 'ELECTRONICS & COMMUNICATIONS ENGINEERING', href: '/electronics-communications-engineering' },

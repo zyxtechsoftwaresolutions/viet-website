@@ -10,19 +10,20 @@ function createImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Crop image to a square blob matching the faculty card photo area. */
+/** Crop image to the selected area at the given output dimensions. */
 export async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
-  outputSize = 800,
+  outputWidth = 800,
+  outputHeight = 800,
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get canvas context');
 
-  canvas.width = outputSize;
-  canvas.height = outputSize;
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
 
   ctx.drawImage(
     image,
@@ -32,8 +33,8 @@ export async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    outputSize,
-    outputSize,
+    outputWidth,
+    outputHeight,
   );
 
   return new Promise((resolve, reject) => {

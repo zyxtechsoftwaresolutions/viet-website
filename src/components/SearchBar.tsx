@@ -83,7 +83,6 @@ const SearchBar = () => {
 
     // Diploma submenu items
     const diplomaItems = [
-      { name: 'AGRICULTURAL ENGINEERING', href: '/agricultural-engineering', category: 'Departments > Diploma', type: 'submenu' as const },
       { name: 'CIVIL ENGINEERING', href: '/civil-engineering', category: 'Departments > Diploma', type: 'submenu' as const },
       { name: 'COMPUTER ENGINEERING', href: '/computer-engineering', category: 'Departments > Diploma', type: 'submenu' as const },
       { name: 'ELECTRONICS & COMMUNICATIONS ENGINEERING', href: '/electronics-communications-engineering', category: 'Departments > Diploma', type: 'submenu' as const },

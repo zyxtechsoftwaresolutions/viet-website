@@ -241,7 +241,13 @@ export const facultyAPI = {
 // Faculty Settings API (sort preference for public Faculty page)
 export const facultySettingsAPI = {
   get: () => apiCall('/faculty-settings'),
-  update: (data: { sort_by?: 'custom' | 'experience' | 'designation' | 'designation-experience' }) =>
+  update: (data: {
+    sort_by?: 'custom' | 'experience' | 'designation' | 'designation-experience';
+    hero_badge?: string;
+    hero_title?: string;
+    hero_subtitle?: string;
+    hero_background_image?: string | null;
+  }) =>
     apiCall('/faculty-settings', { method: 'PUT', body: JSON.stringify(data) }),
 };
 

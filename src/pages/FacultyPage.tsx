@@ -37,6 +37,12 @@ const FacultyPage = () => {
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [designationFilter, setDesignationFilter] = useState<string>('all');
+  const [heroSettings, setHeroSettings] = useState({
+    hero_badge: 'Faculty',
+    hero_title: 'Faculty',
+    hero_subtitle: 'Our faculty across all departments and streams.',
+    hero_background_image: '',
+  });
 
   const parseExperienceYears = (exp: string | undefined): number => {
     if (!exp || !exp.trim()) return 0;
@@ -69,6 +75,12 @@ const FacultyPage = () => {
       // Support both { sort_by } and { settings: { sort_by } } response formats
       const settingsObj = (settings as any)?.settings ?? settings;
       const sb = settingsObj?.sort_by;
+      setHeroSettings({
+        hero_badge: settingsObj?.hero_badge || 'Faculty',
+        hero_title: settingsObj?.hero_title || 'Faculty',
+        hero_subtitle: settingsObj?.hero_subtitle || 'Our faculty across all departments and streams.',
+        hero_background_image: settingsObj?.hero_background_image || '',
+      });
       const sortBy = ['custom', 'default', 'experience', 'designation', 'designation-experience'].includes(sb)
         ? (sb === 'default' ? 'custom' : sb)
         : 'custom';
@@ -197,7 +209,11 @@ const FacultyPage = () => {
       {/* Hero — site standard (Library/Chairman style) */}
       <section
         className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-center text-white"
-        style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)' }}
+        style={{
+          background: heroSettings.hero_background_image
+            ? `linear-gradient(rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.78)), url(${imgUrl(heroSettings.hero_background_image)}) center/cover no-repeat`
+            : 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)',
+        }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden />
         <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
@@ -208,13 +224,13 @@ const FacultyPage = () => {
             transition={{ duration: 0.6 }}
           >
             <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
-              Faculty
+              {heroSettings.hero_badge}
             </p>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
-              Faculty
+              {heroSettings.hero_title}
             </h1>
             <p className="text-base md:text-lg text-white/90 leading-relaxed">
-              Our faculty across all departments and streams.
+              {heroSettings.hero_subtitle}
             </p>
           </motion.div>
         </div>

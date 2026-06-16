@@ -10,7 +10,6 @@ const DATA_DIR = join(__dirname, 'data');
 // Departments data based on ProgramsSection
 const departments = [
   // Diploma Programs
-  { id: 1, name: 'Agriculture Engineering', stream: 'DIPLOMA', level: 'Diploma', image: '/assets/civil-department.svg', createdAt: new Date().toISOString() },
   { id: 2, name: 'Civil Engineering', stream: 'DIPLOMA', level: 'Diploma', image: '/assets/civil-department.svg', createdAt: new Date().toISOString() },
   { id: 3, name: 'Computer Science Engineering', stream: 'DIPLOMA', level: 'Diploma', image: '/assets/cse-department.jpg', createdAt: new Date().toISOString() },
   { id: 4, name: 'ECE', stream: 'DIPLOMA', level: 'Diploma', image: '/assets/ece-department.svg', createdAt: new Date().toISOString() },

@@ -30,12 +30,6 @@ function isCSEFamilyDepartment(d: string): boolean {
 
 const configs: Record<string, DepartmentPageConfig> = {
   // Diploma
-  'diploma-agriculture': {
-    slug: 'diploma-agriculture',
-    backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'agriculture'),
-    galleryFilter: (img) => matchDept(img.department || '', 'agriculture', 'diploma'),
-  },
   'diploma-civil': {
     slug: 'diploma-civil',
     backHref: '/btech',
@@ -212,7 +206,6 @@ export function getAllDepartmentPageSlugs(): string[] {
 
 /** Display name for gallery/back link (e.g. "Civil Engineering (Diploma)") */
 const displayNames: Record<string, string> = {
-  'diploma-agriculture': 'Agriculture Engineering (Diploma)',
   'diploma-civil': 'Civil Engineering (Diploma)',
   'diploma-cse': 'Computer Science Engineering (Diploma)',
   'diploma-ece': 'Electronics & Communications (Diploma)',
@@ -241,7 +234,6 @@ export function getProgrammeHref(stream: string, level: string, name: string): s
   const n = (name || '').toLowerCase();
 
   if (s === 'DIPLOMA') {
-    if (n.includes('agriculture')) return '/programs/department/diploma-agriculture';
     if (n.includes('civil')) return '/programs/department/diploma-civil';
     if (n.includes('computer') && n.includes('science')) return '/programs/department/diploma-cse';
     if (n.includes('ece') || (n.includes('electronics') && n.includes('communication'))) return '/programs/department/diploma-ece';

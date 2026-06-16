@@ -38,7 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2, Search, Image as ImageIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -180,6 +180,14 @@ const Faculty = () => {
   const [customOrder, setCustomOrder] = useState<Faculty[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [heroForm, setHeroForm] = useState({
+    hero_badge: 'Faculty',
+    hero_title: 'Faculty',
+    hero_subtitle: 'Our faculty across all departments and streams.',
+    hero_background_image: '' as string | null,
+    heroBackgroundFile: null as File | null,
+  });
+  const [savingHero, setSavingHero] = useState(false);
 
   const fetchFaculty = async () => {
     try {
@@ -202,10 +210,19 @@ const Faculty = () => {
   const fetchFacultySettings = async () => {
     try {
       const settings = await facultySettingsAPI.get();
-      const sb = settings?.sort_by;
+      const settingsObj = (settings as any)?.settings ?? settings;
+      const sb = settingsObj?.sort_by;
       if (['custom', 'default', 'experience', 'designation', 'designation-experience'].includes(sb)) {
         setSortBy(sb === 'default' ? 'custom' : sb);
       }
+      setHeroForm((prev) => ({
+        ...prev,
+        hero_badge: settingsObj?.hero_badge || 'Faculty',
+        hero_title: settingsObj?.hero_title || 'Faculty',
+        hero_subtitle: settingsObj?.hero_subtitle || 'Our faculty across all departments and streams.',
+        hero_background_image: settingsObj?.hero_background_image || '',
+        heroBackgroundFile: null,
+      }));
     } catch {
       // Use default
     }
@@ -236,6 +253,30 @@ const Faculty = () => {
       toast.success('Faculty sort order updated on website');
     } catch (error: any) {
       toast.error(error.message || 'Failed to save sort preference');
+    }
+  };
+
+  const handleSaveHeroSettings = async () => {
+    setSavingHero(true);
+    try {
+      let heroBgUrl = heroForm.hero_background_image || '';
+      if (heroForm.heroBackgroundFile) {
+        toast.info('Uploading hero background image...');
+        const uploaded = await uploadToSupabase(heroForm.heroBackgroundFile, 'faculty', 'images');
+        if (uploaded) heroBgUrl = uploaded;
+      }
+      await facultySettingsAPI.update({
+        hero_badge: heroForm.hero_badge,
+        hero_title: heroForm.hero_title,
+        hero_subtitle: heroForm.hero_subtitle,
+        hero_background_image: heroBgUrl || null,
+      });
+      setHeroForm((prev) => ({ ...prev, hero_background_image: heroBgUrl || '', heroBackgroundFile: null }));
+      toast.success('Faculty hero section updated');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save hero settings');
+    } finally {
+      setSavingHero(false);
     }
   };
 
@@ -499,6 +540,76 @@ const Faculty = () => {
       </div>
 
       <div className="space-y-4">
+        <div className="border rounded-lg p-4 md:p-5 bg-muted/20">
+          <div className="flex items-center gap-2 mb-4">
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Faculty Page Hero Section</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="hero-badge">Hero badge</Label>
+              <Input
+                id="hero-badge"
+                value={heroForm.hero_badge}
+                onChange={(e) => setHeroForm((prev) => ({ ...prev, hero_badge: e.target.value }))}
+                placeholder="Faculty"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hero-title">Hero title</Label>
+              <Input
+                id="hero-title"
+                value={heroForm.hero_title}
+                onChange={(e) => setHeroForm((prev) => ({ ...prev, hero_title: e.target.value }))}
+                placeholder="Faculty"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="hero-subtitle">Hero subtitle</Label>
+              <Input
+                id="hero-subtitle"
+                value={heroForm.hero_subtitle}
+                onChange={(e) => setHeroForm((prev) => ({ ...prev, hero_subtitle: e.target.value }))}
+                placeholder="Our faculty across all departments and streams."
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="hero-bg">Hero background image (optional)</Label>
+              <Input
+                id="hero-bg"
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setHeroForm((prev) => ({
+                    ...prev,
+                    heroBackgroundFile: e.target.files?.[0] || null,
+                  }))
+                }
+              />
+              {heroForm.hero_background_image && (
+                <p className="text-xs text-muted-foreground break-all">
+                  Current image: {heroForm.hero_background_image}
+                </p>
+              )}
+              {heroForm.hero_background_image && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHeroForm((prev) => ({ ...prev, hero_background_image: '', heroBackgroundFile: null }))}
+                >
+                  Remove background image
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button onClick={handleSaveHeroSettings} disabled={savingHero}>
+              {savingHero ? 'Saving hero...' : 'Save hero section'}
+            </Button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative flex-1 min-w-[240px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

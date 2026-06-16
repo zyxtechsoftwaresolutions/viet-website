@@ -262,12 +262,14 @@ const AboutUs = () => {
               <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
                 {heroDescription}
               </p>
-              <a
-                href="#about-content"
-                className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg"
-              >
-                Learn More
-              </a>
+              {pageContent?.hero?.buttonText?.trim() && (
+                <a
+                  href={pageContent.hero.buttonLink?.trim() || '#about-content'}
+                  className="inline-flex items-center px-6 py-3 rounded-full font-semibold text-white bg-[#E1731A] hover:bg-[#c96215] transition-all duration-300 shadow-lg"
+                >
+                  {pageContent.hero.buttonText.trim()}
+                </a>
+              )}
             </motion.div>
           </div>
         </div>

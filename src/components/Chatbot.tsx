@@ -50,7 +50,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   {
     keywords: ["course", "courses", "program", "programs", "branch", "branches", "department", "departments", "stream", "offered", "available"],
     phrases: ["what courses", "which courses", "courses offered", "programs available", "what branches", "which branches", "departments available", "courses available", "what can i study", "what programs", "list of courses"],
-    answer: "VIET offers 15+ programs:\n\n📘 Diploma: Agriculture, Civil, Computer, ECE, EEE, Mechanical, Automobile\n\n🎓 B.Tech: CSE, CSE (Data Science), CSE (Cyber Security), CSE (AI & ML), ECE, EEE, Civil, Mechanical\n\n📗 M.Tech: CAD/CAM, Power Electronics, Structural Engineering, Thermal Engineering, VLSI/Embedded Systems\n\n📙 Management: BBA, BCA, MBA, MCA\n\nTotal Students: 4,900+ | Faculty: 200+"
+    answer: "VIET offers 15+ programs:\n\n📘 Diploma: Civil, Computer, ECE, EEE, Mechanical\n\n🎓 B.Tech: CSE, CSE (Data Science), CSE (Cyber Security), CSE (AI & ML), ECE, EEE, Civil, Mechanical\n\n📗 M.Tech: CAD/CAM, Power Electronics, Structural Engineering, Thermal Engineering, VLSI/Embedded Systems\n\n📙 Management: BBA, BCA, MBA, MCA\n\nTotal Students: 4,900+ | Faculty: 200+"
   },
   {
     keywords: ["cse", "computer science", "computer engineering", "cs"],
@@ -100,7 +100,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   {
     keywords: ["diploma"],
     phrases: ["about diploma", "diploma courses", "diploma programs", "polytechnic"],
-    answer: "VIET offers Diploma programs in: Agriculture, Civil, Computer, ECE, EEE, Mechanical, and Automobile Engineering. Total Diploma students: 1,400+."
+    answer: "VIET offers Diploma programs in: Civil, Computer, ECE, EEE, and Mechanical Engineering. Total Diploma students: 1,400+."
   },
   {
     keywords: ["mtech", "m.tech", "postgraduate", "pg", "masters", "post graduation"],

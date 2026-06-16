@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { departmentPagesAPI, facultyAPI } from '@/lib/api';
 import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { FileText, Upload, Trash2, Plus } from 'lucide-react';
+import { imgUrl } from '@/lib/imageUtils';
+import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -43,7 +45,6 @@ const DEPARTMENT_SLUGS = [
   { value: 'automobile', label: 'ENGINEERING UG - Automobile Engineering (AME)' },
   { value: 'bsh', label: 'ENGINEERING UG - Basic Science & Humanities (BS&H)' },
   // Diploma
-  { value: 'diploma-agriculture', label: 'DIPLOMA - Agriculture Engineering' },
   { value: 'diploma-civil', label: 'DIPLOMA - Civil Engineering' },
   { value: 'diploma-cse', label: 'DIPLOMA - Computer Science Engineering' },
   { value: 'diploma-ece', label: 'DIPLOMA - Electronics & Communications Engineering' },
@@ -80,10 +81,10 @@ type ClubCard = { id: string; category: string; title: string; subtitle: string 
 type FacultyOrderFilter = 'designation' | 'experience' | 'designation-experience';
 
 const defaultSections = () => ({
-  hero: { image: '', video: '', badge: '', title: '', subtitle: '', buttonText: 'Apply Now', buttonLink: '' },
+  hero: { image: '', video: '', badge: '', title: '', subtitle: '', buttonText: '', buttonLink: '' },
   overview: { title: '', content: '', whyChoose: '' },
   visionMission: { vision: '', mission: '' },
-  hod: { message: '' },
+  hod: { message: '', messageImage: '' },
   courses: { categories: [] as ProgramCategory[] },
   curriculum: { introText: 'Select a program and regulation to download the syllabus.' },
   admission: { title: '', content: '', link: '' },
@@ -108,7 +109,6 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
 
   if (raw.hero) {
     out.hero = { ...def.hero, ...raw.hero };
-    if (typeof out.hero === 'object' && !('buttonText' in out.hero)) (out.hero as any).buttonText = 'Apply Now';
     if (typeof out.hero === 'object' && !('buttonLink' in out.hero)) (out.hero as any).buttonLink = '';
     if (typeof out.hero === 'object' && !('image' in out.hero)) (out.hero as any).image = '';
     if (typeof out.hero === 'object' && !('video' in out.hero)) (out.hero as any).video = '';
@@ -265,6 +265,12 @@ const DepartmentPages = () => {
   const [heroImageFile, setHeroImageFile] = useState<File | null>(null);
   const [heroVideoFile, setHeroVideoFile] = useState<File | null>(null);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [hodMessageImageFile, setHodMessageImageFile] = useState<File | null>(null);
+  const [hodMessageImagePreview, setHodMessageImagePreview] = useState<string>('');
+  const [hodCropDialogOpen, setHodCropDialogOpen] = useState(false);
+  const [hodCropImageSrc, setHodCropImageSrc] = useState<string | null>(null);
+  const [hodCropFileName, setHodCropFileName] = useState('hod-message-photo.jpg');
+  const hodMessageImageInputRef = useRef<HTMLInputElement>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [regulationToDelete, setRegulationToDelete] = useState<{ program: string; regulation: string } | null>(null);
@@ -293,6 +299,9 @@ const DepartmentPages = () => {
   const loadPage = async () => {
     setLoading(true);
     setHeroImageFile(null);
+    setHodMessageImageFile(null);
+    setHodMessageImagePreview('');
+    setHodCropImageSrc(null);
     try {
       const data = await departmentPagesAPI.getBySlug(slug);
       setPage(data);
@@ -364,6 +373,21 @@ const DepartmentPages = () => {
         return;
       }
       setUploadingHero(false);
+    }
+    if (hodMessageImageFile) {
+      try {
+        toast.info('Uploading HOD message photo…');
+        const messageImageUrl = await uploadToSupabase(hodMessageImageFile, 'department-pages', 'images');
+        sectionsToSave = {
+          ...sectionsToSave,
+          hod: { ...sectionsToSave.hod, messageImage: messageImageUrl },
+        };
+        setHodMessageImageFile(null);
+        setHodMessageImagePreview('');
+      } catch (e: any) {
+        toast.error(e.message || 'HOD message photo upload failed');
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -753,6 +777,66 @@ const DepartmentPages = () => {
   const heroImage = sections.hero?.image;
   const heroImageUrl = heroImage ? (heroImage.startsWith('http') ? heroImage : `${API_BASE}${heroImage}`) : '';
 
+  const hodMessageImage = sections.hod?.messageImage ?? '';
+  const hodMessageImageUrl = hodMessageImage
+    ? hodMessageImage.startsWith('http')
+      ? hodMessageImage
+      : `${API_BASE}${hodMessageImage}`
+    : '';
+
+  const openHodMessageCropper = (src: string, name: string) => {
+    setHodCropImageSrc(src);
+    setHodCropFileName(name);
+    setHodCropDialogOpen(true);
+  };
+
+  const handleHodMessageImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      openHodMessageCropper(reader.result as string, file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHodMessageCropComplete = (file: File, previewUrl: string) => {
+    setHodMessageImageFile(file);
+    setHodMessageImagePreview(previewUrl);
+    if (hodMessageImageInputRef.current) hodMessageImageInputRef.current.value = '';
+  };
+
+  const handleAdjustHodMessagePhoto = () => {
+    const src = hodMessageImagePreview
+      ? hodMessageImagePreview.startsWith('data:') || hodMessageImagePreview.startsWith('blob:')
+        ? hodMessageImagePreview
+        : imgUrl(hodMessageImagePreview)
+      : hodMessageImage
+        ? hodMessageImageUrl
+        : '';
+    if (src) openHodMessageCropper(src, hodCropFileName);
+  };
+
+  const handleHodCropDialogChange = (open: boolean) => {
+    setHodCropDialogOpen(open);
+    if (!open) {
+      setHodCropImageSrc(null);
+      if (hodMessageImageInputRef.current) hodMessageImageInputRef.current.value = '';
+    }
+  };
+
+  const clearHodMessageImage = () => {
+    setHodMessageImageFile(null);
+    setHodMessageImagePreview('');
+    updateSection('hod', 'messageImage', '');
+  };
+
+  const hodMessagePreviewSrc = hodMessageImagePreview
+    ? hodMessageImagePreview.startsWith('data:') || hodMessageImagePreview.startsWith('blob:') || hodMessageImagePreview.startsWith('http')
+      ? hodMessageImagePreview
+      : imgUrl(hodMessageImagePreview)
+    : hodMessageImageUrl;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -905,9 +989,9 @@ const DepartmentPages = () => {
                 <div className="space-y-2">
                   <Label>Button Text</Label>
                   <Input
-                    value={sections.hero?.buttonText ?? 'Apply Now'}
+                    value={sections.hero?.buttonText ?? ''}
                     onChange={(e) => updateSection('hero', 'buttonText', e.target.value)}
-                    placeholder="Apply Now"
+                    placeholder="Optional — e.g. Apply Now"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1017,9 +1101,54 @@ const DepartmentPages = () => {
         <TabsContent value="hod" className="space-y-4">
           <Card>
             <CardHeader>
+              <CardTitle>HOD Message Photo</CardTitle>
+              <CardDescription>
+                Upload a separate photo for the Head of Department message section on this department page.
+                The general HOD profile photo (used on faculty cards) is managed in Admin → HODs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Message section photo</Label>
+                <div className="flex flex-wrap items-start gap-4">
+                  {hodMessagePreviewSrc && (
+                    <div className="w-full max-w-sm aspect-video overflow-hidden border bg-muted shrink-0">
+                      <img src={hodMessagePreviewSrc} alt="HOD message" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Input
+                      ref={hodMessageImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleHodMessageImageChange}
+                      className="max-w-xs"
+                    />
+                    {hodMessagePreviewSrc && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={handleAdjustHodMessagePhoto}>
+                          Adjust photo
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={clearHodMessageImage}>
+                          Remove photo
+                        </Button>
+                      </div>
+                    )}
+                    {hodMessageImageFile && (
+                      <p className="text-xs text-muted-foreground">
+                        New photo selected — click Save at the bottom to upload.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Message</CardTitle>
               <CardDescription>
-                Add a message that will appear in the Head of Department section. This message will be displayed above the HOD cards. HODs themselves are managed separately in the Admin → HODs panel.
+                Add a message for the Head of Department section. HOD details are managed in Admin → HODs.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1032,7 +1161,7 @@ const DepartmentPages = () => {
                   placeholder="Enter the message for the Head of Department section..."
                 />
                 <p className="text-xs text-muted-foreground">
-                  You can use HTML tags for formatting. The message will appear above the HOD cards.
+                  You can use HTML tags for formatting. The message appears beside the HOD message photo.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -1739,6 +1868,20 @@ const DepartmentPages = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FacultyImageCropper
+        open={hodCropDialogOpen}
+        onOpenChange={handleHodCropDialogChange}
+        imageSrc={hodCropImageSrc}
+        fileName={hodCropFileName}
+        description="Drag to reposition and zoom. The 16:9 frame matches the HOD message photo on the department page."
+        previewMaxWidth="480px"
+        aspect={16 / 9}
+        outputWidth={1280}
+        outputHeight={720}
+        showProfileFooter={false}
+        onCropComplete={handleHodMessageCropComplete}
+      />
     </div>
   );
 };

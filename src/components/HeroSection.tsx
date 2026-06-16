@@ -526,6 +526,18 @@ function ExplorePathStreamColumn({
   );
 }
 
+/** Hidden from homepage Explore Your Path only — still listed under Departments and has its own page. */
+function isExcludedFromExplorePath(name: string): boolean {
+  const n = (name || '').toLowerCase();
+  return (
+    n.includes('basic science') ||
+    n.includes('bs&h') ||
+    n.includes('bs & h') ||
+    n.includes('bsh') ||
+    (n.includes('humanities') && n.includes('basic'))
+  );
+}
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -587,8 +599,7 @@ const HeroSection = () => {
     
     // Href mapping - try to match existing routes
     let href = '#';
-    if (normalizedName.includes('agriculture')) href = '/agricultural-engineering';
-    else if (normalizedName.includes('civil') && level.toLowerCase() === 'diploma') href = '/civil-engineering';
+    if (normalizedName.includes('civil') && level.toLowerCase() === 'diploma') href = '/civil-engineering';
     else if (normalizedName.includes('civil') && level.toLowerCase() === 'ug') href = '/civil-engineering-ug';
     else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'diploma') href = '/computer-engineering';
     else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'ug') href = '/programs/engineering/ug/cse';
@@ -621,6 +632,7 @@ const HeroSection = () => {
         const unique = departments.filter((dept) => {
           const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
           if (seen.has(key)) return false;
+          if (dept.name.toLowerCase().includes('agriculture')) return false;
           seen.add(key);
           return true;
         });
@@ -909,7 +921,7 @@ const HeroSection = () => {
                     {slide.buttonText && (
                       <button
                         onClick={slide.buttonAction}
-                        className="group relative px-8 py-3.5 bg-white text-[#0a192f] font-semibold text-base rounded-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-white/25"
+                        className="group relative px-8 py-3.5 bg-[#E1731A] hover:bg-[#c96215] text-white font-semibold text-base rounded-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[#E1731A]/30"
                       >
                         <span className="relative z-10 flex items-center gap-2">
                           {slide.buttonText}
@@ -968,10 +980,10 @@ const HeroSection = () => {
         <ScrollingTicker />
       </div>
 
-      {/* News & Announcements - below hero, above EXPLORE YOUR PATH */}
+      {/* News & Announcements - below hero, above Learn@VIET */}
       <NewsAnnouncementsSection />
 
-      {/* Explore Your Path – four streams visible at once */}
+      {/* Learn@VIET – four streams visible at once */}
       <div id="whats-your-interest" className="relative overflow-hidden py-8 md:py-10 border-t border-slate-800 min-h-[560px] md:min-h-[540px] lg:h-[580px] bg-slate-900">
         <ExplorePathVideo />
         <div className="absolute inset-0 bg-black/40 z-[1]" aria-hidden />
@@ -988,7 +1000,7 @@ const HeroSection = () => {
               className="text-3xl md:text-4xl lg:text-5xl font-bold text-white"
               style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.06em' }}
             >
-              Explore Your Path
+              Learn@VIET
             </h2>
             <div className="mt-3 h-px w-20 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" aria-hidden />
           </motion.div>
@@ -1006,7 +1018,11 @@ const HeroSection = () => {
 
                 const streams = [
                   { id: 'diploma', title: 'Diploma', groups: [{ items: interestCategories.diploma }] },
-                  { id: 'btech', title: 'B.Tech', groups: [{ items: interestCategories.engineering.ug }] },
+                  {
+                    id: 'btech',
+                    title: 'B.Tech',
+                    groups: [{ items: interestCategories.engineering.ug.filter((p) => !isExcludedFromExplorePath(p.name)) }],
+                  },
                   { id: 'mtech', title: 'M.Tech', groups: [{ items: interestCategories.engineering.pg }] },
                   { id: 'management', title: 'Management', groups: managementGroups },
                 ];

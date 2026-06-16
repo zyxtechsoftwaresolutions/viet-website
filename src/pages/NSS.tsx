@@ -59,14 +59,6 @@ const NSSPage = () => {
             <p className="text-base md:text-lg text-white/90 leading-relaxed mb-6">
               Not Me, But You — Building tomorrow&apos;s leaders through community service and social responsibility.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="#join" className="px-6 py-3 bg-white text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-all shadow-lg">
-                Join NSS
-              </a>
-              <a href="#activities" className="px-6 py-3 bg-white/10 backdrop-blur-sm border-2 border-white text-white rounded-xl font-semibold hover:bg-white/20 transition-all">
-                Our Activities
-              </a>
-            </div>
           </motion.div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 pointer-events-none">

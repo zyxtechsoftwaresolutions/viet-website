@@ -62,25 +62,6 @@ interface APIFacultyMember {
 const PROGRAMS_DATA: Program[] = [
     // Diploma Programs
     {
-      icon: Leaf,
-      title: 'Agriculture Engineering',
-      description: 'Modern agricultural technology and sustainable farming practices',
-      duration: '3 Years',
-      seats: '30',
-      gradient: 'from-green-500 to-emerald-600',
-      image: civilImage,
-      color: 'hsl(142 70% 30%)',
-      category: 'Diploma',
-      faculty: {
-        hod: {
-          name: 'HOD - Agriculture Engineering',
-          designation: 'Head of Department',
-          qualification: 'M.Tech / Ph.D',
-          email: 'agriculturehod@viet.edu.in'
-        }
-      }
-    },
-    {
       icon: Building2,
       title: 'Civil Engineering',
       description: 'Infrastructure development and construction technology',

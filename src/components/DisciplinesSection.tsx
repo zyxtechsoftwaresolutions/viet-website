@@ -119,6 +119,7 @@ const DisciplinesSection = () => {
         const unique = departments.filter((dept) => {
           const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
           if (seen.has(key)) return false;
+          if (dept.name.toLowerCase().includes('agriculture')) return false;
           seen.add(key);
           return true;
         });
@@ -163,7 +164,6 @@ const DisciplinesSection = () => {
   // Fallback programmes (used only if API fails or returns empty)
   const fallbackProgrammes: Programme[] = [
     // Diploma Programmes - each using getDepartmentImage for consistency
-    { name: 'Agriculture Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Agriculture Engineering'), icon: Leaf },
     { name: 'Civil Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Civil Engineering'), icon: Building2 },
     { name: 'Computer Science Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Computer Science Engineering'), icon: Code },
     { name: 'ECE', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('ECE'), icon: Radio },

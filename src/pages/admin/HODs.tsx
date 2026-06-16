@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,6 +38,8 @@ import {
 import { GripVertical, ChevronUp, ChevronDown, Plus, Pencil, Trash2 } from 'lucide-react';
 import { hodsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import { imgUrl } from '@/lib/imageUtils';
+import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
 import { toast } from 'sonner';
 
 interface HOD {
@@ -82,6 +84,10 @@ const HODs = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropFileName, setCropFileName] = useState('hod-photo.jpg');
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const fetchHODs = async () => {
     try {
@@ -140,7 +146,7 @@ const HODs = () => {
     setImageFile(null);
     setResumeFile(null);
     setPreview('');
-    // Refetch departments when opening the dialog to ensure we have the latest list
+    setCropImageSrc(null);
     fetchDepartments();
     setDialogOpen(true);
   };
@@ -158,33 +164,56 @@ const HODs = () => {
     });
     setImageFile(null);
     setResumeFile(null);
-    // Set preview with full URL if image exists
-    if (item.image) {
-      const imageUrl = item.image.startsWith('http') 
-        ? item.image 
-        : item.image.startsWith('/') 
-            ? `http://localhost:3001${item.image}` 
-            : `http://localhost:3001/${item.image}`;
-      setPreview(imageUrl);
-    } else {
-      setPreview('');
-    }
-    // Refetch departments when opening the dialog to ensure we have the latest list
+    setCropImageSrc(null);
+    setPreview(item.image ? imgUrl(item.image) : '');
     fetchDepartments();
     setDialogOpen(true);
   };
 
+  const openCropper = (src: string, name: string) => {
+    setCropImageSrc(src);
+    setCropFileName(name);
+    setCropDialogOpen(true);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      openCropper(reader.result as string, file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (file: File, previewUrl: string) => {
+    setImageFile(file);
+    setPreview(previewUrl);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const handleAdjustPhoto = () => {
+    if (preview) {
+      const src =
+        preview.startsWith('data:') || preview.startsWith('blob:')
+          ? preview
+          : imgUrl(preview);
+      openCropper(src, cropFileName);
     }
   };
+
+  const handleCropDialogChange = (open: boolean) => {
+    setCropDialogOpen(open);
+    if (!open) {
+      setCropImageSrc(null);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  const previewSrc =
+    preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http')
+      ? preview
+      : imgUrl(preview);
 
   const handleDelete = (item: HOD) => {
     setSelectedItem(item);
@@ -318,13 +347,7 @@ const HODs = () => {
                 </TableRow>
               ) : (
                 hods.map((item, index) => {
-                  const imageUrl = item.image 
-                    ? (item.image.startsWith('http') 
-                        ? item.image 
-                        : item.image.startsWith('/') 
-                            ? `http://localhost:3001${item.image}` 
-                            : `http://localhost:3001/${item.image}`)
-                    : '/placeholder.svg';
+                  const imageUrl = item.image ? imgUrl(item.image) : '/placeholder.svg';
                   return (
                     <TableRow key={item.id}>
                       <TableCell>
@@ -408,6 +431,7 @@ const HODs = () => {
               <div className="space-y-2">
                 <Label htmlFor="image">Profile Image</Label>
                 <Input
+                  ref={imageInputRef}
                   id="image"
                   type="file"
                   accept="image/*"
@@ -415,14 +439,28 @@ const HODs = () => {
                   className="cursor-pointer"
                 />
                 {preview && (
-                  <img
-                    src={preview.startsWith('data:') || preview.startsWith('http') ? preview : (preview.startsWith('/') ? `http://localhost:3001${preview}` : `http://localhost:3001/${preview}`)}
-                    alt="Preview"
-                    className="w-24 h-24 object-cover rounded-full mt-2"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.svg';
-                    }}
-                  />
+                  <div className="mt-2 space-y-2">
+                    <div className="max-w-[120px] border border-slate-200/80 rounded overflow-hidden bg-white">
+                      <div className="aspect-square w-full bg-slate-100 overflow-hidden">
+                        <img
+                          src={previewSrc}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-2 border-t border-slate-100">
+                        <p className="text-xs font-semibold text-slate-900 truncate">
+                          {formData.name || 'Name'}
+                        </p>
+                        <p className="text-[10px] text-slate-600 truncate">
+                          {formData.designation || 'Designation'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAdjustPhoto}>
+                      Adjust photo
+                    </Button>
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
@@ -549,6 +587,17 @@ const HODs = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FacultyImageCropper
+        open={cropDialogOpen}
+        onOpenChange={handleCropDialogChange}
+        imageSrc={cropImageSrc}
+        fileName={cropFileName}
+        facultyName={formData.name}
+        facultyDesignation={formData.designation}
+        description="Drag to reposition and zoom. The square frame matches the HOD photo on faculty cards."
+        onCropComplete={handleCropComplete}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

@@ -20,7 +20,6 @@ const AmritaStyleHeader = () => {
   // Program Data Structure (same as Program Finder)
   const programData = {
     diploma: [
-      { name: 'Agriculture Engineering', href: '/agricultural-engineering', description: 'Learn modern farming techniques, irrigation systems, and agricultural machinery for sustainable agriculture.' },
       { name: 'Civil Engineering', href: '/civil-engineering', description: 'Foundation in construction, surveying, and infrastructure development for building projects.' },
       { name: 'Computer Science Engineering', href: '/computer-engineering', description: 'Core programming, hardware fundamentals, and software development skills for IT careers.' },
       { name: 'Electronics & Communications Engineering', href: '/electronics-communications-engineering', description: 'Study electronic circuits, communication systems, and signal processing technologies.' },

@@ -239,7 +239,7 @@ const AboutUsAdmin = () => {
                 <ImageIcon className="h-5 w-5" />
                 Hero section
               </CardTitle>
-              <CardDescription>Title, description, and background image</CardDescription>
+              <CardDescription>Title, description, background image, and optional hero button</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -269,6 +269,24 @@ const AboutUsAdmin = () => {
                 {((content.hero as any)?.heroImage as string) && (
                   <p className="text-xs text-muted-foreground">Current: {(content.hero as any).heroImage}</p>
                 )}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Hero button text (optional)</Label>
+                  <Input
+                    value={((content.hero as any)?.buttonText as string) || ''}
+                    onChange={(e) => updateContent('hero.buttonText', e.target.value)}
+                    placeholder="e.g. Learn More"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hero button link (optional)</Label>
+                  <Input
+                    value={((content.hero as any)?.buttonLink as string) || ''}
+                    onChange={(e) => updateContent('hero.buttonLink', e.target.value)}
+                    placeholder="#about-content or https://..."
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

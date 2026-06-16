@@ -322,7 +322,7 @@ const DepartmentGallery: React.FC = () => {
                       return (
                         <div
                           key={chunkIndex * 10 + i}
-                          className={`vibe-gallery-item relative group cursor-pointer ${itemLayout.colSpan} ${itemLayout.rowSpan} min-h-[150px] md:min-h-[200px]`}
+                          className={`vibe-gallery-item department-gallery-item relative group cursor-pointer ${itemLayout.colSpan} ${itemLayout.rowSpan} min-h-[150px] md:min-h-[200px]`}
                           onClick={() => openImageModal(img.src)}
                         >
                           <img
@@ -368,8 +368,8 @@ const DepartmentGallery: React.FC = () => {
               <ChevronRight className="w-6 h-6" />
             </Button>
             {selectedImage && (
-              <div className="flex justify-center bg-black/80 rounded-lg">
-                <img src={selectedImage} alt={galleryImages[currentImageIndex]?.alt || 'Gallery'} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+              <div className="flex justify-center bg-black/80">
+                <img src={selectedImage} alt={galleryImages[currentImageIndex]?.alt || 'Gallery'} className="max-w-full max-h-[80vh] object-contain" />
               </div>
             )}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">

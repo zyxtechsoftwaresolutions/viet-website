@@ -596,6 +596,11 @@ html {
   border-radius: 0.75rem;
 }
 
+/* Department page galleries — sharp corners (no rounding) */
+.department-gallery-item.vibe-gallery-item {
+  border-radius: 0;
+}
+
 .vibe-gallery-item::after {
   content: '';
   position: absolute;

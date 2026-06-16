@@ -36,7 +36,6 @@ function isCSEFamilyDepartment(d) {
 }
 
 const SLUG_TO_FILTER = {
-  'diploma-agriculture': (d) => matchDept(d, 'agriculture'),
   'diploma-civil': (d) => matchDept(d, 'civil') && (matchDept(d, 'diploma') || !matchDept(d, 'engineering ug', 'b.tech')),
   'diploma-cse': (d) => matchDept(d, 'computer') && (matchDept(d, 'diploma') || matchDept(d, 'computer science engineering')),
   'diploma-ece': (d) => matchDept(d, 'ece', 'electronics') && (matchDept(d, 'diploma') || matchDept(d, 'communications')),

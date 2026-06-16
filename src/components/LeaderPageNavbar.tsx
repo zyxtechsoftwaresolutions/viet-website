@@ -26,7 +26,6 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
   // Program Data Structure — Diploma, Engineering PG, Management use /programs/department/:slug (editable in Admin → Department Pages)
   const programData = {
     diploma: [
-      { name: 'Agriculture Engineering', href: '/programs/department/diploma-agriculture', description: 'Learn modern farming techniques, irrigation systems, and agricultural machinery for sustainable agriculture.' },
       { name: 'Civil Engineering', href: '/programs/department/diploma-civil', description: 'Foundation in construction, surveying, and infrastructure development for building projects.' },
       { name: 'Computer Science Engineering', href: '/programs/department/diploma-cse', description: 'Core programming, hardware fundamentals, and software development skills for IT careers.' },
       { name: 'Electronics & Communications Engineering', href: '/programs/department/diploma-ece', description: 'Study electronic circuits, communication systems, and signal processing technologies.' },
@@ -424,14 +423,18 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              {/* Full logo container - visible when not scrolled */}
+              {/* Full logo container - visible when not scrolled; frosted backdrop for contrast on light hero media */}
               <motion.div 
-                className="rounded-lg overflow-hidden bg-transparent"
+                className="rounded-lg overflow-hidden bg-black/40 backdrop-blur-md px-2.5 py-1.5 sm:px-3 sm:py-2 border border-white/15 shadow-lg"
+                style={{
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                }}
                 initial={false}
                 animate={{
                   width: isScrolled ? 0 : 'auto',
                   opacity: isScrolled ? 0 : 1,
-                  padding: isScrolled ? 0 : 0,
+                  padding: isScrolled ? 0 : undefined,
                 }}
                 transition={{
                   duration: 0.5,

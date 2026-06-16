@@ -22,6 +22,12 @@ interface FacultyImageCropperProps {
   fileName?: string;
   facultyName?: string;
   facultyDesignation?: string;
+  description?: string;
+  previewMaxWidth?: string;
+  aspect?: number;
+  outputWidth?: number;
+  outputHeight?: number;
+  showProfileFooter?: boolean;
   onCropComplete: (file: File, previewUrl: string) => void;
 }
 
@@ -32,8 +38,17 @@ const FacultyImageCropper = ({
   fileName = 'faculty-photo.jpg',
   facultyName,
   facultyDesignation,
+  description = 'Drag to reposition and zoom. The square frame matches the faculty card on the website.',
+  previewMaxWidth = '220px',
+  aspect = 1,
+  outputWidth,
+  outputHeight,
+  showProfileFooter = true,
   onCropComplete,
 }: FacultyImageCropperProps) => {
+  const cropOutputWidth = outputWidth ?? (aspect === 1 ? 800 : 1280);
+  const cropOutputHeight = outputHeight ?? (aspect === 1 ? 800 : 720);
+  const previewAspectClass = aspect === 1 ? 'aspect-square' : 'aspect-video';
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -47,7 +62,7 @@ const FacultyImageCropper = ({
     if (!imageSrc || !croppedAreaPixels) return;
     setSaving(true);
     try {
-      const blob = await getCroppedImg(imageSrc, croppedAreaPixels);
+      const blob = await getCroppedImg(imageSrc, croppedAreaPixels, cropOutputWidth, cropOutputHeight);
       const previewUrl = URL.createObjectURL(blob);
       const file = new File([blob], fileName.replace(/\.\w+$/, '.jpg'), {
         type: 'image/jpeg',
@@ -74,21 +89,22 @@ const FacultyImageCropper = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Adjust profile photo</DialogTitle>
-          <DialogDescription>
-            Drag to reposition and zoom. The square frame matches the faculty card on the website.
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         {imageSrc && (
           <div className="space-y-4">
             {/* Faculty card preview — same layout as FacultyPage */}
-            <div className="mx-auto max-w-[220px] bg-white border border-slate-200/80 rounded overflow-hidden shadow-sm">
-              <div className="relative w-full aspect-square bg-slate-100 overflow-hidden">
+            <div
+              className="mx-auto bg-white border border-slate-200/80 rounded overflow-hidden shadow-sm"
+              style={{ maxWidth: previewMaxWidth }}
+            >
+              <div className={`relative w-full ${previewAspectClass} bg-slate-100 overflow-hidden`}>
                 <Cropper
                   image={imageSrc}
                   crop={crop}
                   zoom={zoom}
-                  aspect={1}
+                  aspect={aspect}
                   cropShape="rect"
                   showGrid
                   onCropChange={setCrop}
@@ -96,14 +112,16 @@ const FacultyImageCropper = ({
                   onCropComplete={onCropCompleteHandler}
                 />
               </div>
-              <div className="p-3 border-t border-slate-100">
-                <p className="font-semibold text-slate-900 text-sm leading-tight truncate">
-                  {facultyName || 'Faculty name'}
-                </p>
-                <p className="text-xs text-slate-600 mt-0.5 truncate">
-                  {facultyDesignation || 'Designation'}
-                </p>
-              </div>
+              {showProfileFooter && (
+                <div className="p-3 border-t border-slate-100">
+                  <p className="font-semibold text-slate-900 text-sm leading-tight truncate">
+                    {facultyName || 'Faculty name'}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5 truncate">
+                    {facultyDesignation || 'Designation'}
+                  </p>
+                </div>
+              )}
             </div>
 
             <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">

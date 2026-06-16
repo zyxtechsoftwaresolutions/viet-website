@@ -178,7 +178,16 @@ async function initializeData() {
     'aicte-affiliation-letters': { letters: [] },
     'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } },
     'explore-path-video-settings': { settings: { id: 1, video_url: null } },
-    'faculty-settings': { settings: { id: 1, sort_by: 'custom' } }
+    'faculty-settings': {
+      settings: {
+        id: 1,
+        sort_by: 'custom',
+        hero_badge: 'Faculty',
+        hero_title: 'Faculty',
+        hero_subtitle: 'Our faculty across all departments and streams.',
+        hero_background_image: null
+      }
+    }
   };
 
   for (const [file, defaultData] of Object.entries(dataFiles)) {
@@ -1743,7 +1752,20 @@ app.put('/api/faculty-settings', authenticateToken, checkSectionAccess, async (r
     if (body.sort_by !== undefined && !validSortBy.includes(body.sort_by)) {
       return res.status(400).json({ error: 'sort_by must be one of: custom, experience, designation, designation-experience' });
     }
-    const updated = await db.updateFacultySettings({ sort_by: body.sort_by });
+    const sanitizeText = (value, max = 300) =>
+      value === undefined ? undefined : String(value ?? '').trim().slice(0, max);
+    const sanitizeNullableText = (value, max = 2000) => {
+      if (value === undefined) return undefined;
+      const trimmed = String(value ?? '').trim();
+      return trimmed ? trimmed.slice(0, max) : null;
+    };
+    const updated = await db.updateFacultySettings({
+      sort_by: body.sort_by,
+      hero_badge: sanitizeText(body.hero_badge, 80),
+      hero_title: sanitizeText(body.hero_title, 120),
+      hero_subtitle: sanitizeText(body.hero_subtitle, 500),
+      hero_background_image: sanitizeNullableText(body.hero_background_image, 2000),
+    });
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message || 'Failed to update faculty settings' });

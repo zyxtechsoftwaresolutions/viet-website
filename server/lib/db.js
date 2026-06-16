@@ -1500,12 +1500,20 @@ export async function updateExplorePathVideoSettings(item) {
 
 // ==================== FACULTY SETTINGS ====================
 export async function getFacultySettings() {
+  const defaults = {
+    id: 1,
+    sort_by: 'custom',
+    hero_badge: 'Faculty',
+    hero_title: 'Faculty',
+    hero_subtitle: 'Our faculty across all departments and streams.',
+    hero_background_image: null,
+  };
   if (useJsonFallback) {
     try {
       const d = await readJsonFile('faculty-settings');
-      return d.settings || { id: 1, sort_by: 'custom' };
+      return { ...defaults, ...(d.settings || {}) };
     } catch (e) {
-      return { id: 1, sort_by: 'custom' };
+      return defaults;
     }
   }
   try {
@@ -1516,19 +1524,23 @@ export async function getFacultySettings() {
       .single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '42P01') {
-        return { id: 1, sort_by: 'custom' };
+        return defaults;
       }
       throw error;
     }
-    return data || { id: 1, sort_by: 'custom' };
+    return { ...defaults, ...(data || {}) };
   } catch (e) {
-    return { id: 1, sort_by: 'custom' };
+    return defaults;
   }
 }
 
 export async function updateFacultySettings(item) {
   const payload = { updated_at: new Date().toISOString() };
   if (item.sort_by !== undefined) payload.sort_by = item.sort_by;
+  if (item.hero_badge !== undefined) payload.hero_badge = item.hero_badge;
+  if (item.hero_title !== undefined) payload.hero_title = item.hero_title;
+  if (item.hero_subtitle !== undefined) payload.hero_subtitle = item.hero_subtitle;
+  if (item.hero_background_image !== undefined) payload.hero_background_image = item.hero_background_image;
 
   if (useJsonFallback) {
     const d = await readJsonFile('faculty-settings');
