@@ -215,26 +215,26 @@ const AnnouncementsNewsEventsSection = () => {
       `}</style>
       <section
       id="happenings"
-      className="glossy-green-texture relative py-20 overflow-hidden border-y border-emerald-200/50"
+      className="happenings-bg-texture relative py-16 md:py-[4.5rem] overflow-hidden border-y border-emerald-200/50"
       ref={ref}
       >
       <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12">
         {/* Section Header - aligned and styled like VIBE@VIET */}
-        <div className="mb-6 md:mb-8 flex items-center gap-3">
+        <div className="mb-5 md:mb-7 flex items-center gap-3">
           <h2
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0a192f] px-3 py-1 rounded-lg bg-white/70 backdrop-blur-sm"
+            className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-[#0a192f] px-3 py-1 rounded-lg bg-white/70 backdrop-blur-sm"
             style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.12em' }}
           >
             Happenings
           </h2>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8 lg:items-stretch">
+        <div className="grid lg:grid-cols-5 gap-6 lg:gap-7 lg:items-stretch">
           {/* Left: Latest/Upcoming Event + Countdown – content-sized (16/9 image + content); height drives right column */}
           <div className="lg:col-span-3 order-2 lg:order-1 lg:self-start">
-            <div ref={leftCardRef} className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+            <div ref={leftCardRef} className="happenings-glass-card rounded-2xl overflow-hidden">
               {latestEventImageUrl && (
-                <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+                <div className="aspect-[16/9] w-full max-h-[280px] sm:max-h-[300px] lg:max-h-[340px] overflow-hidden bg-muted">
                   <img
                     src={latestEventImageUrl}
                     alt={latestEvent?.title ?? 'Latest event'}
@@ -247,7 +247,7 @@ const AnnouncementsNewsEventsSection = () => {
                   />
                 </div>
               )}
-              <div className="p-6 md:p-8">
+              <div className="p-5 md:p-7">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -309,7 +309,7 @@ const AnnouncementsNewsEventsSection = () => {
             style={
               leftCardHeightPx != null
                 ? { height: `${leftCardHeightPx}px`, minHeight: 0, maxHeight: `${leftCardHeightPx}px` }
-                : { minHeight: '280px' }
+                : { minHeight: '260px' }
             }
           >
             <div
@@ -348,7 +348,7 @@ const AnnouncementsNewsEventsSection = () => {
                             href={card.link || '#'}
                             target={card.link?.startsWith('http') ? '_blank' : undefined}
                             rel={card.link?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="block rounded-2xl overflow-hidden shadow-lg flex-shrink-0"
+                            className="block happenings-glass-card rounded-2xl overflow-hidden flex-shrink-0"
                             style={rightCardHeightStyle}
                           >
                             <div className="relative h-full w-full">

@@ -230,6 +230,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const [allGalleryImages, setAllGalleryImages] = useState<Array<{ src: string; alt: string }>>([]);
   const [faculty, setFaculty] = useState<any[]>([]);
   const [hods, setHods] = useState<any[]>([]);
+  const [teachingFacultyHods, setTeachingFacultyHods] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -278,6 +279,8 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         const [f, h] = await Promise.all([facultyAPI.getAll(), hodsAPI.getAll()]);
         const data = await departmentPagesAPI.getBySlug(slug);
         const facultyIds = Array.isArray(data?.sections?.faculty?.facultyIds) ? data.sections.faculty.facultyIds : [];
+        const facultyHodIds = Array.isArray(data?.sections?.faculty?.hodIds) ? data.sections.faculty.hodIds : [];
+        const hasExplicitFacultyHodIds = Object.prototype.hasOwnProperty.call(data?.sections?.faculty ?? {}, 'hodIds');
         const deptFilter = facultyFilter ?? (() => false);
         const hodIds = Array.isArray(data?.sections?.hod?.hodIds) ? data.sections.hod.hodIds : [];
         if (hodIds.length > 0) {
@@ -286,6 +289,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         } else {
           setHods(h.filter((x: any) => deptFilter(x.department || '')));
         }
+        const teachingHods = hasExplicitFacultyHodIds
+          ? h.filter((x: any) => facultyHodIds.includes(x.id))
+          : h.filter((x: any) => deptFilter(x.department || ''));
+        setTeachingFacultyHods(teachingHods);
         if (facultyIds.length > 0) {
           const idSet = new Set(facultyIds);
           setFaculty(f.filter((x: any) => idSet.has(x.id)));
@@ -295,6 +302,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       } catch (_) {
         setFaculty([]);
         setHods([]);
+        setTeachingFacultyHods([]);
       }
     };
     loadFacultyAndHods();
@@ -415,7 +423,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   // Faculty list: keep HOD(s) of this department first, then sort remaining faculty
   // by selected order from Admin -> Department Pages -> Faculty.
   const sortedFacultyWithHods = useMemo(() => {
-    const sortedHods = [...hods].sort((a: any, b: any) => {
+    const sortedHods = [...teachingFacultyHods].sort((a: any, b: any) => {
       const hpA = getHodPriority(a.designation);
       const hpB = getHodPriority(b.designation);
       if (hpB !== hpA) return hpB - hpA;
@@ -466,7 +474,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     }
 
     return result;
-  }, [hods, faculty, facultyOrderFilter]);
+  }, [teachingFacultyHods, faculty, facultyOrderFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50">

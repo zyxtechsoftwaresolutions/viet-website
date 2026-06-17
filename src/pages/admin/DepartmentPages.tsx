@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { departmentPagesAPI, facultyAPI } from '@/lib/api';
+import { departmentPagesAPI, facultyAPI, hodsAPI } from '@/lib/api';
+import { getDepartmentPageConfig } from '@/lib/departmentPageConfig';
 import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,6 +80,14 @@ type IdeaCellStat = { label: string; value: string };
 type IdeaCellPillar = { id: string; icon: string; title: string; items: string[] };
 type ClubCard = { id: string; category: string; title: string; subtitle: string };
 type FacultyOrderFilter = 'designation' | 'experience' | 'designation-experience';
+type FacultySelectionItem = {
+  id: number;
+  name: string;
+  designation?: string;
+  experience?: string;
+  department?: string;
+  source: 'faculty' | 'hod';
+};
 
 const defaultSections = () => ({
   hero: { image: '', video: '', badge: '', title: '', subtitle: '', buttonText: '', buttonLink: '' },
@@ -235,6 +244,9 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
       facultyIds: Array.isArray(raw.faculty.facultyIds) ? raw.faculty.facultyIds : (def.faculty.facultyIds || []),
       sortBy,
     };
+    if (Array.isArray(raw.faculty.hodIds)) {
+      (out.faculty as { hodIds?: number[] }).hodIds = raw.faculty.hodIds;
+    }
   }
   ['gallery', 'alumni'].forEach((k) => {
     if (raw[k]?.content !== undefined) (out as any)[k] = { ...(out as any)[k], content: raw[k].content };
@@ -275,23 +287,42 @@ const DepartmentPages = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [regulationToDelete, setRegulationToDelete] = useState<{ program: string; regulation: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [allFaculty, setAllFaculty] = useState<Array<{ id: number; name: string; designation?: string; experience?: string }>>([]);
+  const [allFaculty, setAllFaculty] = useState<FacultySelectionItem[]>([]);
   const [facultySearchQuery, setFacultySearchQuery] = useState('');
+  const [facultyDepartmentFilter, setFacultyDepartmentFilter] = useState<string>('all');
+  const [hodIdsTouched, setHodIdsTouched] = useState(false);
 
   useEffect(() => {
     loadPage();
+    setFacultyDepartmentFilter('all');
+    setFacultySearchQuery('');
+    setHodIdsTouched(false);
   }, [slug]);
 
   useEffect(() => {
-    facultyAPI.getAll()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setAllFaculty(list.map((f: any) => ({
-          id: f.id,
-          name: f.name,
-          designation: f.designation,
-          experience: f.experience,
-        })));
+    Promise.all([facultyAPI.getAll(), hodsAPI.getAll()])
+      .then(([facultyData, hodsData]) => {
+        const facultyList = Array.isArray(facultyData) ? facultyData : [];
+        const hodList = Array.isArray(hodsData) ? hodsData : [];
+        const merged: FacultySelectionItem[] = [
+          ...facultyList.map((f: any) => ({
+            id: f.id,
+            name: f.name,
+            designation: f.designation,
+            experience: f.experience,
+            department: f.department,
+            source: 'faculty' as const,
+          })),
+          ...hodList.map((h: any) => ({
+            id: h.id,
+            name: h.name,
+            designation: h.designation,
+            experience: h.experience,
+            department: h.department,
+            source: 'hod' as const,
+          })),
+        ];
+        setAllFaculty(merged);
       })
       .catch(() => setAllFaculty([]));
   }, []);
@@ -306,9 +337,11 @@ const DepartmentPages = () => {
       const data = await departmentPagesAPI.getBySlug(slug);
       setPage(data);
       setSections(migrateSections(data.sections));
+      setHodIdsTouched(Array.isArray(data.sections?.faculty?.hodIds));
     } catch {
       setPage({ slug, sections: defaultSections(), curriculum: { programs: [] } });
       setSections(defaultSections());
+      setHodIdsTouched(false);
     } finally {
       setLoading(false);
     }
@@ -332,8 +365,38 @@ const DepartmentPages = () => {
     updateSection('faculty', 'facultyIds', Array.from(set).sort((a, b) => a - b));
   };
 
+  const toggleHodForDept = (hodId: number) => {
+    const ids = sections.faculty?.hodIds ?? [];
+    const set = new Set(ids);
+    if (set.has(hodId)) set.delete(hodId);
+    else set.add(hodId);
+    setHodIdsTouched(true);
+    updateSection('faculty', 'hodIds', Array.from(set).sort((a, b) => a - b));
+  };
+
+  const toggleTeachingFaculty = (item: FacultySelectionItem) => {
+    if (item.source === 'hod') toggleHodForDept(item.id);
+    else toggleFacultyForDept(item.id);
+  };
+
+  const isTeachingFacultySelected = (item: FacultySelectionItem) => {
+    if (item.source === 'hod') {
+      if (hodIdsTouched || Array.isArray((sections.faculty as { hodIds?: number[] } | undefined)?.hodIds)) {
+        return (sections.faculty?.hodIds ?? []).includes(item.id);
+      }
+      const deptConfig = getDepartmentPageConfig(slug);
+      const deptFilter = deptConfig?.facultyFilter;
+      return deptFilter ? deptFilter(item.department || '') : false;
+    }
+    return (sections.faculty?.facultyIds ?? []).includes(item.id);
+  };
+
   const prepareSectionsForSave = () => {
     const s = { ...sections };
+    if (!hodIdsTouched && s.faculty) {
+      const { hodIds, ...facultyRest } = s.faculty as { hodIds?: number[] } & Record<string, unknown>;
+      s.faculty = facultyRest;
+    }
     return s;
   };
 
@@ -488,6 +551,8 @@ const DepartmentPages = () => {
       return 30;
     };
     const q = facultySearchQuery.trim().toLowerCase();
+    const deptConfig = getDepartmentPageConfig(slug);
+    const deptFilter = deptConfig?.facultyFilter;
     const facultyOrderFilter: FacultyOrderFilter =
       sections.faculty?.sortBy === 'designation' || sections.faculty?.sortBy === 'experience' || sections.faculty?.sortBy === 'designation-experience'
         ? sections.faculty.sortBy
@@ -495,7 +560,12 @@ const DepartmentPages = () => {
     const filtered = allFaculty.filter((f) => {
       const name = (f.name || '').toLowerCase();
       const designation = (f.designation || '').toLowerCase();
-      return !q || name.includes(q) || designation.includes(q);
+      const department = (f.department || '').toLowerCase();
+      const matchesSearch = !q || name.includes(q) || designation.includes(q) || department.includes(q);
+      const matchesDeptPage = !deptFilter || deptFilter(f.department || '');
+      const matchesDeptDropdown =
+        facultyDepartmentFilter === 'all' || (f.department || '') === facultyDepartmentFilter;
+      return matchesSearch && matchesDeptPage && matchesDeptDropdown;
     });
     return [...filtered].sort((a, b) => {
       if (facultyOrderFilter === 'designation') {
@@ -514,9 +584,22 @@ const DepartmentPages = () => {
         const expB = parseExperienceYears(b.experience);
         if (expB !== expA) return expB - expA;
       }
+      if (a.source !== b.source) return a.source === 'hod' ? -1 : 1;
       return String(a.name || '').localeCompare(String(b.name || ''));
     });
-  }, [allFaculty, facultySearchQuery, sections.faculty?.sortBy]);
+  }, [allFaculty, facultySearchQuery, facultyDepartmentFilter, sections.faculty?.sortBy, slug]);
+
+  const facultyDepartmentOptions = useMemo(() => {
+    const deptConfig = getDepartmentPageConfig(slug);
+    const deptFilter = deptConfig?.facultyFilter;
+    const names = new Set<string>();
+    for (const f of allFaculty) {
+      const dept = f.department || '';
+      if (!dept) continue;
+      if (!deptFilter || deptFilter(dept)) names.add(dept);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [allFaculty, slug]);
 
   const addCategory = () => {
     const id = 'cat-' + Date.now();
@@ -1761,7 +1844,7 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>Faculty</CardTitle>
-              <CardDescription>Select which faculty members to show on this department page. Add faculty in Admin → Faculty first.</CardDescription>
+              <CardDescription>Select teaching faculty and HODs to show on this department page. HODs are included as teaching faculty.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -1776,7 +1859,7 @@ const DepartmentPages = () => {
               <div>
                 <Label className="mb-2 block">Faculty to display</Label>
                 {allFaculty.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No faculty added yet. Add faculty in Admin → Faculty first.</p>
+                  <p className="text-sm text-muted-foreground">No faculty or HODs added yet. Add them in Admin → Faculty or Admin → HODs first.</p>
                 ) : (
                   <>
                     {(() => {
@@ -1785,12 +1868,25 @@ const DepartmentPages = () => {
                           ? sections.faculty.sortBy
                           : 'designation-experience';
                       return (
-                    <div className="mb-3 grid gap-3 md:grid-cols-2">
+                    <div className="mb-3 grid gap-3 md:grid-cols-3">
                       <Input
-                        placeholder="Search by name or designation..."
+                        placeholder="Search by name, designation, or department..."
                         value={facultySearchQuery}
                         onChange={(e) => setFacultySearchQuery(e.target.value)}
                       />
+                      <Select value={facultyDepartmentFilter} onValueChange={setFacultyDepartmentFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All departments (for this page)</SelectItem>
+                          {facultyDepartmentOptions.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Select value={currentSort} onValueChange={(value: FacultyOrderFilter) => updateSection('faculty', 'sortBy', value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Sort by" />
@@ -1806,17 +1902,23 @@ const DepartmentPages = () => {
                     })()}
                     <div className="border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2">
                       {filteredFacultyForSelection.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No faculty match the selected filter.</p>
+                        <p className="text-sm text-muted-foreground">No faculty or HODs match the selected filter.</p>
                       )}
                       {filteredFacultyForSelection.map((f) => (
-                      <div key={f.id} className="flex items-center gap-2">
+                      <div key={`${f.source}-${f.id}`} className="flex items-center gap-2">
                         <Checkbox
-                          id={`faculty-${f.id}`}
-                          checked={(sections.faculty?.facultyIds ?? []).includes(f.id)}
-                          onCheckedChange={() => toggleFacultyForDept(f.id)}
+                          id={`faculty-${f.source}-${f.id}`}
+                          checked={isTeachingFacultySelected(f)}
+                          onCheckedChange={() => toggleTeachingFaculty(f)}
                         />
-                        <label htmlFor={`faculty-${f.id}`} className="text-sm cursor-pointer flex-1">
+                        <label htmlFor={`faculty-${f.source}-${f.id}`} className="text-sm cursor-pointer flex-1">
                           {f.name} {f.designation ? `(${f.designation})` : ''}
+                          {f.source === 'hod' ? (
+                            <span className="ml-2 text-xs font-medium text-primary">HOD</span>
+                          ) : null}
+                          {f.department ? (
+                            <span className="ml-2 text-xs text-muted-foreground">{f.department}</span>
+                          ) : null}
                         </label>
                       </div>
                     ))}

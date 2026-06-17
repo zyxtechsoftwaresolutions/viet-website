@@ -46,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { facultyAPI, facultySettingsAPI } from '@/lib/api';
+import { facultyAPI, facultySettingsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { imgUrl } from '@/lib/imageUtils';
 import { toast } from 'sonner';
@@ -65,6 +65,14 @@ interface Faculty {
   resume?: string;
   sort_order?: number;
   sortOrder?: number;
+}
+
+interface Department {
+  id: number;
+  name: string;
+  stream: string;
+  level: string;
+  image: string;
 }
 
 function SortableFacultyRow({
@@ -139,6 +147,7 @@ function SortableFacultyRow({
       </TableCell>
       <TableCell>{item.name}</TableCell>
       <TableCell>{item.designation}</TableCell>
+      <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground">{item.department || '—'}</TableCell>
       <TableCell>{item.qualification}</TableCell>
       <TableCell>{item.experience || '—'}</TableCell>
       <TableCell className="text-right">
@@ -157,6 +166,7 @@ function SortableFacultyRow({
 
 const Faculty = () => {
   const [faculty, setFaculty] = useState<Faculty[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -168,6 +178,7 @@ const Faculty = () => {
     email: '',
     phone: '',
     experience: '',
+    department: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -180,6 +191,7 @@ const Faculty = () => {
   const [customOrder, setCustomOrder] = useState<Faculty[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [heroForm, setHeroForm] = useState({
     hero_badge: 'Faculty',
     hero_title: 'Faculty',
@@ -231,6 +243,9 @@ const Faculty = () => {
   useEffect(() => {
     fetchFaculty();
     fetchFacultySettings();
+    departmentsAPI.getAll()
+      .then((data) => setDepartments(Array.isArray(data) ? data : []))
+      .catch(() => setDepartments([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -343,9 +358,13 @@ const Faculty = () => {
   const baseDisplayList = sortBy === 'custom' ? customOrder : sortedFaculty;
 
   const displayList = useMemo(() => {
-    if (!searchQuery.trim()) return baseDisplayList;
+    let list = baseDisplayList;
+    if (departmentFilter !== 'all') {
+      list = list.filter((f) => (f.department || '') === departmentFilter);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.trim().toLowerCase();
-    return baseDisplayList.filter(
+    return list.filter(
       (f) =>
         (f.name || '').toLowerCase().includes(q) ||
         (f.designation || '').toLowerCase().includes(q) ||
@@ -353,7 +372,7 @@ const Faculty = () => {
         (f.department || '').toLowerCase().includes(q) ||
         (f.email || '').toLowerCase().includes(q)
     );
-  }, [baseDisplayList, searchQuery]);
+  }, [baseDisplayList, searchQuery, departmentFilter]);
 
   const handleAdd = () => {
     setSelectedItem(null);
@@ -364,6 +383,7 @@ const Faculty = () => {
       email: '',
       phone: '',
       experience: '',
+      department: '',
     });
     setImageFile(null);
     setResumeFile(null);
@@ -380,6 +400,7 @@ const Faculty = () => {
       email: item.email || '',
       phone: item.phone || '',
       experience: item.experience || '',
+      department: item.department || '',
     });
     setImageFile(null);
     setResumeFile(null);
@@ -620,6 +641,19 @@ const Faculty = () => {
               className="pl-9"
             />
           </div>
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-[260px]">
+              <SelectValue placeholder="Filter by department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All departments</SelectItem>
+              {departments.map((dept) => (
+                <SelectItem key={dept.id} value={dept.name}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add Faculty
@@ -662,6 +696,7 @@ const Faculty = () => {
                   <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Designation</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Qualification</TableHead>
                   <TableHead>Experience</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -670,7 +705,7 @@ const Faculty = () => {
               <TableBody>
                 {displayList.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No faculty members available
                     </TableCell>
                   </TableRow>
@@ -734,6 +769,7 @@ const Faculty = () => {
                     </TableCell>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.designation}</TableCell>
+                    <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground">{item.department || '—'}</TableCell>
                     <TableCell>{item.qualification}</TableCell>
                     <TableCell>{item.experience || '—'}</TableCell>
                     <TableCell className="text-right">
@@ -850,6 +886,32 @@ const Faculty = () => {
                   onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
                   placeholder="e.g., M.Tech., Ph.D"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                {departments.length === 0 ? (
+                  <Select disabled>
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="No departments available" />
+                    </SelectTrigger>
+                  </Select>
+                ) : (
+                  <Select
+                    value={formData.department}
+                    onValueChange={(value) => setFormData({ ...formData, department: value })}
+                  >
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.name}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
