@@ -365,6 +365,7 @@ function ExplorePathVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoSrc, setVideoSrc] = useState(EXPLORE_PATH_VIDEO_FALLBACK);
   const [useFallback, setUseFallback] = useState(false);
+  const [isInView, setIsInView] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -382,17 +383,34 @@ function ExplorePathVideo() {
   }, []);
 
   useEffect(() => {
+    const section = document.getElementById('whats-your-interest');
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.08, rootMargin: '80px 0px' }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+
+    if (!isInView) {
+      v.pause();
+      return;
+    }
+
     const play = () => v.play().catch(() => {});
-    v.addEventListener('loadeddata', play);
-    v.addEventListener('canplay', play);
-    v.load();
-    return () => {
-      v.removeEventListener('loadeddata', play);
-      v.removeEventListener('canplay', play);
-    };
-  }, [videoSrc]);
+    if (v.readyState >= 2) {
+      play();
+    } else {
+      v.addEventListener('canplay', play, { once: true });
+      v.load();
+    }
+  }, [videoSrc, isInView]);
 
   if (useFallback) return null;
 
@@ -400,14 +418,14 @@ function ExplorePathVideo() {
     <video
       key={videoSrc}
       ref={videoRef}
-      autoPlay
+      autoPlay={false}
       muted
       loop
       playsInline
-      preload="auto"
+      preload={isInView ? 'auto' : 'none'}
       className="absolute inset-0 w-full h-full object-cover z-0"
       aria-hidden
-      src={videoSrc}
+      src={isInView ? videoSrc : undefined}
       onError={() => {
         if (videoSrc !== EXPLORE_PATH_VIDEO_FALLBACK) {
           setVideoSrc(EXPLORE_PATH_VIDEO_FALLBACK);
@@ -813,6 +831,30 @@ const HeroSection = () => {
     return () => window.removeEventListener(INTRO_COMPLETE_EVENT, onIntroComplete);
   }, [currentSlide, heroSlides.length]);
 
+  // Pause hero carousel videos when scrolled out of view (reduces scroll jank below the fold)
+  useEffect(() => {
+    const home = document.getElementById('home');
+    if (!home || heroSlides.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const video = videoRefs.current[currentSlide];
+          video?.play().catch(() => {});
+        } else {
+          videoRefs.current.forEach((el) => {
+            if (el) {
+              el.pause();
+            }
+          });
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px' }
+    );
+    observer.observe(home);
+    return () => observer.disconnect();
+  }, [currentSlide, heroSlides.length]);
+
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -1030,7 +1072,7 @@ const HeroSection = () => {
       <NewsAnnouncementsSection />
 
       {/* Learn@VIET – four streams visible at once */}
-      <div id="whats-your-interest" className="relative overflow-hidden py-8 md:py-10 border-t border-slate-800 min-h-[560px] md:min-h-[540px] lg:h-[580px] bg-slate-900">
+      <div id="whats-your-interest" className="relative overflow-hidden py-8 md:py-10 border-t border-slate-800 min-h-[560px] md:min-h-[540px] lg:h-[580px] bg-slate-900 mb-0">
         <ExplorePathVideo />
         <div className="absolute inset-0 bg-black/40 z-[1]" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 z-[1]" aria-hidden />
@@ -1042,16 +1084,13 @@ const HeroSection = () => {
             viewport={{ once: true }}
             className="text-center mb-6 md:mb-8 shrink-0"
           >
-            <h2
-              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white"
-              style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.06em' }}
-            >
-              Learn@VIET
-            </h2>
+            <h2 className="home-section-title home-section-title--light">
+            Learn@VIET
+          </h2>
             <div className="mt-3 h-px w-20 mx-auto bg-gradient-to-r from-transparent via-white/50 to-transparent" aria-hidden />
           </motion.div>
 
-          <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/25 backdrop-blur-md shadow-2xl shadow-black/30 overflow-hidden">
+          <div className="flex-1 min-h-0 border border-white/15 bg-black/50 shadow-2xl shadow-black/30 overflow-hidden">
             <div className="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row h-full min-h-0">
               {(() => {
                 const managementGroups: ExploreProgramGroup[] = [];

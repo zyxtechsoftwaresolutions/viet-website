@@ -1,7 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Clock } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  ArrowRight,
+  Calendar,
+  CalendarPlus,
+  Clock,
+  History,
+  MapPin,
+  Megaphone,
+  Radio,
+  Users,
+} from 'lucide-react';
 import { eventsAPI } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface Event {
   id: number;
@@ -15,30 +25,81 @@ interface Event {
   link?: string;
 }
 
-const RIGHT_VISIBLE_CARDS = 3;
-const RIGHT_SCROLL_DURATION_BASE = 12;
-const CARD_GAP_PX = 12;
+type EventTab = 'upcoming' | 'ongoing' | 'recent' | 'past';
+
+const RIGHT_VISIBLE_ROWS = 4;
+const RIGHT_SCROLL_DURATION_BASE = 14;
+const ROW_GAP_PX = 10;
+const EVENT_ROW_HEIGHT = 88;
+/** Slight extra height for featured card image column (content drives total height) */
+const FEATURED_IMAGE_MIN_HEIGHT = 280;
+
+const EVENT_TABS: Array<{
+  id: EventTab;
+  label: string;
+  sub: string;
+  icon: typeof Calendar;
+}> = [
+  { id: 'upcoming', label: 'Upcoming Events', sub: "Don't miss what's next", icon: Calendar },
+  { id: 'ongoing', label: 'Ongoing Events', sub: 'Live updates from campus', icon: Radio },
+  { id: 'recent', label: 'Recent Events', sub: 'Highlights of happenings', icon: Megaphone },
+  { id: 'past', label: 'Past Events', sub: 'Moments from the past', icon: History },
+];
+
+function formatDateBlock(dateString: string) {
+  const d = new Date(dateString);
+  return {
+    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    day: d.getDate(),
+    year: d.getFullYear(),
+  };
+}
+
+function toGoogleCalendarDates(date: string, time: string, timeEnd?: string) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const start = new Date(`${date}T${time || '09:00'}`);
+  const end = timeEnd ? new Date(`${date}T${timeEnd}`) : new Date(start.getTime() + 60 * 60 * 1000);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  return `${fmt(start)}/${fmt(end)}`;
+}
+
+function formatDateRange(event: Event) {
+  const start = new Date(event.date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  if (event.time_end) {
+    return `${start} • ${event.time || '00:00'} – ${event.time_end}`;
+  }
+  if (event.time) return `${start} • ${event.time}`;
+  return start;
+}
 
 const AnnouncementsNewsEventsSection = () => {
   const ref = useRef<HTMLElement>(null);
-  const leftCardRef = useRef<HTMLDivElement>(null);
-  const animRef = useRef<HTMLDivElement>(null);
-  const offsetRef = useRef(0);
-  const [leftCardHeightPx, setLeftCardHeightPx] = useState<number | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
+  const featuredRef = useRef<HTMLDivElement>(null);
+  const [featuredHeightPx, setFeaturedHeightPx] = useState<number | null>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [activeTab, setActiveTab] = useState<EventTab>('recent');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdowns, setCountdowns] = useState<
     Record<number, { days: number; hours: number; minutes: number; seconds: number }>
   >({});
 
-  // Defer API call until component is in viewport (intersection observer)
   useEffect(() => {
     if (!ref.current) return;
-    
+
+    let fetched = false;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        const visible = entries.some((e) => e.isIntersecting);
+        setIsInView(visible);
+
+        if (visible && !fetched) {
+          fetched = true;
           const fetchData = async () => {
             try {
               const eventsData = await eventsAPI.getAll().catch(() => []);
@@ -51,21 +112,18 @@ const AnnouncementsNewsEventsSection = () => {
             }
           };
           fetchData();
-          observer.disconnect();
         }
       },
-      { rootMargin: '200px' } // Start loading 200px before section enters viewport
+      { rootMargin: '200px', threshold: 0 }
     );
-    
+
     observer.observe(ref.current);
-    
     return () => observer.disconnect();
   }, []);
 
   const calculateCountdown = (eventDate: string, eventTime: string) => {
     const eventDateTime = new Date(`${eventDate}T${eventTime || '00:00'}`).getTime();
-    const now = new Date().getTime();
-    const distance = eventDateTime - now;
+    const distance = eventDateTime - Date.now();
     if (distance < 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     return {
       days: Math.floor(distance / (1000 * 60 * 60 * 24)),
@@ -75,13 +133,13 @@ const AnnouncementsNewsEventsSection = () => {
     };
   };
 
-  // Event status: start time = time, end time = time_end (or end of day if not set)
   const getEventStartMs = (e: Event) => new Date(`${e.date}T${e.time || '00:00'}`).getTime();
   const getEventEndMs = (e: Event) => {
     const endTime = e.time_end?.trim();
     if (endTime) return new Date(`${e.date}T${endTime}`).getTime();
     return new Date(`${e.date}T23:59:59`).getTime();
   };
+
   type EventStatus = 'upcoming' | 'live' | 'completed';
   const getEventStatus = (e: Event): EventStatus => {
     const now = Date.now();
@@ -93,313 +151,438 @@ const AnnouncementsNewsEventsSection = () => {
   };
 
   useEffect(() => {
-    if (events.length === 0) return;
+    if (!isInView || events.length === 0) return;
     const updateCountdowns = () => {
       const next: Record<number, { days: number; hours: number; minutes: number; seconds: number }> = {};
       events.forEach((event) => {
-        next[event.id] = calculateCountdown(event.date, event.time);
+        if (getEventStatus(event) === 'upcoming') {
+          next[event.id] = calculateCountdown(event.date, event.time);
+        }
       });
       setCountdowns(next);
     };
     updateCountdowns();
     const interval = setInterval(updateCountdowns, 1000);
     return () => clearInterval(interval);
-  }, [events]);
+  }, [events, isInView]);
 
-  const toDateShort = (dateString: string) => {
-    const d = new Date(dateString);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
-    return `${day} ${month}`;
-  };
+  const liveEvents = useMemo(
+    () => events.filter((e) => getEventStatus(e) === 'live'),
+    [events]
+  );
+  const upcomingEvents = useMemo(
+    () =>
+      events
+        .filter((e) => getEventStatus(e) === 'upcoming')
+        .sort((a, b) => getEventStartMs(a) - getEventStartMs(b)),
+    [events]
+  );
+  const completedEvents = useMemo(
+    () =>
+      events
+        .filter((e) => getEventStatus(e) === 'completed')
+        .sort((a, b) => getEventEndMs(b) - getEventEndMs(a)),
+    [events]
+  );
 
-  // Event images are full Supabase Storage URLs from DB; use as-is.
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const featuredEvent = liveEvents[0] || upcomingEvents[0] || completedEvents[0] || null;
+  const featuredStatus = featuredEvent ? getEventStatus(featuredEvent) : null;
+  const featuredCountdown =
+    featuredEvent && featuredStatus === 'upcoming'
+      ? countdowns[featuredEvent.id] || calculateCountdown(featuredEvent.date, featuredEvent.time || '00:00')
+      : null;
 
-  const now = Date.now();
-  const eventsWithStatus = events.map((e) => ({ event: e, status: getEventStatus(e) }));
-  const liveEvents = eventsWithStatus.filter((x) => x.status === 'live').map((x) => x.event);
-  const upcomingEvents = eventsWithStatus
-    .filter((x) => x.status === 'upcoming')
-    .map((x) => x.event)
-    .sort((a, b) => getEventStartMs(a) - getEventStartMs(b));
-  const completedEvents = eventsWithStatus
-    .filter((x) => x.status === 'completed')
-    .map((x) => x.event)
-    .sort((a, b) => getEventEndMs(b) - getEventEndMs(a));
-  const latestEvent = liveEvents[0] || upcomingEvents[0] || completedEvents[0];
-  const latestEventStatus = latestEvent ? getEventStatus(latestEvent) : null;
-  const eventsSortedByDateDesc = [...completedEvents, ...liveEvents, ...upcomingEvents].reverse();
-  const rightListEvents = eventsSortedByDateDesc.filter((e) => e.id !== latestEvent?.id);
-  const rightListCards = rightListEvents.map((e) => ({
-    id: e.id,
-    title: e.title,
-    description: e.description || '',
-    dateShort: toDateShort(e.date),
-    time: e.time,
-    time_end: e.time_end,
-    timeLabel: e.time_end ? `${e.time || '00:00'} – ${e.time_end}` : (e.time || 'TBA'),
-    location: e.location,
-    image: e.image || null,
-    link: e.link,
-  }));
-  const latestEventCountdown = latestEvent && latestEventStatus === 'upcoming'
-    ? (countdowns[latestEvent.id] || calculateCountdown(latestEvent.date, latestEvent.time || '00:00'))
-    : null;
-  const latestEventIsUpcoming = latestEventStatus === 'upcoming';
-  const latestEventIsLive = latestEventStatus === 'live';
-  const latestEventIsCompleted = latestEventStatus === 'completed';
-  const latestEventImageUrl = latestEvent?.image || null;
-  const rightVisibleCount = Math.min(rightListCards.length, RIGHT_VISIBLE_CARDS) || 1;
-  // Use margin on each card so spacing is reliable (no attached cards). Each card: margin 6px top + 6px bottom = 12px between cards.
-  const rightGapTotal = rightVisibleCount * CARD_GAP_PX;
-  const rightCardHeightStyle =
-    rightListCards.length > 0
-      ? {
-          height: `calc((100% - ${rightGapTotal}px) / ${rightVisibleCount})`,
-          minHeight: 0,
-          maxHeight: `calc((100% - ${rightGapTotal}px) / ${rightVisibleCount})`,
-          flexShrink: 0,
-          flexGrow: 0,
-          marginTop: CARD_GAP_PX / 2,
-          marginBottom: CARD_GAP_PX / 2,
-        }
-      : {};
+  const tabEvents = useMemo(() => {
+    const excludeFeatured = (list: Event[]) =>
+      featuredEvent ? list.filter((e) => e.id !== featuredEvent.id) : list;
 
-  // Lock right column height to left card so: sum of 3 right cards = left card height (aligned).
+    switch (activeTab) {
+      case 'upcoming':
+        return excludeFeatured(upcomingEvents);
+      case 'ongoing':
+        return excludeFeatured(liveEvents);
+      case 'recent':
+        return excludeFeatured(completedEvents.slice(0, 12));
+      case 'past':
+        return excludeFeatured(completedEvents);
+      default:
+        return [];
+    }
+  }, [activeTab, upcomingEvents, liveEvents, completedEvents, featuredEvent]);
+
+  const listCards = useMemo(
+    () =>
+      tabEvents.map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description || '',
+        date: e.date,
+        timeLabel: e.time_end
+          ? `${e.time || '00:00'} – ${e.time_end}`
+          : e.time || 'All day',
+        location: e.location,
+        image: e.image || null,
+        link: e.link,
+        status: getEventStatus(e),
+      })),
+    [tabEvents]
+  );
+
+  const needsScroll = listCards.length > RIGHT_VISIBLE_ROWS;
+  const scrollDuration = Math.max(
+    RIGHT_SCROLL_DURATION_BASE,
+    (listCards.length / RIGHT_VISIBLE_ROWS) * 5
+  );
+
+  // Featured panel sets height; right column matches it on desktop only
   useEffect(() => {
-    const el = leftCardRef.current;
-    if (!el) return;
-    const measure = () => setLeftCardHeightPx(el.offsetHeight);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [events.length, loading]);
-
-  // JS-driven animation: freezes exactly where it is on hover, continues from there on unhover.
-  const duration = Math.max(RIGHT_SCROLL_DURATION_BASE, (rightListCards.length / RIGHT_VISIBLE_CARDS) * 4);
-  const speed = 0.5 / (duration * 60);
-  useEffect(() => {
-    if (rightListCards.length <= RIGHT_VISIBLE_CARDS) return;
-    const el = animRef.current;
-    if (!el) return;
-    let rafId: number;
-    const tick = () => {
-      if (!isHovered) {
-        offsetRef.current += speed;
-        if (offsetRef.current >= 0.5) offsetRef.current = 0;
-        el.style.transform = `translate3d(0, ${-offsetRef.current * 100}%, 0)`;
-      }
-      rafId = requestAnimationFrame(tick);
+    const el = featuredRef.current;
+    if (!el || loading) return;
+    const measure = () => {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      setFeaturedHeightPx(isDesktop ? el.offsetHeight : null);
     };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [isHovered, rightListCards.length, speed]);
+    measure();
+    const ro = new ResizeObserver(() => requestAnimationFrame(measure));
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [loading, featuredEvent?.id, featuredEvent?.image, featuredStatus]);
 
+  const statusLabel =
+    featuredStatus === 'live'
+      ? 'Live Now'
+      : featuredStatus === 'upcoming'
+        ? 'Upcoming'
+        : featuredStatus === 'completed'
+          ? 'Featured'
+          : '';
+
+  const statusBadgeClass =
+    featuredStatus === 'live'
+      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      : featuredStatus === 'upcoming'
+        ? 'bg-amber-50 text-amber-800 border-amber-200'
+        : 'bg-slate-100 text-slate-700 border-slate-200';
+
+  const listHeaderLabel =
+    activeTab === 'upcoming'
+      ? 'Upcoming Events'
+      : activeTab === 'ongoing'
+        ? 'Ongoing Events'
+        : activeTab === 'recent'
+          ? 'Recently Completed Events'
+          : 'Past Events';
+
+  const renderEventRow = (card: (typeof listCards)[0], keyPrefix: string) => {
+    const dateBlock = formatDateBlock(card.date);
+    const tagLabel =
+      card.status === 'live' ? 'LIVE' : card.status === 'upcoming' ? 'UPCOMING' : 'COMPLETED';
+    const tagClass =
+      card.status === 'live'
+        ? 'bg-emerald-100 text-emerald-800'
+        : card.status === 'upcoming'
+          ? 'bg-amber-50 text-amber-800'
+          : 'bg-slate-100 text-slate-600';
+
+    const inner = (
+      <div className="happenings-event-row flex items-stretch h-full overflow-hidden">
+        <div className="w-[62px] shrink-0 flex flex-col items-center justify-center border-r border-[#0a192f]/10 bg-[#f8fafc] px-1 py-2 text-center">
+          <span className="text-[10px] font-bold text-emerald-800 tracking-wide">{dateBlock.month}</span>
+          <span className="text-xl font-extrabold text-[#0a192f] leading-none">{dateBlock.day}</span>
+          <span className="text-[9px] text-slate-500 mt-0.5">{dateBlock.year}</span>
+        </div>
+        <div className="w-[88px] shrink-0 border-r border-[#0a192f]/10 bg-slate-100">
+          {card.image ? (
+            <img src={card.image} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-slate-400">
+              <Calendar className="h-6 w-6" aria-hidden />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-center">
+          <h4 className="text-sm font-bold text-[#0a192f] line-clamp-1">{card.title}</h4>
+          {card.description && (
+            <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">{card.description}</p>
+          )}
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <span className={cn('text-[9px] font-bold uppercase tracking-wider px-2 py-0.5', tagClass)}>
+              {tagLabel}
+            </span>
+            <span className="text-[10px] text-slate-500 flex items-center gap-1">
+              <Clock className="h-3 w-3" aria-hidden />
+              {card.timeLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (card.link && card.link !== '#') {
+      return (
+        <a
+          key={`${keyPrefix}-${card.id}`}
+          href={card.link}
+          target={card.link.startsWith('http') ? '_blank' : undefined}
+          rel={card.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+          className="block flex-shrink-0"
+          style={{ height: EVENT_ROW_HEIGHT, marginBottom: ROW_GAP_PX }}
+        >
+          {inner}
+        </a>
+      );
+    }
+
+    return (
+      <div
+        key={`${keyPrefix}-${card.id}`}
+        className="flex-shrink-0"
+        style={{ height: EVENT_ROW_HEIGHT, marginBottom: ROW_GAP_PX }}
+      >
+        {inner}
+      </div>
+    );
+  };
 
   return (
-    <>
-      <style>{`
-        .happenings-anim {
-          will-change: transform;
-          backface-visibility: hidden;
-          contain: layout paint;
-        }
-      `}</style>
-      <section
+    <section
       id="happenings"
-      className="happenings-bg-texture relative py-16 md:py-[4.5rem] overflow-hidden border-y border-emerald-200/50"
       ref={ref}
-      >
-      <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12">
-        {/* Section Header - aligned and styled like VIBE@VIET */}
-        <div className="mb-5 md:mb-7 flex items-center gap-3">
-          <h2
-            className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-[#0a192f] px-3 py-1 rounded-lg bg-white/70 backdrop-blur-sm"
-            style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.12em' }}
-          >
+      className={cn(
+        'happenings-section py-14 md:py-20',
+        isInView ? 'section-in-view' : 'section-offscreen'
+      )}
+    >
+      <div className="container mx-auto px-4 md:px-10 lg:px-12">
+        {/* Header — same typography as Campus Updates */}
+        <div className="mb-8 md:mb-10">
+          <h2 className="home-section-title home-section-title--light">
             Happenings
           </h2>
+          <p className="mt-2 text-sm sm:text-base text-white/90 max-w-xl">
+            Stay updated with all the events and activities at VIET
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6 lg:gap-7 lg:items-stretch">
-          {/* Left: Latest/Upcoming Event + Countdown – content-sized (16/9 image + content); height drives right column */}
-          <div className="lg:col-span-3 order-2 lg:order-1 lg:self-start">
-            <div ref={leftCardRef} className="happenings-glass-card rounded-2xl overflow-hidden">
-              {latestEventImageUrl && (
-                <div className="aspect-[16/9] w-full max-h-[280px] sm:max-h-[300px] lg:max-h-[340px] overflow-hidden bg-muted">
-                  <img
-                    src={latestEventImageUrl}
-                    alt={latestEvent?.title ?? 'Latest event'}
-                    className="h-full w-full object-cover"
-                    width={800}
-                    height={450}
-                    loading="lazy"
-                    decoding="async"
-                    fetchpriority="high"
-                  />
-                </div>
-              )}
-              <div className="p-5 md:p-7">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {latestEventIsLive ? 'Live now' : latestEventIsUpcoming ? 'Latest upcoming event' : 'Latest event'}
-                    </p>
-                    <h3 className="mt-2 text-2xl md:text-3xl font-bold text-foreground line-clamp-2">
-                      {latestEvent ? latestEvent.title : 'No events yet'}
+        {/* Featured drives height; recent-events panel matches it on desktop */}
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 lg:items-start">
+          {/* Featured event — left */}
+          <div className="lg:col-span-7">
+            <div ref={featuredRef} className="happenings-panel overflow-hidden w-full">
+              {loading ? (
+                <div className="p-8 text-center text-slate-500">Loading events...</div>
+              ) : !featuredEvent ? (
+                <div className="p-8 text-center text-slate-500">No events yet. Add events in the admin panel.</div>
+              ) : (
+                <div className="grid md:grid-cols-[minmax(0,52%)_minmax(160px,48%)]">
+                  <div className="p-6 md:p-9 flex flex-col">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">
+                        Featured Event
+                      </span>
+                      {statusLabel && (
+                        <span className={cn('text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border', statusBadgeClass)}>
+                          {statusLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-2xl md:text-3xl font-bold text-[#0a192f] leading-tight">
+                      {featuredEvent.title}
                     </h3>
-                    {latestEvent && (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {formatDate(latestEvent.date)}
-                        {(latestEvent.time || latestEvent.time_end) ? ` • ${latestEvent.time || '00:00'}${latestEvent.time_end ? ` – ${latestEvent.time_end}` : ''}` : ''}
-                        {latestEvent.location ? ` • ${latestEvent.location}` : ''}
+                    {featuredEvent.description && (
+                      <p className="mt-3 text-sm text-slate-600 leading-relaxed line-clamp-5">
+                        {featuredEvent.description}
                       </p>
                     )}
-                  </div>
-                  <div className="shrink-0 flex items-center gap-2">
-                    {loading ? (
-                      <span className="text-sm text-muted-foreground">Loading...</span>
-                    ) : latestEvent && latestEventCountdown && latestEventIsUpcoming ? (
-                      <div className="flex gap-2">
-                        <div className="rounded-lg bg-primary/10 px-2.5 py-2 text-center min-w-[3rem]">
-                          <div className="text-lg md:text-xl font-bold text-primary leading-tight">{latestEventCountdown.days}</div>
-                          <div className="text-[10px] uppercase text-muted-foreground">Days</div>
-                        </div>
-                        <div className="rounded-lg bg-primary/10 px-2.5 py-2 text-center min-w-[3rem]">
-                          <div className="text-lg md:text-xl font-bold text-primary leading-tight">{latestEventCountdown.hours}</div>
-                          <div className="text-[10px] uppercase text-muted-foreground">Hrs</div>
-                        </div>
-                        <div className="rounded-lg bg-primary/10 px-2.5 py-2 text-center min-w-[3rem]">
-                          <div className="text-lg md:text-xl font-bold text-primary leading-tight">{latestEventCountdown.minutes}</div>
-                          <div className="text-[10px] uppercase text-muted-foreground">Min</div>
-                        </div>
-                        <div className="rounded-lg bg-primary/10 px-2.5 py-2 text-center min-w-[3rem]">
-                          <div className="text-lg md:text-xl font-bold text-primary leading-tight">{latestEventCountdown.seconds}</div>
-                          <div className="text-[10px] uppercase text-muted-foreground">Sec</div>
+
+                    <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
+                      <li className="flex items-start gap-2.5">
+                        <Calendar className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                        <span>{formatDateRange(featuredEvent)}</span>
+                      </li>
+                      {featuredEvent.location && (
+                        <li className="flex items-start gap-2.5">
+                          <MapPin className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                          <span>{featuredEvent.location}</span>
+                        </li>
+                      )}
+                      <li className="flex items-start gap-2.5">
+                        <Users className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                        <span>Open for all students &amp; faculty</span>
+                      </li>
+                    </ul>
+
+                    {featuredCountdown && featuredStatus === 'upcoming' && (
+                      <div className="mt-6">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+                          Event starts in
+                        </p>
+                        <div className="grid grid-cols-4 gap-2 max-w-sm">
+                          {(['days', 'hours', 'minutes', 'seconds'] as const).map((unit) => (
+                            <div key={unit} className="happenings-countdown-box px-2 py-2.5 text-center">
+                              <div className="text-xl md:text-2xl font-extrabold text-[#0a192f] leading-none">
+                                {featuredCountdown[unit]}
+                              </div>
+                              <div className="text-[9px] uppercase tracking-wider text-slate-500 mt-1">
+                                {unit}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ) : latestEvent && latestEventIsLive ? (
-                      <span className="text-sm font-medium text-emerald-800 bg-emerald-100 rounded-lg px-3 py-2">Event live</span>
-                    ) : latestEvent && latestEventIsCompleted ? (
-                      <span className="text-sm font-medium text-green-700 bg-green-100 rounded-lg px-3 py-2">Event completed</span>
-                    ) : !latestEvent ? (
-                      <p className="text-sm text-muted-foreground">Add events in the admin panel.</p>
+                    )}
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      {featuredEvent.link && featuredEvent.link !== '#' ? (
+                        <a
+                          href={featuredEvent.link}
+                          target={featuredEvent.link.startsWith('http') ? '_blank' : undefined}
+                          rel={featuredEvent.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 transition-colors"
+                        >
+                          View Details
+                          <ArrowRight className="h-4 w-4" aria-hidden />
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-2 border-2 border-[#0a192f]/20 text-[#0a192f] text-xs font-bold uppercase tracking-wider px-4 py-2.5 hover:border-emerald-700/40 hover:text-emerald-800 transition-colors"
+                        onClick={() => {
+                          const dates = toGoogleCalendarDates(
+                            featuredEvent.date,
+                            featuredEvent.time,
+                            featuredEvent.time_end
+                          );
+                          const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(featuredEvent.title)}&dates=${dates}&details=${encodeURIComponent(featuredEvent.description || '')}&location=${encodeURIComponent(featuredEvent.location || 'VIET Campus')}`;
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <CalendarPlus className="h-4 w-4" aria-hidden />
+                        Add to Calendar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    className="relative bg-slate-100 border-t md:border-t-0 md:border-l border-[#0a192f]/10"
+                    style={{ minHeight: FEATURED_IMAGE_MIN_HEIGHT }}
+                  >
+                    {featuredEvent.image ? (
+                      <img
+                        src={featuredEvent.image}
+                        alt={featuredEvent.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
-                      <div className="rounded-full bg-primary/10 p-3 text-primary">
-                        <Calendar className="h-6 w-6" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-100">
+                        <Calendar className="h-16 w-16 text-emerald-200" aria-hidden />
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Right: height locked to left card on desktop; fixed sensible height on mobile */}
+          {/* Recent events — height locked to featured panel on desktop */}
           <div
-            className="lg:col-span-2 order-1 lg:order-2 flex min-h-0 overflow-hidden"
+            className="lg:col-span-5 flex flex-col min-h-0"
             style={
-              leftCardHeightPx != null
-                ? { height: `${leftCardHeightPx}px`, minHeight: 0, maxHeight: `${leftCardHeightPx}px` }
-                : { minHeight: '260px' }
+              featuredHeightPx != null
+                ? { height: `${featuredHeightPx}px`, maxHeight: `${featuredHeightPx}px` }
+                : undefined
             }
           >
-            <div
-              className="relative overflow-hidden flex-1 min-h-0 w-full h-full"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-              }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <div
-                ref={animRef}
-                className="happenings-anim flex flex-col h-full"
-                style={{
-                  height: rightListCards.length > RIGHT_VISIBLE_CARDS ? '200%' : '100%',
-                }}
-              >
+            <div className="happenings-panel flex flex-col flex-1 min-h-0 h-full p-4 md:p-5">
+              <div className="flex items-center justify-between gap-3 mb-4 shrink-0">
+                <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-[#0a192f]">
+                  {listHeaderLabel}
+                </h3>
+                <button
+                  type="button"
+                  className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900 inline-flex items-center gap-1"
+                  onClick={() => setActiveTab('past')}
+                >
+                  View all
+                  <ArrowRight className="h-3 w-3" aria-hidden />
+                </button>
+              </div>
+
+              <div className="campus-panel-scroll-viewport flex-1 min-h-0">
                 {loading ? (
-                  <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">Loading events...</div>
-                ) : rightListCards.length === 0 ? (
-                  <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">No events</div>
+                  <div className="flex items-center justify-center h-full text-slate-500 text-sm">Loading...</div>
+                ) : listCards.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-slate-500 text-sm text-center px-4">
+                    No events in this category.
+                  </div>
                 ) : (
-                  <>
-                    {(rightListCards.length > RIGHT_VISIBLE_CARDS ? [1, 2] : [1]).map((copy) => (
-                      <div
-                        key={copy}
-                        className="flex flex-col flex-shrink-0 items-stretch"
-                        style={{
-                          height: rightListCards.length > RIGHT_VISIBLE_CARDS ? '50%' : '100%',
-                        }}
-                      >
-                        {rightListCards.map((card) => (
-                          <a
-                            key={`${copy}-${card.id}`}
-                            href={card.link || '#'}
-                            target={card.link?.startsWith('http') ? '_blank' : undefined}
-                            rel={card.link?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="block happenings-glass-card rounded-2xl overflow-hidden flex-shrink-0"
-                            style={rightCardHeightStyle}
-                          >
-                            <div className="relative h-full w-full">
-                              {card.image ? (
-                                <img
-                                  src={card.image}
-                                  alt={card.title}
-                                  className="h-full w-full object-cover"
-                                  width={400}
-                                  height={300}
-                                  loading="lazy"
-                                  decoding="async"
-                                  fetchpriority="auto"
-                                />
-                              ) : (
-                                <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-muted-foreground">
-                                  <Calendar className="h-10 w-10 opacity-60" />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                              <div className="absolute inset-0 flex flex-col justify-end p-4">
-                                <span className="inline-flex w-fit items-center rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-                                  {card.dateShort}
-                                </span>
-                                <h4 className="mt-2 text-sm font-bold text-white line-clamp-2 tracking-tight drop-shadow-md [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                                  {card.title}
-                                </h4>
-                                <p className="mt-1 flex items-center gap-1.5 text-xs text-white/90 line-clamp-1">
-                                  <Clock className="h-3.5 w-3.5 shrink-0 opacity-90" />
-                                  <span>{card.timeLabel}</span>
-                                  {card.location && <span className="opacity-80">· {card.location}</span>}
-                                </p>
-                              </div>
-                            </div>
-                          </a>
-                        ))}
-                        {/* Spacer so next copy doesn't attach to this one when scrolling */}
-                        {rightListCards.length > RIGHT_VISIBLE_CARDS && (
-                          <div style={{ height: CARD_GAP_PX, minHeight: CARD_GAP_PX, flexShrink: 0 }} aria-hidden />
-                        )}
+                  <div
+                    className={cn(needsScroll && 'notice-auto-scroll')}
+                    style={
+                      needsScroll
+                        ? ({
+                            '--scroll-duration': `${scrollDuration}s`,
+                            height: listCards.length * 2 * (EVENT_ROW_HEIGHT + ROW_GAP_PX),
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                  >
+                    {(needsScroll ? [1, 2] : [1]).map((copy) => (
+                      <div key={copy}>
+                        {listCards.map((card) => renderEventRow(card, String(copy)))}
                       </div>
                     ))}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Bottom category tabs */}
+        <div className="mt-6 md:mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {EVENT_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'happenings-tab text-left p-4 flex items-start gap-3',
+                  isActive && 'happenings-tab--active'
+                )}
+              >
+                <span
+                  className={cn(
+                    'shrink-0 w-10 h-10 flex items-center justify-center border',
+                    isActive
+                      ? 'border-emerald-600/30 bg-emerald-50 text-emerald-800'
+                      : 'border-[#0a192f]/10 bg-slate-50 text-slate-600'
+                  )}
+                >
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-bold uppercase tracking-wide text-[#0a192f]">
+                    {tab.label}
+                  </span>
+                  <span className="block text-[10px] text-slate-500 mt-0.5 leading-snug">{tab.sub}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-      </section>
-    </>
+    </section>
   );
 };
 

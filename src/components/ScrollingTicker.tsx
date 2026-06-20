@@ -71,8 +71,8 @@ const ScrollingTicker = () => {
     <div className="relative w-full bg-primary text-white overflow-hidden border-b border-primary/20 shadow-md">
       <div className="flex items-center h-10 md:h-12">
         <div className="flex-shrink-0 px-4 md:px-6 bg-primary z-10 border-r border-white/20">
-          <span className="text-xs md:text-sm font-semibold uppercase tracking-wider whitespace-nowrap">
-            Latest
+          <span className="text-xs md:text-sm font-semibold tracking-wide whitespace-nowrap">
+            What&apos;s New
           </span>
         </div>
         <div ref={containerRef} className="flex-1 overflow-hidden relative h-full">

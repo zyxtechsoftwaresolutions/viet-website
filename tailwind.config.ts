@@ -165,6 +165,10 @@ export default {
 				'marquee': {
 					'0%': { transform: 'translateX(0)' },
 					'100%': { transform: 'translateX(-50%)' }
+				},
+				'marquee-reverse': {
+					'0%': { transform: 'translateX(-50%)' },
+					'100%': { transform: 'translateX(0)' }
 				}
 			},
 			animation: {
@@ -174,7 +178,8 @@ export default {
 				'slide-in-right': 'slide-in-right 0.6s ease-out',
 				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
 				'kinetic-float': 'kinetic-float 3s ease-in-out infinite',
-				'marquee': 'marquee 25s linear infinite'
+				'marquee': 'marquee 35s linear infinite',
+				'marquee-reverse': 'marquee-reverse 35s linear infinite'
 			}
 		}
 	},

@@ -1,149 +1,13 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Mail, Award, Users, BookOpen, GraduationCap, Building2, Globe, Heart, Target, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
+import AnimatedStat, { type AnimatedStatConfig } from '@/components/AnimatedStat';
 import { pagesAPI } from '@/lib/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const statIcons = [BookOpen, Users, GraduationCap, Award];
-
-// Animated Stat Component - moved outside to prevent recreation
-interface StatType {
-  number: string;
-  label: string;
-  icon: any;
-  targetValue: number | string;
-  suffix: string;
-  isLetter?: boolean;
-}
-
-const AnimatedStat = memo(({ stat, index }: { stat: StatType; index: number }) => {
-  const [count, setCount] = useState<number | string>(stat.isLetter ? 'D' : 0);
-  const hasStartedRef = useRef(false);
-  const hasCompletedRef = useRef(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const statRef = useRef(stat);
-
-  // Update stat ref when it changes
-  useEffect(() => {
-    statRef.current = stat;
-  }, [stat]);
-
-  useEffect(() => {
-    // Don't run if already started or completed, or if ref is not available
-    if (hasStartedRef.current || hasCompletedRef.current || !ref.current) return;
-    
-    // Don't create observer if one already exists
-    if (observerRef.current) return;
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        // Double check - make sure we haven't started and we're intersecting
-        if (entry.isIntersecting && !hasStartedRef.current && !hasCompletedRef.current) {
-          hasStartedRef.current = true;
-          
-          // Disconnect observer immediately
-          if (observerRef.current) {
-            observerRef.current.disconnect();
-            observerRef.current = null;
-          }
-          
-          const currentStat = statRef.current;
-          
-          if (currentStat.isLetter && currentStat.targetValue === 'A') {
-            // Animate through NAAC grades: D, C, B, B+, B++, A, A+, A++ and stop at A
-            const naacGrades = ['D', 'C', 'B', 'B+', 'B++', 'A', 'A+', 'A++', 'A'];
-            let currentIndex = 0;
-            intervalRef.current = setInterval(() => {
-              setCount(naacGrades[currentIndex]);
-              currentIndex++;
-              if (currentIndex >= naacGrades.length) {
-                if (intervalRef.current) {
-                  clearInterval(intervalRef.current);
-                  intervalRef.current = null;
-                }
-                setCount('A');
-                hasCompletedRef.current = true;
-              }
-            }, 2000 / naacGrades.length);
-          } else if (typeof currentStat.targetValue === 'number') {
-            // Animate numbers from 0 to target
-            const duration = 2000;
-            const startTime = Date.now();
-            const targetNum = currentStat.targetValue as number;
-            const animate = () => {
-              // Check if completed before continuing
-              if (hasCompletedRef.current) return;
-              
-              const elapsed = Date.now() - startTime;
-              const progress = Math.min(elapsed / duration, 1);
-              const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-              const current = Math.floor(easeOutQuart * targetNum);
-              setCount(current);
-
-              if (progress < 1) {
-                animationFrameRef.current = requestAnimationFrame(animate);
-              } else {
-                setCount(targetNum);
-                animationFrameRef.current = null;
-                hasCompletedRef.current = true;
-              }
-            };
-            animate();
-          }
-        }
-      },
-      { threshold: 0.1, rootMargin: '0px' }
-    );
-
-    if (ref.current && observerRef.current) {
-      observerRef.current.observe(ref.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
-  }, []); // Empty dependency array - only run once on mount
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="text-center"
-    >
-      <div className="w-16 h-16 bg-[#0a192f] rounded-full flex items-center justify-center mx-auto mb-4">
-        <stat.icon className="w-8 h-8 text-white" />
-      </div>
-      <div className="text-3xl md:text-4xl font-bold text-[#0a192f] mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        {typeof count === 'number' ? count.toLocaleString() : count}{stat.suffix}
-      </div>
-      <div className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        {stat.label}
-      </div>
-    </motion.div>
-  );
-});
-
-AnimatedStat.displayName = 'AnimatedStat';
 
 const AboutUs = () => {
   const [pageContent, setPageContent] = useState<any>(null);
@@ -164,7 +28,7 @@ const AboutUs = () => {
     fetchPageContent();
   }, []);
 
-  const stats = useMemo(() => {
+  const stats = useMemo((): AnimatedStatConfig[] => {
     const fromApi = pageContent?.stats;
     if (Array.isArray(fromApi) && fromApi.length >= 4) {
       return fromApi.slice(0, 4).map((s: any, i: number) => ({

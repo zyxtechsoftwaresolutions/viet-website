@@ -53,6 +53,15 @@ const FooterSection = ({ title, children }: { title: string; children: React.Rea
   </div>
 );
 
+const FooterDottedDivider = ({ className = '' }: { className?: string }) => (
+  <div className={`footer-h-rule ${className}`} aria-hidden />
+);
+
+/** Plus (+) where horizontal & vertical dotted footer lines meet — Amrita-style */
+const FooterJunction = ({ className = '' }: { className?: string }) => (
+  <span className={`footer-junction ${className}`} aria-hidden />
+);
+
 const Footer = () => {
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
 
@@ -147,7 +156,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="relative bg-[#060608] text-white -mt-1 overflow-hidden font-montserrat">
+    <footer className="relative bg-black text-white overflow-hidden font-montserrat">
       <div
         className="pointer-events-none absolute inset-0 opacity-40"
         aria-hidden
@@ -157,14 +166,12 @@ const Footer = () => {
         }}
       />
 
-      <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent" aria-hidden />
-
       <div className="relative container mx-auto px-4 sm:px-6 md:px-10 lg:px-12">
-        {/* ── Row 1: Brand | Contact | Anti-Ragging (Swarnandhra-style) ── */}
-        <div className="py-10 md:py-12 border-b border-white/10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-8 xl:gap-12">
-            {/* Col 1 — College emblem + name */}
-            <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+        {/* ── Main: Brand (left) | Anti-Ragging + links (right) ── */}
+        <div className="py-10 md:py-12">
+          <div className="flex flex-col lg:flex-row lg:items-stretch gap-10 lg:gap-0">
+            {/* Left — Brand, social, contact */}
+            <div className="w-full lg:w-[34%] lg:shrink-0 flex flex-col items-center lg:items-start text-center lg:text-left lg:pr-10 xl:pr-12 footer-v-rule">
               <img
                 src="/logo-viet.png"
                 alt="VIET Logo"
@@ -200,129 +207,146 @@ const Footer = () => {
                   </a>
                 ))}
               </div>
+
+              <div className="w-full mt-8 text-center lg:text-left [&_h3]:justify-center lg:[&_h3]:justify-start">
+                <FooterSection title="Contact Us">
+                  <ul className="space-y-2.5">
+                    <li>
+                      <a
+                        href="mailto:website@viet.edu.in"
+                        className="group inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200"
+                      >
+                        <Mail className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
+                        <span>website@viet.edu.in</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="tel:+919959617476"
+                        className="group inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200"
+                      >
+                        <Phone className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
+                        <span>+91 9959617476 / 9959617477</span>
+                      </a>
+                    </li>
+                    <li>
+                      <span className="inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200">
+                        <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
+                        <span>
+                          88th Division, Narava, GVMC,
+                          <br />
+                          Visakhapatnam, Andhra Pradesh 530027, India
+                        </span>
+                      </span>
+                    </li>
+                  </ul>
+                </FooterSection>
+              </div>
             </div>
 
-            {/* Col 2 — Contact Us */}
-            <div className="text-center lg:text-left">
-              <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-primary mb-5">
-                Contact Us
-              </h3>
-              <address className="not-italic space-y-4 text-sm text-slate-200">
-                <div className="flex items-start gap-3 justify-center lg:justify-start">
-                  <Mail className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
-                  <a href="mailto:website@viet.edu.in" className="hover:text-white transition-colors">
-                    website@viet.edu.in
-                  </a>
-                </div>
-                <div className="flex items-start gap-3 justify-center lg:justify-start">
-                  <Phone className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
-                  <a href="tel:+919959617476" className="hover:text-white transition-colors">
-                    +91 9959617476 / 9959617477
-                  </a>
-                </div>
-                <div className="flex items-start gap-3 justify-center lg:justify-start">
-                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
-                  <span>
-                    88th Division, Narava, GVMC,
-                    <br />
-                    Visakhapatnam, Andhra Pradesh 530027, India
-                  </span>
-                </div>
-              </address>
-            </div>
-
-            {/* Col 3 — Anti-Ragging Policy (Swarnandhra-style symbol + text) */}
-            <div className="text-center lg:text-left">
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
-                <img
-                  src="/anti-ragging-symbol.png"
-                  alt="Anti-Ragging Symbol"
-                  className="w-auto max-w-[7rem] sm:max-w-[7.5rem] h-auto object-contain shrink-0 mx-auto sm:mx-0"
-                  width={120}
-                  height={120}
-                  loading="lazy"
-                />
-                <div className="min-w-0 flex-1">
-                  <h3
-                    id="footer-anti-ragging-heading"
-                    className="text-sm font-bold uppercase tracking-[0.18em] text-primary mb-3"
-                  >
-                    Anti-Ragging Policy
-                  </h3>
-                  <p className="text-slate-200 text-sm leading-relaxed mb-4 text-justify">
-                    Visakha Institute of Engineering &amp; Technology, in strict compliance with UGC
-                    Regulations on Curbing the Menace of Ragging in Higher Educational Institutions,
-                    2009, AICTE Notification, Supreme Court directives, and Andhra Pradesh Prohibition of
-                    Ragging Act, has decided to frame a Policy to Prohibit and Prevent Ragging Activities
-                    in its Campus. Ragging — A violation of Human Rights.
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                    <Link
-                      to="/grievance-redressal"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors"
+            {/* Right — Anti-Ragging on top, link columns below */}
+            <div className="w-full lg:flex-1 lg:min-w-0 lg:pl-10 xl:pl-12 flex flex-col">
+              <div className="relative pb-8 lg:pb-10 footer-cell-h-rule">
+                <FooterJunction className="footer-junction--main hidden lg:block" />
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 lg:gap-8 text-center lg:text-left">
+                  <img
+                    src="/anti-ragging-symbol.png"
+                    alt="Anti-Ragging Symbol"
+                    className="w-auto max-w-[7rem] sm:max-w-[7.5rem] lg:max-w-[8rem] h-auto object-contain shrink-0 mx-auto sm:mx-0"
+                    width={120}
+                    height={120}
+                    loading="lazy"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      id="footer-anti-ragging-heading"
+                      className="text-xs font-bold uppercase tracking-[0.22em] text-primary mb-4 flex items-center gap-2 justify-center lg:justify-start"
                     >
-                      <Shield className="w-3.5 h-3.5" aria-hidden />
-                      View Policy
-                    </Link>
-                    <a
-                      href="tel:18001805522"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/20 text-slate-100 text-xs font-medium hover:bg-white/10 transition-colors"
-                    >
-                      Helpline: 1800-180-5522
-                    </a>
-                    <a
-                      href="https://www.ugc.ac.in/antiRagging/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/20 text-slate-100 text-xs font-medium hover:bg-white/10 transition-colors"
-                    >
-                      UGC Portal
-                      <ExternalLink className="w-3 h-3" aria-hidden />
-                    </a>
+                      <span className="w-6 h-px bg-primary/80 shrink-0" aria-hidden />
+                      Anti-Ragging Policy
+                    </h3>
+                    <p className="text-slate-200 text-sm leading-relaxed mb-5 text-justify">
+                      Visakha Institute of Engineering &amp; Technology, in strict compliance with UGC
+                      Regulations on Curbing the Menace of Ragging in Higher Educational Institutions,
+                      2009, AICTE Notification, Supreme Court directives, and Andhra Pradesh Prohibition of
+                      Ragging Act, has decided to frame a Policy to Prohibit and Prevent Ragging Activities
+                      in its Campus. Ragging — A violation of Human Rights.
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                      <Link
+                        to="/grievance-redressal"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors"
+                      >
+                        <Shield className="w-3.5 h-3.5" aria-hidden />
+                        View Policy
+                      </Link>
+                      <a
+                        href="tel:18001805522"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/20 text-slate-100 text-xs font-medium hover:bg-white/10 transition-colors"
+                      >
+                        Helpline: 1800-180-5522
+                      </a>
+                      <a
+                        href="https://www.ugc.ac.in/antiRagging/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/20 text-slate-100 text-xs font-medium hover:bg-white/10 transition-colors"
+                      >
+                        UGC Portal
+                        <ExternalLink className="w-3 h-3" aria-hidden />
+                      </a>
+                    </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 lg:gap-0 pt-8 lg:pt-10">
+                <div className="relative sm:pr-6 lg:pr-8 footer-v-rule">
+                  <FooterJunction className="footer-junction--col hidden lg:block" />
+                  <FooterSection title="Leadership">
+                    <ul className="space-y-2.5">
+                      {leadershipLinks.map((link) => (
+                        <FooterLink key={link.name} href={link.href}>
+                          {link.name}
+                        </FooterLink>
+                      ))}
+                    </ul>
+                  </FooterSection>
+                </div>
+
+                <div className="relative sm:px-6 lg:px-8 footer-v-rule">
+                  <FooterJunction className="footer-junction--col hidden lg:block" />
+                  <FooterSection title="Academics">
+                    <ul className="space-y-2.5">
+                      {academicsLinks.map((link) => (
+                        <FooterLink key={link.name} href={link.href}>
+                          {link.name}
+                        </FooterLink>
+                      ))}
+                    </ul>
+                  </FooterSection>
+                </div>
+
+                <div className="relative sm:pl-6 lg:pl-8">
+                  <FooterSection title="Campus &amp; Support">
+                    <ul className="space-y-2.5">
+                      {campusLinks.map((link) => (
+                        <FooterLink key={link.name} href={link.href}>
+                          {link.name}
+                        </FooterLink>
+                      ))}
+                    </ul>
+                  </FooterSection>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Row 2: Leadership | Academics | Campus Support (single row) ── */}
-        <div className="py-10 md:py-12 border-b border-white/10">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
-            <FooterSection title="Leadership">
-              <ul className="space-y-2.5">
-                {leadershipLinks.map((link) => (
-                  <FooterLink key={link.name} href={link.href}>
-                    {link.name}
-                  </FooterLink>
-                ))}
-              </ul>
-            </FooterSection>
-
-            <FooterSection title="Academics">
-              <ul className="space-y-2.5">
-                {academicsLinks.map((link) => (
-                  <FooterLink key={link.name} href={link.href}>
-                    {link.name}
-                  </FooterLink>
-                ))}
-              </ul>
-            </FooterSection>
-
-            <FooterSection title="Campus &amp; Support">
-              <ul className="space-y-2.5">
-                {campusLinks.map((link) => (
-                  <FooterLink key={link.name} href={link.href}>
-                    {link.name}
-                  </FooterLink>
-                ))}
-              </ul>
-            </FooterSection>
-          </div>
-        </div>
+        <FooterDottedDivider />
 
         {/* ── Accreditation Strip ── */}
-        <div className="py-8 border-b border-white/10">
+        <div className="py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-2 text-slate-300">
               <Building2 className="w-4 h-4 text-primary shrink-0" aria-hidden />
@@ -347,8 +371,10 @@ const Footer = () => {
           </div>
         </div>
 
+        <FooterDottedDivider />
+
         {/* ── Policy links ── */}
-        <div className="py-5 flex flex-wrap justify-center gap-x-6 gap-y-2 border-b border-white/10">
+        <div className="py-5 flex flex-wrap justify-center gap-x-6 gap-y-2">
           {policyLinks.map((link) => (
             <a
               key={link.name}
@@ -359,6 +385,8 @@ const Footer = () => {
             </a>
           ))}
         </div>
+
+        <FooterDottedDivider />
 
         {/* ── Bottom: copyright | visitors (center) | developer ── */}
         <div className="py-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center text-sm">

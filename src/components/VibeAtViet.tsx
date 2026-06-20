@@ -1,21 +1,51 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
 import {
   isVideoUrl,
   getVideoEmbedUrl,
-  getChromelessYouTubeEmbedUrl,
+  detectVideoPlatform,
+  getYouTubeThumbnailUrl,
+  getYouTubeWatchEmbedUrl,
   type VideoPlatform,
 } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-const IFRAME_VIDEO_PLATFORMS: VideoPlatform[] = ['youtube', 'instagram', 'vimeo'];
+const VIMEO_PLATFORM: VideoPlatform = 'vimeo';
 
-function shouldUseIframeEmbed(video: string): boolean {
-  if (!isVideoUrl(video)) return false;
-  const { platform } = getVideoEmbedUrl(video);
-  return IFRAME_VIDEO_PLATFORMS.includes(platform);
+function usesNativeVideo(video: string | null | undefined): boolean {
+  if (!video) return false;
+  if (!isVideoUrl(video)) return true;
+  const platform = detectVideoPlatform(video);
+  return platform === 'file' || platform === 'googledrive' || platform === 'unknown';
+}
+
+function usesVimeoBackground(video: string): boolean {
+  return isVideoUrl(video) && detectVideoPlatform(video) === VIMEO_PLATFORM;
+}
+
+function isExternalGalleryVideo(video: string): boolean {
+  if (!video || !isVideoUrl(video)) return false;
+  const platform = detectVideoPlatform(video);
+  return platform === 'youtube' || platform === 'instagram';
+}
+
+const imageSrc = (path: string) => {
+  if (!path) return '/placeholder.svg';
+  if (isGoogleDriveLink(path)) return convertGoogleDriveLink(path);
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/')) return path;
+  return path;
+};
+
+function getTilePoster(item: VibeAtVietItem): string {
+  if (item.image) return imageSrc(item.image);
+  if (item.video && detectVideoPlatform(item.video) === 'youtube') {
+    return getYouTubeThumbnailUrl(item.video) ?? '/placeholder.svg';
+  }
+  return '/placeholder.svg';
 }
 
 function VibeGalleryVideo({
@@ -31,6 +61,7 @@ function VibeGalleryVideo({
   caption: string;
   videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const src = (() => {
     if (!videoPath) return '';
     if (isGoogleDriveLink(videoPath)) return convertGoogleDriveToDownload(videoPath);
@@ -38,8 +69,29 @@ function VibeGalleryVideo({
     return videoPath;
   })();
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const video = videoRefs.current[slotIndex];
+        if (!video) return;
+        if (entries[0]?.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [slotIndex, videoRefs]);
+
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden rounded-[inherit]">
       <video
         ref={(el) => {
           videoRefs.current[slotIndex] = el;
@@ -49,7 +101,7 @@ function VibeGalleryVideo({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         controls={false}
         controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
         disablePictureInPicture
@@ -64,7 +116,7 @@ function VibeGalleryVideo({
           target.style.display = 'none';
           const img = document.createElement('img');
           img.src = poster;
-          img.className = 'absolute inset-0 h-full w-full object-cover pointer-events-none';
+          img.className = 'absolute inset-0 h-full w-full object-cover pointer-events-none vibe-gallery-poster';
           img.alt = caption;
           target.parentElement?.appendChild(img);
         }}
@@ -76,42 +128,115 @@ function VibeGalleryVideo({
   );
 }
 
-function VibeYoutubeEmbed({ videoUrl, title }: { videoUrl: string; title: string }) {
-  const embedUrl = getChromelessYouTubeEmbedUrl(videoUrl);
+function VibeVimeoBackground({ videoUrl, title }: { videoUrl: string; title: string }) {
+  const { embedUrl } = getVideoEmbedUrl(videoUrl);
 
   return (
-    <div className="vibe-yt-embed absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
+    <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
       <iframe
         src={embedUrl}
         title={title}
-        className="vibe-yt-iframe border-0 pointer-events-none"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        loading="eager"
+        className="vibe-gallery-iframe border-0 pointer-events-none"
+        allow="autoplay; fullscreen; picture-in-picture"
+        loading="lazy"
         tabIndex={-1}
       />
     </div>
   );
 }
 
-const imageSrc = (path: string) => {
-  if (!path) return '/placeholder.svg';
-  if (isGoogleDriveLink(path)) return convertGoogleDriveLink(path);
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  if (path.startsWith('/')) return path;
-  return path;
-};
+function VibeGalleryPoster({ src, alt }: { src: string; alt: string }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="absolute inset-0 h-full w-full object-cover pointer-events-none vibe-gallery-poster"
+      loading="lazy"
+    />
+  );
+}
+
+function VibeGalleryTileMedia({
+  item,
+  slotIndex,
+  videoRefs,
+  onExternalVideoClick,
+}: {
+  item: VibeAtVietItem;
+  slotIndex: number;
+  videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
+  onExternalVideoClick?: (item: VibeAtVietItem) => void;
+}) {
+  const poster = getTilePoster(item);
+
+  if (!item.video) {
+    return (
+      <img
+        src={poster}
+        alt={item.caption}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
+    );
+  }
+
+  if (usesNativeVideo(item.video)) {
+    return (
+      <VibeGalleryVideo
+        slotIndex={slotIndex}
+        videoPath={item.video}
+        poster={poster}
+        caption={item.caption}
+        videoRefs={videoRefs}
+      />
+    );
+  }
+
+  if (usesVimeoBackground(item.video)) {
+    return <VibeVimeoBackground videoUrl={item.video} title={item.caption} />;
+  }
+
+  if (isExternalGalleryVideo(item.video)) {
+    return (
+      <button
+        type="button"
+        className="absolute inset-0 w-full h-full border-0 p-0 bg-transparent cursor-pointer"
+        onClick={() => onExternalVideoClick?.(item)}
+        aria-label={`Play ${item.caption}`}
+      >
+        <VibeGalleryPoster src={poster} alt={item.caption} />
+      </button>
+    );
+  }
+
+  return <VibeGalleryPoster src={poster} alt={item.caption} />;
+}
 
 const VibeAtViet = () => {
   const navigate = useNavigate();
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [galleryItems, setGalleryItems] = useState<VibeAtVietItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [watchVideo, setWatchVideo] = useState<{ embedUrl: string; title: string } | null>(null);
+
+  const openExternalVideo = (item: VibeAtVietItem) => {
+    if (!item.video) return;
+    const platform = detectVideoPlatform(item.video);
+    if (platform === 'youtube') {
+      const embedUrl = getYouTubeWatchEmbedUrl(item.video);
+      if (embedUrl) {
+        setWatchVideo({ embedUrl, title: item.caption });
+        return;
+      }
+    }
+    const { embedUrl } = getVideoEmbedUrl(item.video);
+    setWatchVideo({ embedUrl, title: item.caption });
+  };
 
   useEffect(() => {
     vibeAtVietAPI.getAll()
       .then((items) => {
         const list = items || [];
-        // Deduplicate by id to avoid duplicate tiles
         const seen = new Set<number>();
         const deduped = list.filter((item) => {
           if (seen.has(item.id)) return false;
@@ -124,39 +249,24 @@ const VibeAtViet = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Grid layout pattern - Based on provided HTML/CSS structure
-  // 5 columns × 5 rows grid
-  // div1: col 1, row 1 (default)
-  // div2: col 2, row 1 (default)
-  // div3: col 1, row 2
-  // div4: col 2, row 2
-  // div5: col 3, row 1, spans 2 rows
-  // div6: col 4, row 1, spans 2 columns
-  // div7: col 5, row 2, spans 3 rows
-  // div8: col 4, row 5, spans 2 columns
-  // div9: col 4, row 2
-  // div10: col 4, row 3, spans 2 rows
-  // div11: col 1, row 3, spans 3 rows
-  // div13: col 2, row 3, spans 2 columns and 3 rows
   const getGridClass = (index: number) => {
     const patterns: { [key: number]: string } = {
-      0: 'col-span-1 row-span-1', // div1: default position (col 1, row 1)
-      1: 'col-span-1 row-span-1', // div2: default position (col 2, row 1)
-      2: 'col-start-1 row-start-2 col-span-1 row-span-1', // div3: col 1, row 2
-      3: 'col-start-2 row-start-2 col-span-1 row-span-1', // div4: col 2, row 2
-      4: 'col-start-3 row-start-1 col-span-1 row-span-2', // div5: col 3, row 1, spans 2 rows
-      5: 'col-start-4 row-start-1 col-span-2 row-span-1', // div6: col 4, row 1, spans 2 columns
-      6: 'col-start-5 row-start-2 col-span-1 row-span-3', // div7: col 5, row 2, spans 3 rows
-      7: 'col-start-4 row-start-5 col-span-2 row-span-1', // div8: col 4, row 5, spans 2 columns
-      8: 'col-start-4 row-start-2 col-span-1 row-span-1', // div9: col 4, row 2
-      9: 'col-start-4 row-start-3 col-span-1 row-span-2', // div10: col 4, row 3, spans 2 rows
-      10: 'col-start-1 row-start-3 col-span-1 row-span-3', // div11: col 1, row 3, spans 3 rows
-      11: 'col-start-2 row-start-3 col-span-2 row-span-3', // div13: col 2, row 3, spans 2 cols and 3 rows
+      0: 'col-span-1 row-span-1',
+      1: 'col-span-1 row-span-1',
+      2: 'col-start-1 row-start-2 col-span-1 row-span-1',
+      3: 'col-start-2 row-start-2 col-span-1 row-span-1',
+      4: 'col-start-3 row-start-1 col-span-1 row-span-2',
+      5: 'col-start-4 row-start-1 col-span-2 row-span-1',
+      6: 'col-start-5 row-start-2 col-span-1 row-span-3',
+      7: 'col-start-4 row-start-5 col-span-2 row-span-1',
+      8: 'col-start-4 row-start-2 col-span-1 row-span-1',
+      9: 'col-start-4 row-start-3 col-span-1 row-span-2',
+      10: 'col-start-1 row-start-3 col-span-1 row-span-3',
+      11: 'col-start-2 row-start-3 col-span-2 row-span-3',
     };
     return patterns[index] || 'col-span-1 row-span-1';
   };
 
-  // Build 12 slots by order: slot[i] = item with order === i (so each grid position shows its assigned media)
   const orderedSlots: (VibeAtVietItem | null)[] = Array(12).fill(null);
   galleryItems.forEach((item) => {
     const o = item.order ?? 999;
@@ -164,7 +274,6 @@ const VibeAtViet = () => {
       orderedSlots[o] = item;
     }
   });
-  // Fallback: if no items use order, fill slots in array order so we don't show empty grid
   const hasOrdered = orderedSlots.some((s) => s !== null);
   if (!hasOrdered && galleryItems.length > 0) {
     galleryItems.slice(0, 12).forEach((item, i) => {
@@ -172,23 +281,41 @@ const VibeAtViet = () => {
     });
   }
 
-  // Preload images when gallery items change
   useEffect(() => {
     galleryItems.forEach((item) => {
-      if (item.image) {
-        const src = imageSrc(item.image);
-        const img = new Image();
-        img.src = src;
-      }
+      const src = getTilePoster(item);
+      const img = new Image();
+      img.src = src;
     });
   }, [galleryItems]);
+
+  const renderTile = (item: VibeAtVietItem, slotIndex: number, className: string) => (
+    <div
+      key={`vibe-slot-${slotIndex}-${item.id}`}
+      className={`vibe-gallery-item relative group overflow-hidden ${className}`}
+    >
+      <VibeGalleryTileMedia
+        item={item}
+        slotIndex={slotIndex}
+        videoRefs={videoRefs}
+        onExternalVideoClick={openExternalVideo}
+      />
+      <div className="vibe-caption">
+        <p
+          className="text-[#0a192f] text-xs md:text-sm lg:text-base font-medium leading-snug"
+          style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+        >
+          {item.caption}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <section id="vibe-at-viet" className="py-8 md:py-10 bg-white overflow-hidden">
       <div className="container mx-auto px-4 md:px-10 lg:px-12">
-        {/* Section Header */}
         <div className="mb-6 md:mb-8 flex items-center gap-3">
-          <h2 
+          <h2
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0a192f]"
             style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.12em' }}
           >
@@ -208,114 +335,42 @@ const VibeAtViet = () => {
           </div>
         ) : (
           <>
-          {/* Mobile: 2-column simple grid */}
-          <div className="grid grid-cols-2 gap-2 md:hidden">
-            {orderedSlots.filter(Boolean).slice(0, 8).map((item, idx) => {
-              if (!item) return null;
-              const tall = idx === 0 || idx === 3 || idx === 5;
-              return (
-                <div
-                  key={`vibe-mobile-${idx}-${item.id}`}
-                  className={`vibe-gallery-item relative group cursor-pointer rounded-xl overflow-hidden ${tall ? 'row-span-2 min-h-[200px]' : 'min-h-[120px]'}`}
-                >
-                  {item.video ? (
-                    shouldUseIframeEmbed(item.video) ? (
-                      (() => {
-                        const { platform } = getVideoEmbedUrl(item.video);
-                        if (platform === 'youtube') {
-                          return <VibeYoutubeEmbed videoUrl={item.video} title={item.caption} />;
-                        }
-                        const { embedUrl } = getVideoEmbedUrl(item.video);
-                        return (
-                          <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
-                            <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" className="vibe-gallery-iframe border-0 pointer-events-none" title={item.caption} loading="lazy" tabIndex={-1} />
-                          </div>
-                        );
-                      })()
-                    ) : (
-                      <VibeGalleryVideo slotIndex={idx} videoPath={item.video} poster={imageSrc(item.image)} caption={item.caption} videoRefs={videoRefs} />
-                    )
-                  ) : (
-                    <img src={imageSrc(item.image)} alt={item.caption} className="w-full h-full object-cover" loading="lazy" />
-                  )}
-                  <div className="vibe-caption">
-                    <p className="text-[#0a192f] text-xs font-medium leading-snug">{item.caption}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {/* Desktop: Original 5-column complex grid */}
-          <div
-            className="hidden md:grid grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5"
-            style={{
-              gridTemplateRows: 'repeat(5, minmax(90px, 1fr))',
-              maxHeight: 'calc(100vh - 180px)',
-            }}
-          >
-            {orderedSlots.map((item, slotIndex) => {
-              const gridClass = getGridClass(slotIndex);
-              if (!item) {
-                return <div key={`vibe-slot-${slotIndex}-empty`} className={`${gridClass} bg-gray-100 rounded-xl min-h-[60px]`} aria-hidden />;
-              }
-              return (
-              <div
-                key={`vibe-slot-${slotIndex}-${item.id}`}
-                className={`vibe-gallery-item relative group cursor-pointer h-full min-h-[60px] ${gridClass}`}
-              >
-                {item.video ? (
-                  shouldUseIframeEmbed(item.video) ? (
-                    (() => {
-                      const { platform, embedUrl } = getVideoEmbedUrl(item.video);
-                      if (platform === 'youtube') {
-                        return (
-                          <VibeYoutubeEmbed videoUrl={item.video} title={item.caption} />
-                        );
-                      }
-                      return (
-                        <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
-                          <iframe
-                            src={embedUrl}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            className="vibe-gallery-iframe border-0 pointer-events-none"
-                            title={item.caption}
-                            loading="lazy"
-                            tabIndex={-1}
-                          />
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    <VibeGalleryVideo
-                      slotIndex={slotIndex}
-                      videoPath={item.video}
-                      poster={imageSrc(item.image)}
-                      caption={item.caption}
-                      videoRefs={videoRefs}
+            <div className="grid grid-cols-2 gap-2 md:hidden">
+              {orderedSlots.filter(Boolean).slice(0, 8).map((item, idx) => {
+                if (!item) return null;
+                const tall = idx === 0 || idx === 3 || idx === 5;
+                return renderTile(
+                  item,
+                  idx,
+                  `rounded-xl overflow-hidden ${tall ? 'row-span-2 min-h-[200px]' : 'min-h-[120px]'}`
+                );
+              })}
+            </div>
+
+            <div
+              className="hidden md:grid grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5"
+              style={{
+                gridTemplateRows: 'repeat(5, minmax(90px, 1fr))',
+                maxHeight: 'calc(100vh - 180px)',
+              }}
+            >
+              {orderedSlots.map((item, slotIndex) => {
+                const gridClass = getGridClass(slotIndex);
+                if (!item) {
+                  return (
+                    <div
+                      key={`vibe-slot-${slotIndex}-empty`}
+                      className={`${gridClass} bg-gray-100 rounded-xl min-h-[60px]`}
+                      aria-hidden
                     />
-                  )
-                ) : (
-                  <img
-                    src={imageSrc(item.image)}
-                    alt={item.caption}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    fetchpriority="high"
-                  />
-                )}
-                <div className="vibe-caption">
-                  <p className="text-[#0a192f] text-sm md:text-base font-medium leading-snug" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    {item.caption}
-                  </p>
-                </div>
-              </div>
-              );
-            })}
-          </div>
+                  );
+                }
+                return renderTile(item, slotIndex, `h-full min-h-[60px] ${gridClass}`);
+              })}
+            </div>
           </>
         )}
 
-        {/* View More Button - Amrita Style */}
         <div className="flex justify-start mt-4 md:mt-6">
           <button
             onClick={() => {
@@ -332,6 +387,30 @@ const VibeAtViet = () => {
           </button>
         </div>
       </div>
+
+      <Dialog open={!!watchVideo} onOpenChange={(open) => !open && setWatchVideo(null)}>
+        <DialogContent className="max-w-4xl w-[calc(100%-2rem)] p-0 gap-0 overflow-hidden bg-black border-0">
+          <button
+            type="button"
+            onClick={() => setWatchVideo(null)}
+            className="absolute top-3 right-3 z-20 rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors"
+            aria-label="Close video"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          {watchVideo && (
+            <div className="relative w-full aspect-video">
+              <iframe
+                src={watchVideo.embedUrl}
+                title={watchVideo.title}
+                className="absolute inset-0 h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

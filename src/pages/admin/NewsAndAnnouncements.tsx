@@ -31,6 +31,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { newsAPI, announcementsAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
+import { imgUrl } from '@/lib/imageUtils';
 import { toast } from 'sonner';
 import { Newspaper, Bell } from 'lucide-react';
 
@@ -40,6 +42,7 @@ interface News {
   description: string;
   date: string;
   link?: string;
+  image?: string;
 }
 
 interface Announcement {
@@ -57,11 +60,14 @@ const NewsTab = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<News | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     date: '',
     link: '',
+    image: '',
   });
 
   useEffect(() => {
@@ -81,24 +87,37 @@ const NewsTab = () => {
 
   const handleAdd = () => {
     setSelectedItem(null);
+    setImageFile(null);
+    setImagePreview('');
     setFormData({
       title: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
       link: '',
+      image: '',
     });
     setDialogOpen(true);
   };
 
   const handleEdit = (item: News) => {
     setSelectedItem(item);
+    setImageFile(null);
+    setImagePreview(item.image ? imgUrl(item.image) : '');
     setFormData({
       title: item.title,
       description: item.description,
       date: item.date,
       link: item.link || '',
+      image: item.image || '',
     });
     setDialogOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleDelete = (item: News) => {
@@ -108,17 +127,24 @@ const NewsTab = () => {
 
   const handleSubmit = async () => {
     try {
+      const payload = { ...formData };
+      if (imageFile) {
+        toast.info('Uploading image…');
+        payload.image = await uploadToSupabase(imageFile, 'campus-updates', 'images');
+      }
+
       if (selectedItem) {
-        await newsAPI.update(selectedItem.id, formData);
-        toast.success('News updated successfully');
+        await newsAPI.update(selectedItem.id, payload);
+        toast.success('Latest update saved successfully');
       } else {
-        await newsAPI.create(formData);
-        toast.success('News created successfully');
+        await newsAPI.create(payload);
+        toast.success('Latest update created successfully');
       }
       setDialogOpen(false);
+      setImageFile(null);
       fetchNews();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save news');
+      toast.error(error.message || 'Failed to save latest update');
     }
   };
 
@@ -135,6 +161,16 @@ const NewsTab = () => {
   };
 
   const columns = [
+    {
+      key: 'image',
+      header: 'Photo',
+      render: (item: News) =>
+        item.image ? (
+          <img src={imgUrl(item.image)} alt="" className="h-10 w-14 rounded object-cover border border-emerald-200" />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
     { key: 'title', header: 'Title' },
     {
       key: 'description',
@@ -156,7 +192,7 @@ const NewsTab = () => {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        addLabel="Add News"
+        addLabel="Add Latest Update"
         getId={(item) => item.id}
         headerClassName="bg-emerald-200 [&>th]:bg-emerald-200"
         bodyClassName="bg-emerald-100"
@@ -166,9 +202,9 @@ const NewsTab = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{selectedItem ? 'Edit News' : 'Add News'}</DialogTitle>
+            <DialogTitle>{selectedItem ? 'Edit Latest Update' : 'Add Latest Update'}</DialogTitle>
             <DialogDescription>
-              {selectedItem ? 'Update news details' : 'Create a new news article'}
+              {selectedItem ? 'Update campus news with optional photo' : 'Create a new campus update with text and optional photo'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -187,9 +223,21 @@ const NewsTab = () => {
                 id="news-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter news description"
+                placeholder="Enter update description"
                 rows={4}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="news-image">Photo (Optional)</Label>
+              <Input
+                id="news-image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              {imagePreview && (
+                <img src={imagePreview} alt="Preview" className="mt-2 h-28 w-full max-w-xs rounded-lg object-cover border" />
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -222,7 +270,7 @@ const NewsTab = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete News</AlertDialogTitle>
+            <AlertDialogTitle>Delete Latest Update</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete &quot;{selectedItem?.title}&quot;? This action cannot be undone.
             </AlertDialogDescription>
@@ -453,19 +501,19 @@ const NewsAndAnnouncements = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">News &amp; Announcements</h1>
-        <p className="text-muted-foreground mt-2">Manage news articles and announcements. Use the tabs below to add, edit, or delete entries in each table.</p>
+        <h1 className="text-3xl font-bold">Campus Updates</h1>
+        <p className="text-muted-foreground mt-2">Manage latest updates and examination corner entries. Use the tabs below to add, edit, or delete entries in each table.</p>
       </div>
 
       <Tabs defaultValue="news" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="news" className="flex items-center gap-2">
             <Newspaper className="h-4 w-4" />
-            News
+            Latest Updates
           </TabsTrigger>
           <TabsTrigger value="announcements" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
-            Announcements
+            Examination Corner
           </TabsTrigger>
         </TabsList>
         <TabsContent value="news" className="mt-6">

@@ -5,7 +5,6 @@ import AnnouncementsNewsEventsSection from '@/components/AnnouncementsNewsEvents
 // Lazy load below-the-fold components for better initial load performance
 const VibeAtViet = lazy(() => import('@/components/VibeAtViet'));
 const PlacementExcellenceSection = lazy(() => import('@/components/PlacementExcellenceSection'));
-const RankedTopSection = lazy(() => import('@/components/RankedTopSection'));
 const Footer = lazy(() => import('@/components/Footer'));
 
 const Index = () => {
@@ -18,7 +17,6 @@ const Index = () => {
       <Suspense fallback={null}>
         <VibeAtViet />
         <PlacementExcellenceSection />
-        <RankedTopSection />
         <Footer />
       </Suspense>
     </div>

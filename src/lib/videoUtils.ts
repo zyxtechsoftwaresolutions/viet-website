@@ -94,6 +94,31 @@ export function getChromelessYouTubeEmbedUrl(url: string): string {
   return buildChromelessYouTubeEmbedUrl(videoId);
 }
 
+/** High-quality still for gallery tiles — avoids broken autoplay iframes */
+export function getYouTubeThumbnailUrl(videoIdOrUrl: string): string | null {
+  const videoId = extractYouTubeVideoId(videoIdOrUrl) ?? videoIdOrUrl;
+  if (!videoId || videoId.length < 6) return null;
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+/** Standard embed with controls — use in modals / detail views only */
+export function buildYouTubeWatchEmbedUrl(videoId: string): string {
+  const params = new URLSearchParams({
+    autoplay: '1',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1',
+    origin: typeof window !== 'undefined' ? window.location.origin : '',
+  });
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+}
+
+export function getYouTubeWatchEmbedUrl(url: string): string | null {
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) return null;
+  return buildYouTubeWatchEmbedUrl(videoId);
+}
+
 /**
  * Converts an Instagram URL to an embed URL
  */

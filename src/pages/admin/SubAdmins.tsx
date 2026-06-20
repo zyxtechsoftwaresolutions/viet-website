@@ -39,7 +39,7 @@ export const ADMIN_SECTIONS = [
   { key: 'hero-videos', label: 'Hero Videos' },
   { key: 'intro-video', label: 'Intro Video' },
   { key: 'ticker', label: 'Scrolling Text' },
-  { key: 'news-announcements', label: 'News & Announcements' },
+  { key: 'news-announcements', label: 'Campus Updates' },
   { key: 'events', label: 'Events' },
   { key: 'departments', label: 'Departments' },
   { key: 'department-pages', label: 'Department Pages' },

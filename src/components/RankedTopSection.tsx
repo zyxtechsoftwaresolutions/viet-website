@@ -60,28 +60,11 @@ const RANKED_ITEMS = [
   },
 ];
 
-/** Continues from Placement section (#FC4921) → deep orange → black (footer) */
-const RANKED_TOP_GRADIENT =
-  'linear-gradient(to bottom, #FC4921 0%, #FC4921 12%, #D93D15 35%, #A82E0F 55%, #6B1C09 75%, #2E0C04 90%, #000000 100%)';
-
 const RankedTopSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section
-      className="relative py-12 md:py-16 overflow-hidden mb-0 -mt-px"
-      style={{ background: RANKED_TOP_GRADIENT }}
-    >
-      {/* Gloss overlay – starts below seam so Placement/Ranked Top meet at same #FC4921 */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          background: `
-            linear-gradient(180deg, transparent 0%, transparent 18%, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.02) 40%, transparent 60%),
-            linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.35) 100%)
-          `,
-        }}
-      />
+    <section className="ranked-top-section relative py-12 md:py-16 overflow-hidden mb-0">
       <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12">
         {/* Section heading */}
         <motion.div
@@ -90,10 +73,7 @@ const RankedTopSection = () => {
           viewport={{ once: true }}
           className="text-center mb-10 md:mb-12"
         >
-          <h2
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3"
-            style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.06em' }}
-          >
+          <h2 className="home-section-title home-section-title--light mb-3">
             Ranked Top
           </h2>
           <p

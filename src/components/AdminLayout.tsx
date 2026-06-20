@@ -49,7 +49,7 @@ const AdminLayout = () => {
     { icon: PlayCircle, label: 'Hero Slides', path: '/admin/hero-videos', section: 'hero-videos', adminOnly: false },
     { icon: Film, label: 'Intro Video', path: '/admin/intro-video', section: 'intro-video', adminOnly: false },
     { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker', section: 'ticker', adminOnly: false },
-    { icon: Newspaper, label: 'News & Announcements', path: '/admin/news-announcements', section: 'news-announcements', adminOnly: false },
+    { icon: Newspaper, label: 'Campus Updates', path: '/admin/news-announcements', section: 'news-announcements', adminOnly: false },
     { icon: Calendar, label: 'Events', path: '/admin/events', section: 'events', adminOnly: false },
     { icon: Building2, label: 'Departments', path: '/admin/departments', section: 'departments', adminOnly: false },
     { icon: BookOpen, label: 'Department Pages', path: '/admin/department-pages', section: 'department-pages', adminOnly: false },
