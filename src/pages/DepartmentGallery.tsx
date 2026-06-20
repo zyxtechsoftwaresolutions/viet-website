@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { galleryAPI } from '@/lib/api';
 import { getDepartmentPageConfig, getDepartmentDisplayName } from '@/lib/departmentPageConfig';
 import { convertGoogleDriveLink } from '@/lib/googleDriveUtils';
@@ -135,53 +134,12 @@ const DepartmentGallery: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState<string>('');
 
-  // Get gallery filter: use shared config for Diploma/PG/Management slugs, else built-in Engineering UG filters
+  // Get gallery filter from shared department config (aliases map URL slugs to config keys)
   const getGalleryFilter = (s: string) => {
-    const config = getDepartmentPageConfig(s);
-    if (config) return config.galleryFilter;
-    const filters: Record<string, (img: { department?: string }) => boolean> = {
-      'cse': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('computer science') || d.includes('cse') || d.includes('engineering ug - computer');
-      },
-      'ece': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('ece') || d.includes('electronics') || d.includes('communication');
-      },
-      'eee': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('eee') || d.includes('electrical');
-      },
-      'mechanical': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('mechanical');
-      },
-      'civil': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('civil');
-      },
-      'ame': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('automobile') || d.includes('ame');
-      },
-      'bsh': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('bsh') || d.includes('basic science') || d.includes('humanities');
-      },
-      'cyber-security': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('cyber') || d.includes('security');
-      },
-      'data-science': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('data science');
-      },
-      'aiml': (img: { department?: string }) => {
-        const d = (img.department || '').toLowerCase();
-        return d.includes('aiml') || d.includes('artificial intelligence') || d.includes('machine learning');
-      },
-    };
-    return filters[s || ''] || (() => false);
+    const slugAliases: Record<string, string> = { ame: 'automobile' };
+    const resolved = slugAliases[s] ?? s;
+    const config = getDepartmentPageConfig(resolved);
+    return config?.galleryFilter ?? (() => false);
   };
 
   // Back link to department page: generic (diploma/pg/management) use /programs/department/:slug; Engineering UG use /programs/engineering/ug/:slug
@@ -380,7 +338,6 @@ const DepartmentGallery: React.FC = () => {
       </Dialog>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

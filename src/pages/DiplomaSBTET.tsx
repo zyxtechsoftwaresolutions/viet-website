@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { 
   FileText, 
   Calendar, 
@@ -533,7 +532,6 @@ const DiplomaSBTET: React.FC = () => {
       </div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

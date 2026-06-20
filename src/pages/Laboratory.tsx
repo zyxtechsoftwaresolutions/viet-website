@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Clock, X } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 const LABS = [
   {
@@ -223,7 +222,6 @@ const Laboratory = () => {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

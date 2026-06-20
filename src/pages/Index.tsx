@@ -7,7 +7,6 @@ const VibeAtViet = lazy(() => import('@/components/VibeAtViet'));
 const PlacementExcellenceSection = lazy(() => import('@/components/PlacementExcellenceSection'));
 const RankedTopSection = lazy(() => import('@/components/RankedTopSection'));
 const Footer = lazy(() => import('@/components/Footer'));
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 
 const Index = () => {
   return (
@@ -22,7 +21,6 @@ const Index = () => {
         <RankedTopSection />
         <Footer />
       </Suspense>
-      <ScrollProgressIndicator />
     </div>
   );
 };

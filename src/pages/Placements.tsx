@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Briefcase, TrendingUp, Building2, Award, Users, DollarSign } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -373,7 +372,6 @@ const Placements = () => {
       </motion.div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

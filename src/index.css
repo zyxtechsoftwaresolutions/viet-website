@@ -914,3 +914,149 @@ html, body {
     transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in;
   }
 }
+
+/* ── Hero UI enhancements ── */
+
+/* Liquid glass panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+.glass-panel-dark {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Hero main logo — full glass block with solid white frame */
+.glass-panel-dark-logo {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Dark glass menu button — matches nav chips */
+.glass-menu-btn {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transform: scale(1.04);
+}
+
+/* REVA-style RGB cycling CTA */
+@keyframes rgb-cycle {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-apply-rgb {
+  background: linear-gradient(
+    270deg,
+    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000
+  );
+  background-size: 400% 400%;
+  animation: rgb-cycle 4s ease infinite;
+}
+
+.hero-apply-rgb:hover {
+  animation-duration: 2s;
+  box-shadow: 0 0 28px rgba(255, 100, 50, 0.55);
+}
+
+/* Admissions hover glow */
+.hero-admissions-glow {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-admissions-glow:hover {
+  transform: scale(1.04) translateX(-4px);
+  box-shadow: 0 0 22px rgba(77, 84, 93, 0.65), 0 6px 20px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.12);
+}
+
+/* Menu overlay slide-in */
+@keyframes menu-slide-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.menu-overlay-enter {
+  animation: menu-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Admissions button glow in nav menu */
+.admissions-btn-glow {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admissions-btn-glow:hover {
+  box-shadow: 0 0 28px rgba(225, 115, 26, 0.65), 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.06);
+}
+
+/* Chatbot welcome bubble */
+@keyframes welcome-bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.chat-welcome-bubble {
+  animation: welcome-bubble-in 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Notice board scroll */
+.notice-board-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.notice-board-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notice-board-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.notice-board-scroll:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+}
+
+@keyframes notice-scroll {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -50%, 0); }
+}
+
+.notice-auto-scroll {
+  will-change: transform;
+  animation: notice-scroll var(--scroll-duration, 30s) linear infinite;
+}
+
+.notice-auto-scroll:hover {
+  animation-play-state: paused;
+}
+
+.font-notice {
+  font-family: 'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif;
+}

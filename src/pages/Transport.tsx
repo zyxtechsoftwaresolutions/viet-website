@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 import { pagesAPI, transportRoutesAPI } from "@/lib/api";
 
 // Fallback data: bus no, driver, contact, capacity, image for hover
@@ -362,7 +361,6 @@ const Transport = () => {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

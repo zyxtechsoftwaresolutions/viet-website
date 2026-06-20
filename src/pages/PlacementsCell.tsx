@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { 
   GraduationCap, 
   Users, 
@@ -1130,7 +1129,6 @@ const PlacementsCell: React.FC = () => {
       </Dialog>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

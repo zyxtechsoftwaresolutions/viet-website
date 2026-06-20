@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 
 interface Committee {
   id: number;
@@ -49,7 +48,6 @@ const CommitteesPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <LeaderPageNavbar backHref="/about" />
-      <ScrollProgressIndicator />
 
       {/* Hero */}
       <section

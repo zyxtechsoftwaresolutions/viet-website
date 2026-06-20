@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { BookOpen, Clock, Users, Wifi, MapPin, Coffee } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 const Library = () => {
   const features = [
@@ -217,7 +216,6 @@ const Library = () => {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

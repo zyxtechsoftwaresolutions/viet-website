@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { facultyAPI, hodsAPI, galleryAPI, departmentPagesAPI } from '@/lib/api';
 import { convertGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 import { getVideoEmbedUrl, isVideoUrl } from '@/lib/videoUtils';
@@ -1652,7 +1651,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       </Dialog>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

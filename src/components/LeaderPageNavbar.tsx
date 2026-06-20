@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowLeft, Plus, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { X, ArrowLeft, Plus, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/SearchBar';
@@ -16,6 +16,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
   const [activeNavItem, setActiveNavItem] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isBackHovered, setIsBackHovered] = useState(false);
+  const [isNaacHovered, setIsNaacHovered] = useState(false);
   
   // Departments 3-column state
   const [selectedStream, setSelectedStream] = useState<string | null>(null);
@@ -199,16 +200,20 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     setActiveNavItem(null);
   }, [location.pathname]);
 
-  // Prevent body scroll when menu is open
+  // Prevent body scroll when menu is open (deferred so open animation isn't interrupted)
   useEffect(() => {
+    let scrollLockTimer: ReturnType<typeof setTimeout> | undefined;
+
     if (isMenuOpen) {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${window.scrollY}px`;
-      // Open About by default when menu opens
       setActiveNavItem('about');
+      scrollLockTimer = setTimeout(() => {
+        const scrollY = window.scrollY;
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = `-${scrollY}px`;
+      }, 80);
     } else {
       const scrollY = document.body.style.top;
       document.documentElement.style.overflow = '';
@@ -216,9 +221,13 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
       document.body.style.position = '';
       document.body.style.width = '';
       document.body.style.top = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+      }
     }
+
     return () => {
+      if (scrollLockTimer) clearTimeout(scrollLockTimer);
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -404,32 +413,43 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
   // Check if we're on the home page
   const isHomePage = location.pathname === '/';
 
+  const homeNavChipClass =
+    'h-12 sm:h-14 md:h-16 lg:h-[4.25rem] px-2.5 sm:px-3 rounded-xl glass-panel-dark border border-white/25';
+
+  const homeLogoChipClass =
+    'h-12 sm:h-14 md:h-16 lg:h-[4.25rem] px-2.5 sm:px-3 rounded-xl glass-panel-dark-logo';
+
+  const homeMenuBtnClass =
+    'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-[3.25rem] lg:w-[3.25rem] rounded-xl glass-panel-dark border border-white/25';
+
+  const menuEase = [0.22, 1, 0.36, 1] as const;
+  const menuTransition = { duration: 0.5, ease: menuEase };
+
   return (
     <>
       {/* Minimal Floating Header - ONLY visible when menu is CLOSED */}
       <AnimatePresence>
         {!isMenuOpen && (
           <motion.header
-            className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50 flex items-center justify-between px-3 sm:px-4 py-1.5 sm:py-2 transition-all duration-300 pointer-events-none"
+            className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50 flex items-center justify-between gap-3 px-3 sm:px-4 py-1.5 sm:py-2 transition-all duration-300 pointer-events-none"
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, y: 0 }}
+            transition={{ duration: 0.25, ease: menuEase }}
           >
-            {/* Logo - tap/click goes to home */}
+            {/* Logo — tap/click goes to home */}
             <motion.div 
-              className="flex items-center cursor-pointer pointer-events-auto"
+              className="flex items-center shrink-0 cursor-pointer pointer-events-auto"
               onClick={() => handleNavigation('/')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              {/* Full logo container - visible when not scrolled; frosted backdrop for contrast on light hero media */}
+              {/* Full logo container - visible when not scrolled */}
               <motion.div 
-                className="rounded-lg overflow-hidden bg-black/40 backdrop-blur-md px-2.5 py-1.5 sm:px-3 sm:py-2 border border-white/15 shadow-lg"
-                style={{
-                  backdropFilter: 'blur(12px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                }}
+                className={cn(
+                  'flex items-center justify-center',
+                  isHomePage ? homeLogoChipClass : 'rounded-xl overflow-hidden glass-panel-dark px-2 py-1 sm:px-2.5 sm:py-1.5'
+                )}
                 initial={false}
                 animate={{
                   width: isScrolled ? 0 : 'auto',
@@ -444,9 +464,12 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                 <img
                   src="/viet-logo-new.png"
                   alt="VIET Logo"
-                  className="h-12 sm:h-16 md:h-20 w-auto object-contain"
-                  width={160}
-                  height={64}
+                  className={cn(
+                    'w-auto object-contain',
+                    isHomePage ? 'h-10 sm:h-12 md:h-14 lg:h-[3.75rem]' : 'h-9 sm:h-11 md:h-12 lg:h-14'
+                  )}
+                  width={140}
+                  height={48}
                   loading="eager"
                   fetchpriority="high"
                   decoding="async"
@@ -455,16 +478,17 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               
               {/* Mini logo container - visible when scrolled */}
               <motion.div
-                className="rounded-full overflow-hidden bg-white/10 backdrop-blur-md p-1.5 border-0 shadow-md"
-                style={{
-                  backdropFilter: 'blur(10px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(10px) saturate(180%)',
-                }}
+                className={cn(
+                  'overflow-hidden flex items-center justify-center',
+                  isHomePage
+                    ? cn(homeNavChipClass, 'rounded-full')
+                    : 'rounded-full glass-panel p-1 sm:p-1.5'
+                )}
                 initial={false}
                 animate={{
                   width: isScrolled ? 'auto' : 0,
                   opacity: isScrolled ? 1 : 0,
-                  padding: isScrolled ? '6px' : 0,
+                  padding: isScrolled ? undefined : 0,
                 }}
                 transition={{
                   duration: 0.5,
@@ -474,9 +498,12 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                 <img
                   src="/logo-viet.png"
                   alt="VIET Logo"
-                  className="h-11 md:h-12 w-auto object-contain"
-                  width={100}
-                  height={40}
+                  className={cn(
+                    'w-auto object-contain',
+                    isHomePage ? 'h-9 sm:h-11 md:h-12' : 'h-9 md:h-10'
+                  )}
+                  width={90}
+                  height={36}
                   loading="eager"
                   fetchpriority="high"
                   decoding="async"
@@ -484,47 +511,60 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
               </motion.div>
             </motion.div>
 
-            {/* Right Side - Back/Admissions + Menu Button */}
-            <div className="flex items-center gap-3 pointer-events-auto">
-              {/* Back (inner pages) / VSPT (home) — same size as former Admissions button */}
+            {/* Right Side - NAAC + Back/College Code + Menu Button */}
+            <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 pointer-events-auto shrink-0">
+              {/* NAAC Grade A — official badge image */}
+              {isHomePage && (
+                <motion.a
+                  href="https://www.naac.gov.in/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onMouseEnter={() => setIsNaacHovered(true)}
+                  onMouseLeave={() => setIsNaacHovered(false)}
+                  className={cn(
+                    'hidden sm:flex items-center justify-center shrink-0 transition-all duration-300 touch-manipulation',
+                    isNaacHovered && 'scale-[1.03]'
+                  )}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="NAAC Grade A Accredited"
+                >
+                  <img
+                    src="/naac-a-grade-icon.png"
+                    alt="NAAC Grade A Accredited"
+                    className="h-14 sm:h-16 md:h-[4.25rem] lg:h-20 w-auto object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </motion.a>
+              )}
+
+              {/* Back (inner pages) / College Code VSPT (home) */}
               <motion.button
                 onClick={isHomePage ? handleVsptClick : handleBackClick}
                 onMouseEnter={() => setIsBackHovered(true)}
                 onMouseLeave={() => setIsBackHovered(false)}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 sm:gap-2 min-w-[5.5rem] sm:min-w-[7.5rem] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-all duration-300 border-2 touch-manipulation",
+                  'flex items-center justify-center gap-1.5 font-semibold text-xs sm:text-sm transition-all duration-300 touch-manipulation',
                   isHomePage
                     ? cn(
-                        "font-bold tracking-[0.12em] uppercase shadow-[0_0_20px_rgba(225,115,26,0.55)] ring-2 ring-yellow-300/90",
-                        isScrolled
-                          ? isBackHovered
-                            ? "bg-orange-600 text-white border-white scale-[1.02]"
-                            : "bg-[#E1731A] text-white border-white"
-                          : isBackHovered
-                            ? "bg-orange-500 text-white border-white shadow-[0_0_28px_rgba(255,200,50,0.65)] scale-[1.03]"
-                            : "bg-[#E1731A] text-white border-white shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+                        homeNavChipClass,
+                        'min-w-[4.75rem] sm:min-w-[6.25rem]',
+                        isBackHovered && 'scale-[1.03] shadow-[0_0_20px_rgba(225,115,26,0.45)]'
                       )
                     : cn(
+                        'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border-2',
                         isScrolled
                           ? isBackHovered
                             ? "bg-white text-primary border-primary"
                             : "bg-primary text-white border-primary"
                           : cn(
-                              "backdrop-blur-md",
+                              "glass-panel border-white/25",
                               isBackHovered
-                                ? "bg-white/20 text-white border-white/40 shadow-lg"
-                                : "bg-white/10 text-white border-white/30 shadow-md"
+                                ? "bg-white/20 text-white shadow-lg"
+                                : "bg-white/10 text-white shadow-md"
                             )
                       )
                 )}
-                style={
-                  isHomePage || isScrolled
-                    ? undefined
-                    : {
-                        backdropFilter: "blur(10px) saturate(180%)",
-                        WebkitBackdropFilter: "blur(10px) saturate(180%)",
-                      }
-                }
                 whileTap={{ scale: 0.95 }}
               >
                 {!isHomePage && (
@@ -535,39 +575,54 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                     )}
                   />
                 )}
-                <span className={cn(isHomePage && "animate-text-blink text-base md:text-lg")}>
-                  {isHomePage ? "VSPT" : "Back"}
-                </span>
+                {isHomePage ? (
+                  <div className="flex flex-col items-center leading-none">
+                    <span className="text-[7px] sm:text-[8px] font-bold text-white/80 tracking-[0.08em] uppercase">College Code</span>
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-300 drop-shadow-md tracking-wider animate-text-blink">VSPT</span>
+                  </div>
+                ) : (
+                  <span>Back</span>
+                )}
               </motion.button>
 
-              {/* Menu Button */}
+              {/* Menu Button — dark glass, modern asymmetric hamburger */}
               <motion.button
                 onClick={() => setIsMenuOpen(true)}
                 className={cn(
-                  "flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full transition-all duration-300 text-white border-2 touch-manipulation",
-                  isScrolled
-                    ? "bg-gray-800 hover:bg-gray-700 border-gray-800"
-                    : "border-white/30 backdrop-blur-md bg-white/10 hover:bg-white/20 hover:border-white/40 shadow-md hover:shadow-lg"
+                  'flex items-center justify-center text-white touch-manipulation shrink-0 transition-all duration-300 hover:bg-white/15 hover:border-white/40',
+                  isHomePage
+                    ? homeMenuBtnClass
+                    : cn(
+                        'w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/25',
+                        isScrolled
+                          ? 'bg-primary text-white border-primary shadow-md hover:brightness-110'
+                          : 'glass-panel-dark hover:bg-white/15'
+                      ),
+                  isScrolled && !isHomePage && 'shadow-md'
                 )}
-                style={
-                  !isScrolled
-                    ? {
-                        backdropFilter: "blur(10px) saturate(180%)",
-                        WebkitBackdropFilter: "blur(10px) saturate(180%)",
-                      }
-                    : {}
-                }
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.92 }}
+                aria-label="Open menu"
               >
-                <Menu className="w-5 h-5" />
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="w-5 h-5 sm:w-[1.35rem] sm:h-[1.35rem]"
+                  aria-hidden
+                >
+                  <line x1="5" y1="7" x2="19" y2="7" />
+                  <line x1="5" y1="12" x2="15" y2="12" />
+                  <line x1="5" y1="17" x2="19" y2="17" />
+                </svg>
               </motion.button>
             </div>
           </motion.header>
         )}
       </AnimatePresence>
 
-      {/* Fullscreen Menu Overlay - Pure BLACK background like Amrita */}
+      {/* Fullscreen Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -576,10 +631,16 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.35, ease: menuEase }}
           >
             {/* Top Ribbon - hidden on mobile */}
-            <div className="text-white flex-shrink-0 pt-4 pb-1 hidden md:block" style={{ backgroundColor: '#000000' }}>
+            <motion.div
+              className="text-white flex-shrink-0 pt-4 pb-1 hidden md:block"
+              style={{ backgroundColor: '#000000' }}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...menuTransition, delay: 0.05 }}
+            >
               <div className="w-full px-4 md:px-8">
                 <div className="flex items-center justify-between py-2">
                   <div className="hidden md:flex items-center gap-3 lg:gap-5">
@@ -611,12 +672,18 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-h-0" style={{ backgroundColor: '#000000' }}>
               {/* MOBILE LAYOUT (<md) - Vertical accordion navigation */}
-              <div className="md:hidden flex-1 flex flex-col min-h-0 overflow-hidden">
+              <motion.div
+                className="md:hidden flex-1 flex flex-col min-h-0 overflow-hidden"
+                initial={{ opacity: 0, y: 28, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ ...menuTransition, delay: 0.08 }}
+              >
                 {/* Mobile Header - Logo + Admissions + Close */}
                 <div className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0 safe-area-top">
                   <motion.div
@@ -630,7 +697,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleAdmissionsClick}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-full font-semibold text-xs border-2 border-[#E1731A] text-white touch-manipulation min-h-[40px]"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs border-2 border-[#E1731A] text-white touch-manipulation min-h-[40px] admissions-btn-glow"
                       style={{ backgroundColor: '#E1731A' }}
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -836,16 +903,17 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                     </a>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* DESKTOP LAYOUT (md+) - Original horizontal tab navigation */}
               <div className="hidden md:flex flex-1 flex-col min-h-0">
                 <div className="flex-1 px-4 md:px-8 py-2 overflow-hidden">
                   <motion.div 
                     className="bg-white rounded-[20px] h-full flex flex-col overflow-hidden shadow-2xl"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.35, delay: 0.05 }}
+                    initial={{ opacity: 0, y: 32, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                    transition={{ ...menuTransition, delay: 0.1 }}
                   >
                     {/* Inner Header with Logo and Navigation */}
                     <div className="px-4 md:px-8 py-4 flex-shrink-0">
@@ -897,9 +965,8 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <motion.button
                             onClick={handleAdmissionsClick}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 border-2 border-[#E1731A] shadow-md text-white"
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 border-2 border-[#E1731A] shadow-md text-white admissions-btn-glow"
                             style={{ backgroundColor: '#E1731A' }}
-                            whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.98 }}
                           >
                             <Plus className="w-4 h-4" style={{ color: 'white' }} />

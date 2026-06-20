@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
+  ChevronLeft,
   ChevronRight,
   Plus,
   Sprout,
@@ -29,6 +30,7 @@ import ScrollingTicker from '@/components/ScrollingTicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const ADMISSIONS_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form';
@@ -45,7 +47,7 @@ const HERO_QUICK_LINKS = [
 ];
 
 const heroQuickBoxClass =
-  "group relative w-full flex items-center justify-between gap-2 px-4 py-3 lg:py-3.5 text-left text-white font-semibold text-[0.8125rem] lg:text-sm tracking-[0.02em] shadow-[0_3px_10px_rgba(0,0,0,0.22)] transition-all duration-300 ease-out hover:brightness-110 hover:-translate-x-1 hover:shadow-[0_6px_16px_rgba(0,0,0,0.28)] active:brightness-95 active:translate-x-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-[-2px]";
+  "group relative w-full flex items-center justify-between gap-2 px-3 py-2.5 lg:py-3 text-left text-white font-semibold text-[0.75rem] lg:text-[0.8125rem] tracking-[0.02em] shadow-[0_3px_10px_rgba(0,0,0,0.22)] transition-all duration-300 ease-out hover:brightness-110 hover:-translate-x-1 hover:shadow-[0_6px_16px_rgba(0,0,0,0.28)] active:brightness-95 active:translate-x-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-[-2px]";
 
 function HeroQuickLinkIcon({ icon }: { icon: 'plus' | 'chevron' }) {
   if (icon === 'chevron') {
@@ -72,14 +74,28 @@ function HeroQuickLinkBox({
   bg,
   icon,
   onClick,
+  variant,
 }: {
   label: string;
   bg: string;
   icon: 'plus' | 'chevron';
   onClick?: () => void;
+  variant?: 'admissions' | 'apply' | 'default';
 }) {
+  const variantClass =
+    variant === 'apply'
+      ? 'hero-apply-rgb'
+      : variant === 'admissions'
+        ? 'hero-admissions-glow'
+        : '';
+
   return (
-    <button type="button" onClick={onClick} className={heroQuickBoxClass} style={{ backgroundColor: bg }}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(heroQuickBoxClass, variantClass)}
+      style={variant === 'apply' ? undefined : { backgroundColor: bg }}
+    >
       <span className="drop-shadow-sm">{label}</span>
       <HeroQuickLinkIcon icon={icon} />
     </button>
@@ -108,7 +124,7 @@ function HeroQuickLinks({
     <>
       {/* Desktop — REVA-style vertical stack, sharp edges, visible gaps */}
       <nav
-        className="hidden md:flex absolute right-0 top-[6.25rem] lg:top-[6.5rem] z-20 flex-col gap-[3px] w-[168px] lg:w-[182px]"
+        className="hidden md:flex absolute right-0 top-[7.5rem] lg:top-[8rem] z-20 flex-col gap-[3px] w-[152px] lg:w-[164px]"
         aria-label="Quick links"
       >
         {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
@@ -118,6 +134,7 @@ function HeroQuickLinks({
             bg={link.bg}
             icon={link.icon}
             onClick={actions[link.id]}
+            variant={link.id === 'apply' ? 'apply' : link.id === 'admissions' ? 'admissions' : 'default'}
           />
         ))}
         <Popover>
@@ -170,7 +187,7 @@ function HeroQuickLinks({
 
       {/* Mobile — Same vertical stack on the right side, smaller size */}
       <nav
-        className="md:hidden absolute right-0 top-[4.5rem] z-20 flex flex-col gap-[2px] w-[110px] sm:w-[130px]"
+        className="md:hidden absolute right-0 top-[5.25rem] z-20 flex flex-col gap-[2px] w-[100px] sm:w-[118px]"
         aria-label="Quick links"
       >
         {HERO_QUICK_LINKS.filter((l) => l.id !== 'portal').map((link) => (
@@ -178,8 +195,12 @@ function HeroQuickLinks({
             key={link.id}
             type="button"
             onClick={actions[link.id]}
-            className="group relative w-full flex items-center justify-between gap-1.5 px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-white font-semibold text-[10px] sm:text-[11px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-300 active:scale-[0.97] active:brightness-95 touch-manipulation"
-            style={{ backgroundColor: link.bg }}
+            className={cn(
+              "group relative w-full flex items-center justify-between gap-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 text-left text-white font-semibold text-[9px] sm:text-[10px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-300 active:scale-[0.97] active:brightness-95 touch-manipulation",
+              link.id === 'apply' && 'hero-apply-rgb',
+              link.id === 'admissions' && 'hero-admissions-glow'
+            )}
+            style={link.id === 'apply' ? undefined : { backgroundColor: link.bg }}
           >
             <span className="drop-shadow-sm">{link.label}</span>
             {link.icon === 'chevron' ? (
@@ -193,7 +214,7 @@ function HeroQuickLinks({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="group relative w-full flex items-center justify-between gap-1.5 px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-white font-semibold text-[10px] sm:text-[11px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] touch-manipulation"
+              className="group relative w-full flex items-center justify-between gap-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 text-left text-white font-semibold text-[9px] sm:text-[10px] tracking-[0.02em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] touch-manipulation"
               style={{ backgroundColor: portalLink.bg }}
             >
               <span className="drop-shadow-sm">{portalLink.label}</span>
@@ -749,6 +770,16 @@ const HeroSection = () => {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
+  const goToPrevSlide = () => {
+    const prev = currentSlide === 0 ? heroSlides.length - 1 : currentSlide - 1;
+    goToSlide(prev);
+  };
+
+  const goToNextSlide = () => {
+    const next = (currentSlide + 1) % heroSlides.length;
+    goToSlide(next);
+  };
+
   // When slide changes: pause every other video, then play the current one. All videos have real src from mount.
   useEffect(() => {
     const onIntroComplete = () => {
@@ -966,12 +997,27 @@ const HeroSection = () => {
             ))}
           </div>
           
-          {/* Slide Counter */}
-          <div className="absolute bottom-6 md:bottom-8 right-6 md:right-48 lg:right-52 z-20 text-white/70 text-sm font-medium">
-            <span className="text-white">{String(currentSlide + 1).padStart(2, '0')}</span>
-            <span className="mx-1">/</span>
-            <span>{String(heroSlides.length).padStart(2, '0')}</span>
-          </div>
+          {/* Carousel arrows — manual navigation */}
+          {heroSlides.length > 1 && (
+            <div className="absolute bottom-6 md:bottom-8 right-6 md:right-48 lg:right-52 z-20 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={goToPrevSlide}
+                className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-black/40 backdrop-blur-sm border border-white/30 text-white hover:bg-black/55 hover:border-white/50 transition-all duration-200"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={goToNextSlide}
+                className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-black/40 backdrop-blur-sm border border-white/30 text-white hover:bg-black/55 hover:border-white/50 transition-all duration-200"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

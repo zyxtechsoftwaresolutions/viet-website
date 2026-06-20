@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Users } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { facultyAPI, hodsAPI, facultySettingsAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import {
@@ -204,7 +203,6 @@ const FacultyPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
-      <ScrollProgressIndicator />
 
       {/* Hero — site standard (Library/Chairman style) */}
       <section

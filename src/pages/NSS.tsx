@@ -2,7 +2,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 const NSSPage = () => {
   const objectives = [
@@ -34,7 +33,6 @@ const NSSPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
-      <ScrollProgressIndicator />
 
       {/* Hero — site theme (slate/indigo gradient) */}
       <section

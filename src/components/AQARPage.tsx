@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { FileText, CheckCircle, ChevronRight } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -686,7 +685,6 @@ const AQARPage = ({ year }: AQARPageProps) => {
       </motion.div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

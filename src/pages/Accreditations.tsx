@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Award, FileText, Download, ExternalLink, Shield, CheckCircle, Star, Building } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { accreditationsAPI, type AccreditationItem } from '@/lib/api';
@@ -281,7 +280,6 @@ const Accreditations = () => {
       </motion.div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

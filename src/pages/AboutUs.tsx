@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Mail, Award, Users, BookOpen, GraduationCap, Building2, Globe, Heart, Target, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { pagesAPI } from '@/lib/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -705,7 +704,6 @@ const AboutUs = () => {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

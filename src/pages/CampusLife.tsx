@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 
 export default function CampusLife() {
   return (
@@ -426,7 +425,6 @@ export default function CampusLife() {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

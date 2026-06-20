@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 import { pagesAPI } from '@/lib/api';
 import ImageModal from '@/components/ImageModal';
@@ -211,7 +210,6 @@ const DynamicPage = () => {
       </motion.div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

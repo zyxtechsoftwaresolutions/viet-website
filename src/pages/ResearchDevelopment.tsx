@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import RDynamicContent from '@/components/RD/RDynamicContent';
 import { 
   Building, 
@@ -140,7 +139,6 @@ const ResearchDevelopment: React.FC = () => {
       </div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

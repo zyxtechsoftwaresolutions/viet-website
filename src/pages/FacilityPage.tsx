@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { pagesAPI, transportRoutesAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import NotFound from './NotFound';
@@ -110,7 +109,6 @@ const FacilityPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
-      <ScrollProgressIndicator />
 
       {/* Hero */}
       <section

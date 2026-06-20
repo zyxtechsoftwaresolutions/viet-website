@@ -1,10 +1,8 @@
 import React from 'react';
 import DepartmentPageTemplate from '@/components/DepartmentPageTemplate';
+import { getDepartmentPageConfig } from '@/lib/departmentPageConfig';
 
-const galleryFilter = (img: { department?: string }) => {
-  const d = (img.department || '').toLowerCase();
-  return d.includes('data science') || d.includes('cse') || d.includes('computer');
-};
+const config = getDepartmentPageConfig('data-science')!;
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
@@ -19,7 +17,7 @@ const DataScience: React.FC = () => (
   <DepartmentPageTemplate
     slug="data-science"
     backHref="/btech"
-    galleryFilter={galleryFilter}
+    galleryFilter={config.galleryFilter}
     facultyFilter={facultyFilter}
   />
 );

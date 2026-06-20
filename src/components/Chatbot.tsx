@@ -372,6 +372,7 @@ function findAnswer(question: string): string {
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [step, setStep] = useState<"details" | "chat">("details");
   const [userDetails, setUserDetails] = useState<UserDetails>({
     name: "",
@@ -394,6 +395,18 @@ const Chatbot = () => {
       inputRef.current.focus();
     }
   }, [step]);
+
+  // Welcome greeting popup on page load / refresh
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcome(true), 1200);
+    const dismissTimer = setTimeout(() => setShowWelcome(false), 8000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(dismissTimer);
+    };
+  }, []);
+
+  const dismissWelcome = () => setShowWelcome(false);
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -453,9 +466,44 @@ const Chatbot = () => {
 
   return (
     <>
+      {/* Welcome greeting bubble */}
+      {showWelcome && !isOpen && (
+        <div
+          className="fixed bottom-[5.5rem] right-4 sm:right-6 z-[9999] max-w-[260px] sm:max-w-[280px] chat-welcome-bubble"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
+            <button
+              onClick={dismissWelcome}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Dismiss greeting"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex items-start gap-3 pr-4">
+              <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#E1731A]/30 shrink-0">
+                <img src="/prerana-bot.png" alt="Prerana" className="w-full h-full object-cover" />
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Hello! I&apos;m <strong>Prerana</strong>, VIET Assistant. How can I help you today?
+              </p>
+            </div>
+            <button
+              onClick={() => { dismissWelcome(); setIsOpen(true); }}
+              className="mt-3 w-full py-2 text-xs font-semibold text-white bg-gradient-to-r from-[#E1731A] to-[#c25e10] rounded-lg hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
+            >
+              Chat with Prerana
+            </button>
+            {/* Speech bubble tail */}
+            <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white border-r border-b border-gray-200 rotate-45" />
+          </div>
+        </div>
+      )}
+
       {/* Floating Chat Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { setIsOpen(!isOpen); dismissWelcome(); }}
         className="fixed bottom-6 right-6 z-[9999] w-[60px] h-[60px] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-110 group overflow-hidden border-2 border-[#E1731A]"
         aria-label="Chat with Prerana"
       >

@@ -1,10 +1,8 @@
 import React from 'react';
 import DepartmentPageTemplate from '@/components/DepartmentPageTemplate';
+import { getDepartmentPageConfig } from '@/lib/departmentPageConfig';
 
-const galleryFilter = (img: { department?: string }) => {
-  const d = (img.department || '').toLowerCase();
-  return d.includes('cyber') || d.includes('cse') || d.includes('computer');
-};
+const config = getDepartmentPageConfig('cyber-security')!;
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
@@ -19,7 +17,7 @@ const CyberSecurity: React.FC = () => (
   <DepartmentPageTemplate
     slug="cyber-security"
     backHref="/btech"
-    galleryFilter={galleryFilter}
+    galleryFilter={config.galleryFilter}
     facultyFilter={facultyFilter}
   />
 );

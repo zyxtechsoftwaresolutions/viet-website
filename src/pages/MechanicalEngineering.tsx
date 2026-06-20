@@ -1,10 +1,8 @@
 import React from 'react';
 import DepartmentPageTemplate from '@/components/DepartmentPageTemplate';
+import { getDepartmentPageConfig } from '@/lib/departmentPageConfig';
 
-const galleryFilter = (img: { department?: string }) => {
-  const d = (img.department || '').toLowerCase();
-  return d.includes('mechanical');
-};
+const config = getDepartmentPageConfig('mechanical')!;
 
 const facultyFilter = (department: string) => {
   const d = (department || '').toLowerCase();
@@ -15,7 +13,7 @@ const MechanicalEngineering: React.FC = () => (
   <DepartmentPageTemplate
     slug="mechanical"
     backHref="/btech"
-    galleryFilter={galleryFilter}
+    galleryFilter={config.galleryFilter}
     facultyFilter={facultyFilter}
   />
 );

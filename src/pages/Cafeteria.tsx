@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { UtensilsCrossed } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 /** Cafeteria gallery — bento-style grid */
 const GALLERY_ITEMS = [
@@ -37,7 +36,6 @@ const Cafeteria = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
-      <ScrollProgressIndicator />
 
       {/* Hero — site theme */}
       <section

@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { Users, Building2, UserCheck, Award, BookOpen, Target } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 
 const OrganizationalChart = () => {
@@ -238,7 +237,6 @@ const OrganizationalChart = () => {
       </motion.div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

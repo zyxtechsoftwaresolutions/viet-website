@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 /** Grid items for "A glimpse into VIET sports" — LPU-style image grid */
 const GLIMPSE_ITEMS = [
@@ -52,7 +51,6 @@ const Sports = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
-      <ScrollProgressIndicator />
 
       {/* Hero — site theme */}
       <section

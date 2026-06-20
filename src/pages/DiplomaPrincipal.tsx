@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -211,7 +210,6 @@ const DiplomaPrincipal = () => {
       <AlsoVisitLeaders currentSlug="diploma-principal" />
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

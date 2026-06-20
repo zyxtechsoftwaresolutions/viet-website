@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 
 const Hostel: React.FC = () => {
   const facilities = [
@@ -280,7 +279,6 @@ const Hostel: React.FC = () => {
       </div>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import ScrollProgressIndicator from "@/components/ScrollProgressIndicator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -419,7 +418,6 @@ const GoverningBody = () => {
       </section>
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

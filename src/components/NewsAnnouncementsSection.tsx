@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Pin } from 'lucide-react';
 import { announcementsAPI, newsAPI } from '@/lib/api';
 
 interface Announcement {
@@ -22,10 +22,161 @@ interface News {
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
-const ROW_HEIGHT_PX = 48;
+const ROW_HEIGHT_PX = 52;
 const VISIBLE_ROWS = 6;
-const SCROLL_CONTAINER_HEIGHT = ROW_HEIGHT_PX * VISIBLE_ROWS; // 288px
-const SCROLL_DURATION_BASE = 25; // seconds for one full cycle when we have many items
+const SCROLL_CONTAINER_HEIGHT = ROW_HEIGHT_PX * VISIBLE_ROWS;
+
+const typeBadgeClass = (type: string) => {
+  if (type === 'result') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (type === 'notification') return 'bg-blue-100 text-blue-800 border-blue-200';
+  return 'bg-slate-100 text-slate-700 border-slate-200';
+};
+
+interface NoticeBoardProps {
+  title: string;
+  accentColor: 'green' | 'sky';
+  showType?: boolean;
+  items: Array<{
+    id: number;
+    date: string;
+    title: string;
+    link?: string;
+    isExternal?: boolean;
+    description?: string;
+    type?: string;
+  }>;
+  emptyMessage: string;
+}
+
+function NoticeBoard({ title, accentColor, showType = false, items, emptyMessage }: NoticeBoardProps) {
+  const headerBg = accentColor === 'green' ? 'bg-emerald-700' : 'bg-sky-700';
+  const boardBg = accentColor === 'green' ? 'bg-[#f5f0e6]' : 'bg-[#eef4f8]';
+  const rowBorder = accentColor === 'green' ? 'border-emerald-200/60' : 'border-sky-200/60';
+  const rowHover = accentColor === 'green' ? 'hover:bg-emerald-50/80' : 'hover:bg-sky-50/80';
+  const pinColor = accentColor === 'green' ? 'text-emerald-600' : 'text-sky-600';
+
+  const needsScroll = items.length > VISIBLE_ROWS;
+  const scrollDuration = Math.max(25, (items.length / VISIBLE_ROWS) * 8);
+
+  const renderRow = (item: NoticeBoardProps['items'][0], copyKey: string) => {
+    const hasLink = item.link && item.link.trim() !== '' && item.link !== '#';
+    const isExternal = hasLink && /^https?:\/\//i.test(item.link!);
+
+    return (
+      <tr
+        key={`${copyKey}-${item.id}`}
+        className={`border-b ${rowBorder} ${rowHover} transition-colors duration-200`}
+        style={{ height: ROW_HEIGHT_PX }}
+      >
+        <td className="px-3 sm:px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap w-[80px] sm:w-[105px] align-middle">
+          {formatDate(item.date)}
+        </td>
+        <td className="px-2 sm:px-3 py-2.5 align-middle">
+          <div className="flex items-start gap-2">
+            <Pin className={`w-3 h-3 mt-1 shrink-0 ${pinColor} opacity-70`} aria-hidden />
+            <div className="min-w-0 flex-1">
+              {hasLink ? (
+                <a
+                  href={item.link}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                  className="font-semibold text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-xs sm:text-sm leading-snug"
+                >
+                  {item.title}
+                </a>
+              ) : (
+                <span className="font-semibold text-slate-800 line-clamp-2 text-xs sm:text-sm leading-snug">
+                  {item.title}
+                </span>
+              )}
+              {item.description && (
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 hidden sm:block">{item.description}</p>
+              )}
+            </div>
+          </div>
+        </td>
+        {item.type && showType && (
+          <td className="px-2 sm:px-3 py-2.5 w-[72px] sm:w-[90px] hidden sm:table-cell align-middle">
+            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${typeBadgeClass(item.type)}`}>
+              {item.type}
+            </span>
+          </td>
+        )}
+        <td className="px-2 py-2.5 w-8 align-middle">
+          {hasLink ? (
+            <a
+              href={item.link}
+              target={isExternal ? '_blank' : undefined}
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+              className="inline-flex text-slate-400 hover:text-slate-700 transition-colors"
+              aria-label="Read more"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </a>
+          ) : (
+            <span className="inline-flex text-slate-300" aria-hidden><ChevronRight className="w-4 h-4" /></span>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
+  return (
+    <div className={`rounded-2xl overflow-hidden flex flex-col shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-white/60 ${boardBg}`}>
+      {/* Board header */}
+      <div className={`${headerBg} px-5 py-3.5 flex items-center gap-2 shrink-0`}>
+        <Pin className="w-4 h-4 text-white/80 rotate-45" aria-hidden />
+        <h3 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          {title}
+        </h3>
+      </div>
+
+      {/* Column headers */}
+      <div className={`grid gap-0 px-3 sm:px-4 py-2 bg-white/60 border-b border-black/5 text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 ${showType ? 'grid-cols-[80px_1fr_32px] sm:grid-cols-[105px_1fr_90px_32px]' : 'grid-cols-[80px_1fr_32px] sm:grid-cols-[105px_1fr_32px]'}`}>
+        <span>Date</span>
+        <span>Notice</span>
+        {showType && <span className="hidden sm:block">Type</span>}
+        <span className="sr-only">Link</span>
+      </div>
+
+      {/* Scrollable notice list */}
+      <div
+        className="overflow-hidden relative"
+        style={{ height: SCROLL_CONTAINER_HEIGHT }}
+      >
+        {items.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium">
+            {emptyMessage}
+          </div>
+        ) : needsScroll ? (
+          <div
+            className="notice-auto-scroll"
+            style={{
+              '--scroll-duration': `${scrollDuration}s`,
+              height: 2 * items.length * ROW_HEIGHT_PX,
+            } as React.CSSProperties}
+          >
+            {[1, 2].map((copy) => (
+              <table key={copy} className="w-full text-left border-collapse font-notice" style={{ height: items.length * ROW_HEIGHT_PX }}>
+                <tbody>
+                  {items.map((item) => renderRow(item, String(copy)))}
+                </tbody>
+              </table>
+            ))}
+          </div>
+        ) : (
+          <div className="notice-board-scroll h-full">
+            <table className="w-full text-left border-collapse font-notice">
+              <tbody>
+                {items.map((item) => renderRow(item, '1'))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const NewsAnnouncementsSection = () => {
   const [news, setNews] = useState<News[]>([]);
@@ -52,187 +203,54 @@ const NewsAnnouncementsSection = () => {
   }, []);
 
   return (
-    <>
-      <style>{`
-        @keyframes news-announce-scroll {
-          0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(0, -50%, 0); }
-        }
-        .news-announce-anim {
-          will-change: transform;
-          transform: translate3d(0, 0, 0);
-          backface-visibility: hidden;
-          contain: layout paint;
-        }
-      `}</style>
-      <section className="glossy-green-texture relative overflow-hidden border-y border-emerald-200/50">
-        <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12 py-12 md:py-16">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
-            <h2
-              className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0a192f] tracking-tight px-3 py-1 rounded-lg bg-white/70 backdrop-blur-sm"
-              style={{ fontFamily: "'Libre Baskerville', 'Cinzel', Georgia, serif", letterSpacing: '0.08em' }}
-            >
-              News & Announcements
-            </h2>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="rounded-xl bg-white border border-slate-200 h-[288px] animate-pulse" />
-              <div className="rounded-xl bg-white border border-slate-200 h-[288px] animate-pulse" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* News table */}
-              <div className="rounded-xl overflow-hidden flex flex-col bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div className="px-5 py-3.5 shrink-0 bg-green-100 border-b border-green-200/80">
-                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-green-600" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
-                    News
-                  </h3>
-                </div>
-                <div className="overflow-hidden bg-green-50" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
-                  <style>{`.news-scroll-wrap::-webkit-scrollbar { display: none; }`}</style>
-                  <div
-                    className="news-scroll-wrap news-announce-anim bg-green-50"
-                    style={{
-                      height: news.length > VISIBLE_ROWS ? 2 * news.length * ROW_HEIGHT_PX : news.length * ROW_HEIGHT_PX,
-                      animation: news.length > VISIBLE_ROWS
-                        ? `news-announce-scroll ${Math.max(SCROLL_DURATION_BASE, (news.length / VISIBLE_ROWS) * 8)}s linear infinite`
-                        : 'none',
-                    }}
-                  >
-                    {news.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium bg-green-50">No news at the moment.</div>
-                    ) : (
-                      <>
-                        {(news.length > VISIBLE_ROWS ? [1, 2] : [1]).map((copy) => (
-                          <table key={copy} className="w-full text-left border-collapse" style={{ height: news.length * ROW_HEIGHT_PX }}>
-                            <tbody>
-                              {news.map((item) => {
-                                const hasLink = item.link && item.link.trim() !== '';
-                                const isExternal = hasLink && /^https?:\/\//i.test(item.link!);
-                                return (
-                                <tr key={`${copy}-${item.id}`} className="border-b border-green-100 hover:bg-green-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
-                                  <td className="px-2 sm:px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[70px] sm:w-[100px]">{formatDate(item.date)}</td>
-                                  <td className="px-2 sm:px-4 py-2">
-                                    {hasLink ? (
-                                      <a
-                                        href={item.link}
-                                        target={isExternal ? '_blank' : undefined}
-                                        rel={isExternal ? 'noopener noreferrer' : undefined}
-                                        className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-xs sm:text-sm"
-                                      >
-                                        {item.title}
-                                      </a>
-                                    ) : (
-                                      <span className="font-medium text-slate-800 line-clamp-2 text-xs sm:text-sm">
-                                        {item.title}
-                                      </span>
-                                    )}
-                                    {item.description && (
-                                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 hidden sm:block">{item.description.slice(0, 50)}…</p>
-                                    )}
-                                  </td>
-                                  <td className="px-1 sm:px-2 py-2 w-6 sm:w-8">
-                                    {hasLink ? (
-                                      <a
-                                        href={item.link}
-                                        target={isExternal ? '_blank' : undefined}
-                                        rel={isExternal ? 'noopener noreferrer' : undefined}
-                                        className="inline-flex text-slate-400 hover:text-slate-700"
-                                        aria-label="Read more"
-                                      >
-                                        <ChevronRight className="w-4 h-4" />
-                                      </a>
-                                    ) : (
-                                      <span className="inline-flex text-slate-300" aria-hidden><ChevronRight className="w-4 h-4" /></span>
-                                    )}
-                                  </td>
-                                </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Announcements table */}
-              <div className="rounded-xl overflow-hidden flex flex-col bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div className="px-5 py-3.5 shrink-0 bg-sky-100 border-b border-sky-200/80">
-                  <h3 className="text-base font-semibold text-slate-800 pl-3 border-l-4 border-sky-600" style={{ fontFamily: "'Libre Baskerville', Georgia, serif" }}>
-                    Announcements
-                  </h3>
-                </div>
-                <div className="overflow-hidden bg-sky-50" style={{ height: SCROLL_CONTAINER_HEIGHT, scrollbarWidth: 'none' }}>
-                  <style>{`.ann-scroll-wrap::-webkit-scrollbar { display: none; }`}</style>
-                  <div
-                    className="ann-scroll-wrap news-announce-anim bg-sky-50"
-                    style={{
-                      height: announcements.length > VISIBLE_ROWS ? 2 * announcements.length * ROW_HEIGHT_PX : announcements.length * ROW_HEIGHT_PX,
-                      animation: announcements.length > VISIBLE_ROWS
-                        ? `news-announce-scroll ${Math.max(SCROLL_DURATION_BASE, (announcements.length / VISIBLE_ROWS) * 8)}s linear infinite`
-                        : 'none',
-                    }}
-                  >
-                    {announcements.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-slate-400 text-sm font-medium bg-sky-50">No announcements at the moment.</div>
-                    ) : (
-                      <>
-                        {(announcements.length > VISIBLE_ROWS ? [1, 2] : [1]).map((copy) => (
-                          <table key={copy} className="w-full text-left border-collapse" style={{ height: announcements.length * ROW_HEIGHT_PX }}>
-                            <tbody>
-                              {announcements.map((item) => (
-                                <tr key={`${copy}-${item.id}`} className="border-b border-sky-100 hover:bg-sky-100/80 transition-colors" style={{ height: ROW_HEIGHT_PX }}>
-                                  <td className="px-2 sm:px-4 py-2 text-xs text-slate-500 whitespace-nowrap w-[70px] sm:w-[100px]">{formatDate(item.date)}</td>
-                                  <td className="px-2 sm:px-4 py-2">
-                                    <a
-                                      href={item.link || '#'}
-                                      target={item.isExternal ? '_blank' : undefined}
-                                      rel={item.isExternal ? 'noopener noreferrer' : undefined}
-                                      className="font-medium text-slate-800 hover:text-[#0a192f] line-clamp-2 transition-colors text-xs sm:text-sm"
-                                    >
-                                      {item.title}
-                                    </a>
-                                  </td>
-                                  <td className="px-2 sm:px-4 py-2 w-[70px] sm:w-[90px] hidden sm:table-cell">
-                                    <span
-                                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                        item.type === 'result' ? 'bg-green-50 text-green-700' : item.type === 'notification' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700'
-                                      }`}
-                                    >
-                                      {item.type}
-                                    </span>
-                                  </td>
-                                  <td className="px-1 sm:px-2 py-2 w-6 sm:w-8">
-                                    <a
-                                      href={item.link || '#'}
-                                      target={item.isExternal ? '_blank' : undefined}
-                                      rel={item.isExternal ? 'noopener noreferrer' : undefined}
-                                      className="inline-flex text-slate-400 hover:text-slate-700"
-                                      aria-label="Open link"
-                                    >
-                                      <ChevronRight className="w-4 h-4" />
-                                    </a>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+    <section className="glossy-green-texture relative overflow-hidden border-y border-emerald-200/50 font-notice">
+      <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12 py-12 md:py-16">
+        <div className="mb-8 md:mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0a192f] tracking-tight">
+            News &amp; Announcements
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
+            Latest updates from the campus notice board
+          </p>
         </div>
-      </section>
-    </>
+
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <div className="rounded-2xl bg-white/80 border border-slate-200 animate-pulse" style={{ height: SCROLL_CONTAINER_HEIGHT + 80 }} />
+            <div className="rounded-2xl bg-white/80 border border-slate-200 animate-pulse" style={{ height: SCROLL_CONTAINER_HEIGHT + 80 }} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <NoticeBoard
+              title="News"
+              accentColor="green"
+              items={news.map((n) => ({
+                id: n.id,
+                date: n.date,
+                title: n.title,
+                link: n.link,
+                description: n.description ? n.description.slice(0, 60) : undefined,
+              }))}
+              emptyMessage="No news at the moment."
+            />
+            <NoticeBoard
+              title="Announcements"
+              accentColor="sky"
+              showType
+              items={announcements.map((a) => ({
+                id: a.id,
+                date: a.date,
+                title: a.title,
+                link: a.link,
+                isExternal: a.isExternal,
+                type: a.type,
+              }))}
+              emptyMessage="No announcements at the moment."
+            />
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 

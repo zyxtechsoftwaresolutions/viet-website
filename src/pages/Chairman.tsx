@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
-import ScrollProgressIndicator from '@/components/ScrollProgressIndicator';
 import { pagesAPI } from '@/lib/api';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 
@@ -209,7 +208,6 @@ const Chairman = () => {
       <AlsoVisitLeaders currentSlug="chairman" />
 
       <Footer />
-      <ScrollProgressIndicator />
     </div>
   );
 };

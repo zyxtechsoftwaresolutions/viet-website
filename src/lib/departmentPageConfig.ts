@@ -16,6 +16,24 @@ function matchDept(d: string, ...terms: string[]): boolean {
   return terms.some((t) => lower.includes(t.toLowerCase()));
 }
 
+/** Gallery images are tagged with full department names (e.g. "DIPLOMA - …", "ENGINEERING UG - …"). */
+function matchGalleryTier(
+  d: string,
+  tier: 'diploma' | 'engineering-ug' | 'engineering-pg' | 'management'
+): boolean {
+  const lower = (d || '').toLowerCase();
+  switch (tier) {
+    case 'diploma':
+      return lower.startsWith('diploma');
+    case 'engineering-ug':
+      return lower.includes('engineering ug');
+    case 'engineering-pg':
+      return lower.includes('engineering pg');
+    case 'management':
+      return lower.includes('management ug') || lower.includes('management pg');
+  }
+}
+
 /** CSE, CSD, CSC, CSM share faculty across all four department pages. */
 function isCSEFamilyDepartment(d: string): boolean {
   const x = (d || '').toLowerCase();
@@ -34,93 +52,93 @@ const configs: Record<string, DepartmentPageConfig> = {
     slug: 'diploma-civil',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'civil') && (matchDept(d, 'diploma') || !matchDept(d, 'engineering ug', 'b.tech')),
-    galleryFilter: (img) => matchDept(img.department || '', 'civil', 'diploma'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'civil'),
   },
   'diploma-cse': {
     slug: 'diploma-cse',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'computer') && (matchDept(d, 'diploma') || matchDept(d, 'computer science engineering')),
-    galleryFilter: (img) => matchDept(img.department || '', 'computer', 'cse', 'diploma'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'computer'),
   },
   'diploma-ece': {
     slug: 'diploma-ece',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'ece', 'electronics') && (matchDept(d, 'diploma') || matchDept(d, 'communications')),
-    galleryFilter: (img) => matchDept(img.department || '', 'ece', 'electronics', 'diploma'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'ece', 'electronics'),
   },
   'diploma-eee': {
     slug: 'diploma-eee',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'eee', 'electrical') && (matchDept(d, 'diploma') || matchDept(d, 'electrical & electronics')),
-    galleryFilter: (img) => matchDept(img.department || '', 'eee', 'electrical', 'diploma'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'eee', 'electrical'),
   },
   'diploma-mechanical': {
     slug: 'diploma-mechanical',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'mechanical') && (matchDept(d, 'diploma') || !matchDept(d, 'engineering ug', 'm.tech', 'b.tech')),
-    galleryFilter: (img) => matchDept(img.department || '', 'mechanical', 'diploma'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'mechanical'),
   },
   // Engineering PG
   'pg-cadcam': {
     slug: 'pg-cadcam',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'cad', 'cam', 'cadcam'),
-    galleryFilter: (img) => matchDept(img.department || '', 'cad', 'cam', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'cad', 'cam'),
   },
   'pg-cse': {
     slug: 'pg-cse',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'cse', 'computer science') && matchDept(d, 'pg', 'm.tech', 'postgraduate'),
-    galleryFilter: (img) => matchDept(img.department || '', 'cse', 'computer', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'computer', 'cse'),
   },
   'pg-power-systems': {
     slug: 'pg-power-systems',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'power system'),
-    galleryFilter: (img) => matchDept(img.department || '', 'power', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'power'),
   },
   'pg-structural': {
     slug: 'pg-structural',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'structural'),
-    galleryFilter: (img) => matchDept(img.department || '', 'structural', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'structural'),
   },
   'pg-thermal': {
     slug: 'pg-thermal',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'thermal'),
-    galleryFilter: (img) => matchDept(img.department || '', 'thermal', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'thermal'),
   },
   'pg-vlsi': {
     slug: 'pg-vlsi',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'vlsi', 'embedded'),
-    galleryFilter: (img) => matchDept(img.department || '', 'vlsi', 'embedded', 'pg', 'm.tech'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-pg') && matchDept(img.department || '', 'vlsi', 'embedded'),
   },
   // Management
   'management-bba': {
     slug: 'management-bba',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'bba', 'business administration'),
-    galleryFilter: (img) => matchDept(img.department || '', 'bba', 'management', 'business'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'management') && matchDept(img.department || '', 'bba'),
   },
   'management-bca': {
     slug: 'management-bca',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'bca', 'computer applications'),
-    galleryFilter: (img) => matchDept(img.department || '', 'bca', 'management', 'computer applications'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'management') && matchDept(img.department || '', 'bca'),
   },
   'management-mba': {
     slug: 'management-mba',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'mba', 'business administration'),
-    galleryFilter: (img) => matchDept(img.department || '', 'mba', 'management', 'business'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'management') && matchDept(img.department || '', 'mba'),
   },
   'management-mca': {
     slug: 'management-mca',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'mca', 'computer applications'),
-    galleryFilter: (img) => matchDept(img.department || '', 'mca', 'management', 'computer applications'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'management') && matchDept(img.department || '', 'mca'),
   },
   // Engineering UG (used by DepartmentPageTemplate + migration)
   // CSE family: CSE, CSD, CSC, CSM share faculty across all four pages
@@ -128,25 +146,34 @@ const configs: Record<string, DepartmentPageConfig> = {
     slug: 'cse',
     backHref: '/btech',
     facultyFilter: isCSEFamilyDepartment,
-    galleryFilter: (img) => matchDept(img.department || '', 'computer science', 'cse', 'engineering ug - computer'),
+    galleryFilter: (img) => {
+      const d = (img.department || '').toLowerCase();
+      return (
+        matchGalleryTier(d, 'engineering-ug') &&
+        d.includes('computer science and engineering (cse)') &&
+        !d.includes('(csc)') &&
+        !d.includes('(csd)') &&
+        !d.includes('(csm)')
+      );
+    },
   },
   'cyber-security': {
     slug: 'cyber-security',
     backHref: '/btech',
     facultyFilter: isCSEFamilyDepartment,
-    galleryFilter: (img) => matchDept(img.department || '', 'cyber', 'csc'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'cyber', 'csc'),
   },
   'data-science': {
     slug: 'data-science',
     backHref: '/btech',
     facultyFilter: isCSEFamilyDepartment,
-    galleryFilter: (img) => matchDept(img.department || '', 'data science', 'csd'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'data science', 'csd'),
   },
   'aiml': {
     slug: 'aiml',
     backHref: '/btech',
     facultyFilter: isCSEFamilyDepartment,
-    galleryFilter: (img) => matchDept(img.department || '', 'aiml', 'csm', 'machine learning'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'aiml', 'csm', 'machine learning'),
   },
   'ece': {
     slug: 'ece',
@@ -157,7 +184,7 @@ const configs: Record<string, DepartmentPageConfig> = {
       const hasEee = x.includes('electrical') && x.includes('electronics');
       return (hasEce && !hasEee) || x === 'ece' || x.includes('electronics and communication');
     },
-    galleryFilter: (img) => matchDept(img.department || '', 'ece', 'electronics', 'communication'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'ece', 'electronics', 'communication'),
   },
   'eee': {
     slug: 'eee',
@@ -168,31 +195,31 @@ const configs: Record<string, DepartmentPageConfig> = {
       const hasEce = x.includes('electronics') && x.includes('communication');
       return (hasEee && !hasEce) || x === 'eee' || x.includes('electrical and electronics');
     },
-    galleryFilter: (img) => matchDept(img.department || '', 'eee', 'electrical'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'eee', 'electrical'),
   },
   'civil': {
     slug: 'civil',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'civil'),
-    galleryFilter: (img) => matchDept(img.department || '', 'civil'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'civil'),
   },
   'mechanical': {
     slug: 'mechanical',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'mechanical'),
-    galleryFilter: (img) => matchDept(img.department || '', 'mechanical'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'mechanical'),
   },
   'automobile': {
     slug: 'automobile',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'automobile', 'ame'),
-    galleryFilter: (img) => matchDept(img.department || '', 'automobile', 'ame'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'automobile', 'ame'),
   },
   'bsh': {
     slug: 'bsh',
     backHref: '/btech',
     facultyFilter: (d) => matchDept(d, 'bsh', 'basic science', 'humanities'),
-    galleryFilter: (img) => matchDept(img.department || '', 'bsh', 'basic science', 'humanities'),
+    galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'bsh', 'basic science', 'humanities'),
   },
 };
 
