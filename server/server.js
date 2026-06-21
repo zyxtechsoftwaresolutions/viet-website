@@ -492,19 +492,19 @@ app.delete('/api/auth/sub-admins/:id', authenticateToken, requireAdmin, async (r
 // ==================== VISITOR COUNT (public, no auth) ====================
 app.get('/api/visitor-count', async (req, res) => {
   try {
-    const count = await db.getVisitorCount();
-    res.json({ count });
+    const stats = await db.getVisitorCount();
+    res.json(stats);
   } catch (error) {
-    res.status(500).json({ count: 0 });
+    res.status(500).json({ count: 0, todayCount: 0 });
   }
 });
 
 app.post('/api/visitor-count', async (req, res) => {
   try {
-    const count = await db.incrementVisitorCount();
-    res.json({ count });
+    const stats = await db.incrementVisitorCount();
+    res.json(stats);
   } catch (error) {
-    res.status(500).json({ count: 0 });
+    res.status(500).json({ count: 0, todayCount: 0 });
   }
 });
 

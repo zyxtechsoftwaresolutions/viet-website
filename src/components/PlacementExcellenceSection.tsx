@@ -517,7 +517,7 @@ const PlacementExcellenceSection = () => {
           </motion.div>
 
           {/* LPU-style circular rollup stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8">
+          <div className="placement-hero-stats-grid grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8">
             {placementStats.map((stat, index) => (
               <AnimatedStat key={stat.label} stat={stat} index={index} variant="placement-lpu" />
             ))}

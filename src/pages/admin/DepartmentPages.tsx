@@ -20,6 +20,7 @@ import { FileText, Upload, Trash2, Plus } from 'lucide-react';
 import { imgUrl } from '@/lib/imageUtils';
 import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,11 +103,11 @@ const defaultSections = () => ({
   facilities: { cards: [] as FacilityCard[] },
   whyViet: { cards: [] as WhyVietCard[] },
   faculty: { content: '', facultyIds: [] as number[], sortBy: 'designation-experience' as FacultyOrderFilter },
-  projects: { stats: [{ label: 'Completed', value: '50+' }, { label: 'Industry', value: '25+' }, { label: 'Research', value: '15+' }, { label: 'Award winning', value: '10+' }] as ProjectStat[], cards: [] as ProjectCard[] },
-  placements: { stats: [{ label: 'Placement rate', value: '95%' }, { label: 'Companies', value: '50+' }, { label: 'Highest package', value: '₹8.5L' }, { label: 'Average package', value: '₹4.2L' }] as PlacementStat[], recruiterImages: [] as string[], cards: [] as PlacementCard[] },
-  rd: { title: 'R&D Lab', stats: [{ label: 'Papers', value: '25+' }, { label: 'Ph.D Faculty', value: '8' }, { label: 'Ongoing', value: '5' }, { label: 'Patents', value: '3' }] as RDStat[], researchAreas: [] as string[], cards: [] as RDProjectCard[] },
-  ideaCell: { title: 'Innovation & entrepreneurship hub', subtitle: 'Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.', stats: [{ label: 'Ideas submitted', value: '50+' }, { label: 'Startups launched', value: '15+' }, { label: 'Mentors', value: '25+' }, { label: 'Awards won', value: '5' }] as IdeaCellStat[], pillars: [] as IdeaCellPillar[] },
-  clubActivities: { title: 'Club Activities', subtitle: 'Join vibrant student communities that ignite passions, build skills, and create lasting connections.', cards: [] as ClubCard[] },
+  projects: { enabled: true, stats: [{ label: 'Completed', value: '50+' }, { label: 'Industry', value: '25+' }, { label: 'Research', value: '15+' }, { label: 'Award winning', value: '10+' }] as ProjectStat[], cards: [] as ProjectCard[] },
+  placements: { enabled: true, stats: [{ label: 'Placement rate', value: '95%' }, { label: 'Companies', value: '50+' }, { label: 'Highest package', value: '₹8.5L' }, { label: 'Average package', value: '₹4.2L' }] as PlacementStat[], recruiterImages: [] as string[], cards: [] as PlacementCard[] },
+  rd: { enabled: true, title: 'R&D Lab', stats: [{ label: 'Papers', value: '25+' }, { label: 'Ph.D Faculty', value: '8' }, { label: 'Ongoing', value: '5' }, { label: 'Patents', value: '3' }] as RDStat[], researchAreas: [] as string[], cards: [] as RDProjectCard[] },
+  ideaCell: { enabled: true, title: 'Innovation & entrepreneurship hub', subtitle: 'Fostering innovation through mentorship, resources, and opportunities to turn ideas into reality.', stats: [{ label: 'Ideas submitted', value: '50+' }, { label: 'Startups launched', value: '15+' }, { label: 'Mentors', value: '25+' }, { label: 'Awards won', value: '5' }] as IdeaCellStat[], pillars: [] as IdeaCellPillar[] },
+  clubActivities: { enabled: true, title: 'Club Activities', subtitle: 'Join vibrant student communities that ignite passions, build skills, and create lasting connections.', cards: [] as ClubCard[] },
   gallery: { content: '' },
   alumni: { content: '' },
 });
@@ -180,15 +181,20 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     }
   }
   if (raw.projects) {
-    if (raw.projects.stats && raw.projects.cards) {
-      out.projects = { stats: raw.projects.stats || def.projects.stats, cards: raw.projects.cards || [] };
+    if (raw.projects.stats || raw.projects.cards || raw.projects.enabled !== undefined) {
+      out.projects = {
+        enabled: raw.projects.enabled !== false,
+        stats: raw.projects.stats || def.projects.stats,
+        cards: raw.projects.cards || [],
+      };
     } else if (raw.projects.content !== undefined) {
       out.projects = def.projects;
     }
   }
   if (raw.placements) {
-    if (raw.placements.stats || raw.placements.recruiterImages || raw.placements.cards) {
+    if (raw.placements.stats || raw.placements.recruiterImages || raw.placements.cards || raw.placements.enabled !== undefined) {
       out.placements = {
+        enabled: raw.placements.enabled !== false,
         stats: raw.placements.stats || def.placements.stats,
         recruiterImages: Array.isArray(raw.placements.recruiterImages) ? raw.placements.recruiterImages : [],
         cards: raw.placements.cards || [],
@@ -198,8 +204,9 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     }
   }
   if (raw.rd) {
-    if (raw.rd.title || raw.rd.stats || raw.rd.researchAreas || raw.rd.cards) {
+    if (raw.rd.title || raw.rd.stats || raw.rd.researchAreas || raw.rd.cards || raw.rd.enabled !== undefined) {
       out.rd = {
+        enabled: raw.rd.enabled !== false,
         title: raw.rd.title || def.rd.title,
         stats: raw.rd.stats || def.rd.stats,
         researchAreas: Array.isArray(raw.rd.researchAreas) ? raw.rd.researchAreas : [],
@@ -210,8 +217,9 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     }
   }
   if (raw.ideaCell) {
-    if (raw.ideaCell.title || raw.ideaCell.subtitle || raw.ideaCell.stats || raw.ideaCell.pillars) {
+    if (raw.ideaCell.title || raw.ideaCell.subtitle || raw.ideaCell.stats || raw.ideaCell.pillars || raw.ideaCell.enabled !== undefined) {
       out.ideaCell = {
+        enabled: raw.ideaCell.enabled !== false,
         title: raw.ideaCell.title || def.ideaCell.title,
         subtitle: raw.ideaCell.subtitle || def.ideaCell.subtitle,
         stats: raw.ideaCell.stats || def.ideaCell.stats,
@@ -222,8 +230,9 @@ function migrateSections(raw: any): typeof defaultSections extends () => infer R
     }
   }
   if (raw.clubActivities) {
-    if (raw.clubActivities.title || raw.clubActivities.subtitle || raw.clubActivities.cards) {
+    if (raw.clubActivities.title || raw.clubActivities.subtitle || raw.clubActivities.cards || raw.clubActivities.enabled !== undefined) {
       out.clubActivities = {
+        enabled: raw.clubActivities.enabled !== false,
         title: raw.clubActivities.title || def.clubActivities.title,
         subtitle: raw.clubActivities.subtitle || def.clubActivities.subtitle,
         cards: raw.clubActivities.cards || [],
@@ -1569,9 +1578,22 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
-              <CardDescription>Edit 4 stat cards and create project cards with badge, title, and overview.</CardDescription>
+              <CardDescription>Enable or disable this section for the selected department, then edit its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="projects-enabled" className="text-base font-medium">Show Projects section</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the Projects section is hidden on this department&apos;s public page.
+                  </p>
+                </div>
+                <Switch
+                  id="projects-enabled"
+                  checked={sections.projects?.enabled !== false}
+                  onCheckedChange={(checked) => updateSection('projects', 'enabled', checked)}
+                />
+              </div>
               <div>
                 <Label className="mb-3 block">Stat Cards</Label>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1609,9 +1631,22 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>Placements</CardTitle>
-              <CardDescription>Edit 4 stat cards, add recruiter images (auto-duplicated for smooth scrolling), and create placement cards.</CardDescription>
+              <CardDescription>Enable or disable this section for the selected department, then edit its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="placements-enabled" className="text-base font-medium">Show Placements section</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the Placements section is hidden on this department&apos;s public page.
+                  </p>
+                </div>
+                <Switch
+                  id="placements-enabled"
+                  checked={sections.placements?.enabled !== false}
+                  onCheckedChange={(checked) => updateSection('placements', 'enabled', checked)}
+                />
+              </div>
               <div>
                 <Label className="mb-3 block">Stat Cards</Label>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1674,9 +1709,22 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>R&D</CardTitle>
-              <CardDescription>Update section title, stat badges, research area badges, and project cards.</CardDescription>
+              <CardDescription>Enable or disable this section for the selected department, then update its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="rd-enabled" className="text-base font-medium">Show R&D section</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the R&D section is hidden on this department&apos;s public page.
+                  </p>
+                </div>
+                <Switch
+                  id="rd-enabled"
+                  checked={sections.rd?.enabled !== false}
+                  onCheckedChange={(checked) => updateSection('rd', 'enabled', checked)}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Section Title</Label>
                 <Input value={sections.rd?.title || 'R&D Lab'} onChange={(e) => updateSection('rd', 'title', e.target.value)} placeholder="R&D Lab" />
@@ -1734,9 +1782,22 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>Idea Cell</CardTitle>
-              <CardDescription>Edit title, subtitle, stat cards (value + label), and pillar cards (icon, title, items).</CardDescription>
+              <CardDescription>Enable or disable this section for the selected department, then edit its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="idea-cell-enabled" className="text-base font-medium">Show Idea Cell section</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the Idea Cell section is hidden on this department&apos;s public page.
+                  </p>
+                </div>
+                <Switch
+                  id="idea-cell-enabled"
+                  checked={sections.ideaCell?.enabled !== false}
+                  onCheckedChange={(checked) => updateSection('ideaCell', 'enabled', checked)}
+                />
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Title</Label>
@@ -1805,9 +1866,22 @@ const DepartmentPages = () => {
           <Card>
             <CardHeader>
               <CardTitle>Club Activities</CardTitle>
-              <CardDescription>Edit section title and subtitle, then create club cards with category, title, and subtitle.</CardDescription>
+              <CardDescription>Enable or disable this section for the selected department, then edit its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="club-activities-enabled" className="text-base font-medium">Show Club Activities section</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the Club Activities section is hidden on this department&apos;s public page.
+                  </p>
+                </div>
+                <Switch
+                  id="club-activities-enabled"
+                  checked={sections.clubActivities?.enabled !== false}
+                  onCheckedChange={(checked) => updateSection('clubActivities', 'enabled', checked)}
+                />
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Section Title</Label>

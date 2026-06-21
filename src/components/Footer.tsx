@@ -7,7 +7,6 @@ import {
   Eye,
   Shield,
   ExternalLink,
-  Building2,
 } from 'lucide-react';
 import { visitorCountAPI } from '@/lib/api';
 
@@ -64,6 +63,7 @@ const FooterJunction = ({ className = '' }: { className?: string }) => (
 
 const Footer = () => {
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [todayVisitorCount, setTodayVisitorCount] = useState<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -72,12 +72,17 @@ const Footer = () => {
         const counted = sessionStorage.getItem(SESSION_KEY);
         const data = counted ? await visitorCountAPI.get() : await visitorCountAPI.increment();
         const count = typeof data?.count === 'number' ? data.count : 0;
+        const todayCount = typeof data?.todayCount === 'number' ? data.todayCount : 0;
         if (isMounted) {
           setVisitorCount(count);
+          setTodayVisitorCount(todayCount);
           if (!counted) sessionStorage.setItem(SESSION_KEY, '1');
         }
       } catch {
-        if (isMounted) setVisitorCount(0);
+        if (isMounted) {
+          setVisitorCount(0);
+          setTodayVisitorCount(0);
+        }
       }
     };
     fetchCount();
@@ -146,13 +151,6 @@ const Footer = () => {
       className:
         'bg-gradient-to-br from-[#f58529] via-[#dd2a7b] to-[#8134af] hover:opacity-90 text-white border-transparent',
     },
-  ];
-
-  const accreditationLogos = [
-    { src: '/naac-A-logo.png', alt: 'NAAC A Grade' },
-    { src: '/UGC-logo.png', alt: 'UGC Autonomous' },
-    { src: '/nirf-logo.png', alt: 'NIRF Ranked' },
-    { src: '/AICTE-Logo.png', alt: 'AICTE Approved' },
   ];
 
   return (
@@ -345,34 +343,6 @@ const Footer = () => {
 
         <FooterDottedDivider />
 
-        {/* ── Accreditation Strip ── */}
-        <div className="py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Building2 className="w-4 h-4 text-primary shrink-0" aria-hidden />
-              <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                Recognitions &amp; Accreditations
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-6 md:gap-8">
-              {accreditationLogos.map((logo) => (
-                <img
-                  key={logo.alt}
-                  src={logo.src}
-                  alt={logo.alt}
-                  className="h-10 sm:h-11 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition-opacity"
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <FooterDottedDivider />
-
         {/* ── Policy links ── */}
         <div className="py-5 flex flex-wrap justify-center gap-x-6 gap-y-2">
           {policyLinks.map((link) => (
@@ -396,15 +366,26 @@ const Footer = () => {
           </p>
 
           <div className="flex justify-center order-1 md:order-2">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-slate-200">
-              <Eye className="w-4 h-4 text-primary" aria-hidden />
-              <span>
-                Visitors:{' '}
-                <strong className="font-semibold text-white">
-                  {visitorCount != null ? visitorCount.toLocaleString() : '—'}
-                </strong>
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-slate-200">
+                <Eye className="w-4 h-4 text-primary" aria-hidden />
+                <span>
+                  Total visitors:{' '}
+                  <strong className="font-semibold text-white">
+                    {visitorCount != null ? visitorCount.toLocaleString() : '—'}
+                  </strong>
+                </span>
               </span>
-            </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-slate-200">
+                <Eye className="w-4 h-4 text-primary" aria-hidden />
+                <span>
+                  Today&apos;s visitors:{' '}
+                  <strong className="font-semibold text-white">
+                    {todayVisitorCount != null ? todayVisitorCount.toLocaleString() : '—'}
+                  </strong>
+                </span>
+              </span>
+            </div>
           </div>
 
           <p className="text-slate-300 text-center md:text-right order-3">

@@ -887,14 +887,17 @@ html {
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.04) 0%,
     rgba(255, 255, 255, 0.06) 38%,
-    rgba(96, 165, 250, 0.28) 62%,
-    rgba(49, 46, 129, 0.72) 82%,
-    #1e1b4b 100%
+    rgba(96, 165, 250, 0.22) 62%,
+    transparent 100%
   );
+  /* Header/readability only — never reaches the stat cards */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 68%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 68%);
 }
 
 .placement-hero-stats-bg > * {
@@ -902,56 +905,68 @@ html {
   z-index: 1;
 }
 
-/* Ranked-top heading shade through carousel & logos → black */
+/* White fade on background only: from vertical centre of stat cards → section bottom */
+.placement-hero-stats-grid {
+  position: relative;
+  z-index: 2;
+}
+
+.placement-hero-stats-grid::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  bottom: -3.5rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, #ffffff 100%);
+}
+
+@media (min-width: 768px) {
+  .placement-hero-stats-grid::after {
+    bottom: -4rem;
+  }
+}
+
 .placement-ranked-continuum {
+  background: transparent;
+}
+
+/* Showcase: white at top (matches hero bottom), fades into bgbg.png */
+.placement-section-body {
+  position: relative;
+  overflow: hidden;
+  background-color: #ffffff;
+  background-image: url('/bgbg.png');
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.placement-section-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10rem;
+  z-index: 0;
+  pointer-events: none;
   background: linear-gradient(
     180deg,
-    #1e1b4b 0%,
-    #1e1b4b 38%,
-    #18142f 52%,
-    #120e24 66%,
-    #0a0612 80%,
-    #040208 92%,
-    #000000 100%
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.92) 18%,
+    rgba(255, 255, 255, 0.55) 40%,
+    transparent 100%
   );
 }
 
-.placement-section-body {
-  position: relative;
-  background: transparent;
-  color: #f5f0eb;
-}
-
-.placement-section-body .placement-member-name {
-  color: #f5f0eb;
-}
-
-.placement-section-body .placement-member-name::before,
-.placement-section-body .placement-member-name::after {
-  background: rgba(245, 240, 235, 0.28);
-}
-
-.placement-section-body .placement-member-role {
-  color: rgba(245, 240, 235, 0.65);
-}
-
-.placement-section-body .placement-dot {
-  background: rgba(245, 240, 235, 0.22);
-}
-
-.placement-section-body .placement-dot.active {
-  background: #f5f0eb;
-}
-
-.placement-section-body .placement-nav-arrow {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f5f0eb;
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-}
-
-.placement-section-body .placement-nav-arrow:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+@media (min-width: 768px) {
+  .placement-section-body::before {
+    height: 12rem;
+  }
 }
 
 .placement-section-body > div {
@@ -960,15 +975,15 @@ html {
 }
 
 .placement-section-body .placement-link {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.placement-section-body .placement-link:hover {
   color: #ffffff;
 }
 
+.placement-section-body .placement-link:hover {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .ranked-top-section {
-  background: transparent;
+  background: #000000;
 }
 
 /* Placement section — LPU-inspired circular stats */

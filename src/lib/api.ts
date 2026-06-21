@@ -38,18 +38,22 @@ export const visitorCountAPI = {
     try {
       const r = await fetch(`${API_BASE_URL}/visitor-count`);
       const data = await r.json().catch(() => ({}));
-      return r.ok && typeof data?.count === 'number' ? data : { count: 0 };
+      return r.ok && typeof data?.count === 'number'
+        ? { count: data.count, todayCount: typeof data.todayCount === 'number' ? data.todayCount : 0 }
+        : { count: 0, todayCount: 0 };
     } catch {
-      return { count: 0 };
+      return { count: 0, todayCount: 0 };
     }
   },
   increment: async () => {
     try {
       const r = await fetch(`${API_BASE_URL}/visitor-count`, { method: 'POST' });
       const data = await r.json().catch(() => ({}));
-      return r.ok && typeof data?.count === 'number' ? data : { count: 0 };
+      return r.ok && typeof data?.count === 'number'
+        ? { count: data.count, todayCount: typeof data.todayCount === 'number' ? data.todayCount : 0 }
+        : { count: 0, todayCount: 0 };
     } catch {
-      return { count: 0 };
+      return { count: 0, todayCount: 0 };
     }
   },
 };

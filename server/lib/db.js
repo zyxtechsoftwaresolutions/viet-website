@@ -1558,28 +1558,47 @@ export async function updateFacultySettings(item) {
 }
 
 // ==================== VISITOR COUNT ====================
+function getTodayDateKey() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+}
+
+function normalizeVisitorStats(raw = {}) {
+  const today = getTodayDateKey();
+  const count = typeof raw.count === 'number' ? raw.count : 0;
+  const todayCount =
+    raw.todayDate === today && typeof raw.todayCount === 'number' ? raw.todayCount : 0;
+  return { count, todayCount, todayDate: raw.todayDate === today ? raw.todayDate : today };
+}
+
 export async function getVisitorCount() {
   if (useJsonFallback) {
     try {
       const d = await readJsonFile('visitor-count');
-      return typeof d.count === 'number' ? d.count : 0;
+      const stats = normalizeVisitorStats(d);
+      return { count: stats.count, todayCount: stats.todayCount };
     } catch (e) {
-      return 0;
+      return { count: 0, todayCount: 0 };
     }
   }
   try {
     const { data, error } = await supabase
       .from('visitor_count')
-      .select('count')
+      .select('count, today_count, today_date')
       .eq('id', 1)
       .single();
     if (error) {
-      if (error.code === 'PGRST116' || error.code === '42P01') return 0;
+      if (error.code === 'PGRST116' || error.code === '42P01') return { count: 0, todayCount: 0 };
       throw error;
     }
-    return data ? Number(data.count) || 0 : 0;
+    const today = getTodayDateKey();
+    const count = data ? Number(data.count) || 0 : 0;
+    const todayCount =
+      data?.today_date === today && typeof data.today_count === 'number'
+        ? Number(data.today_count) || 0
+        : 0;
+    return { count, todayCount };
   } catch (e) {
-    return 0;
+    return { count: 0, todayCount: 0 };
   }
 }
 
@@ -1587,30 +1606,47 @@ export async function incrementVisitorCount() {
   if (useJsonFallback) {
     try {
       const d = await readJsonFile('visitor-count');
+      const today = getTodayDateKey();
+      if (d.todayDate !== today) {
+        d.todayDate = today;
+        d.todayCount = 0;
+      }
       d.count = (typeof d.count === 'number' ? d.count : 0) + 1;
+      d.todayCount = (typeof d.todayCount === 'number' ? d.todayCount : 0) + 1;
       await writeJsonFile('visitor-count', d);
-      return d.count;
+      return { count: d.count, todayCount: d.todayCount };
     } catch (e) {
-      return 0;
+      return { count: 0, todayCount: 0 };
     }
   }
   try {
+    const today = getTodayDateKey();
     const { data: current, error: fetchErr } = await supabase
       .from('visitor_count')
-      .select('count')
+      .select('count, today_count, today_date')
       .eq('id', 1)
       .single();
-    if (fetchErr || !current) return 0;
+    if (fetchErr || !current) return { count: 0, todayCount: 0 };
     const newCount = Number(current.count) + 1;
+    const newTodayCount =
+      current.today_date === today ? Number(current.today_count || 0) + 1 : 1;
     const { data, error } = await supabase
       .from('visitor_count')
-      .update({ count: newCount, updated_at: new Date().toISOString() })
+      .update({
+        count: newCount,
+        today_count: newTodayCount,
+        today_date: today,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', 1)
       .select()
       .single();
     if (error) throw error;
-    return data ? Number(data.count) : newCount;
+    return {
+      count: data ? Number(data.count) : newCount,
+      todayCount: data ? Number(data.today_count) : newTodayCount,
+    };
   } catch (e) {
-    return 0;
+    return { count: 0, todayCount: 0 };
   }
 }

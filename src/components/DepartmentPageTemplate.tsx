@@ -13,7 +13,8 @@ import {
   Phone,
   Mail,
   ExternalLink,
-  Target,
+  Eye,
+  Compass,
   FileText,
   Users,
   GraduationCap,
@@ -46,13 +47,20 @@ const NAV_SECTIONS = [
   { id: 'program-overview', label: 'Program Overview' },
   { id: 'facilities', label: 'Facilities' },
   { id: 'faculty', label: 'Faculty' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'placements', label: 'Placements' },
-  { id: 'rd', label: 'R&D' },
-  { id: 'idea-cell', label: 'Idea Cell' },
-  { id: 'club-activities', label: 'Club Activities' },
+  { id: 'projects', label: 'Projects', optionalKey: 'projects' as const },
+  { id: 'placements', label: 'Placements', optionalKey: 'placements' as const },
+  { id: 'rd', label: 'R&D', optionalKey: 'rd' as const },
+  { id: 'idea-cell', label: 'Idea Cell', optionalKey: 'ideaCell' as const },
+  { id: 'club-activities', label: 'Club Activities', optionalKey: 'clubActivities' as const },
   { id: 'gallery', label: 'Gallery' },
 ] as const;
+
+function isOptionalSectionEnabled(
+  sections: Record<string, any>,
+  key: 'projects' | 'placements' | 'rd' | 'ideaCell' | 'clubActivities'
+): boolean {
+  return sections[key]?.enabled !== false;
+}
 
 function SectionHead({ label, title, accent = 'blue' }: { label: string; title: string; accent?: 'blue' | 'emerald' | 'violet' | 'amber' }) {
   const accentStyles = {
@@ -307,30 +315,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   }, [slug, facultyFilter]);
 
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setActiveNavId(e.target.id);
-            break;
-          }
-        }
-      },
-      { rootMargin: '-15% 0px -65% 0px', threshold: 0 }
-    );
-    const t = setTimeout(() => {
-      NAV_SECTIONS.forEach(({ id }) => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      });
-    }, 150);
-    return () => {
-      clearTimeout(t);
-      observer.disconnect();
-    };
-  }, []);
-
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setActiveNavId(id);
@@ -358,6 +342,44 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   };
 
   const s = deptPage?.sections ?? {};
+  const visibleNavSections = useMemo(
+    () =>
+      NAV_SECTIONS.filter((section) => {
+        if (!('optionalKey' in section) || !section.optionalKey) return true;
+        return isOptionalSectionEnabled(s, section.optionalKey);
+      }),
+    [s]
+  );
+  const showProjectsSection = isOptionalSectionEnabled(s, 'projects');
+  const showPlacementsSection = isOptionalSectionEnabled(s, 'placements');
+  const showRdSection = isOptionalSectionEnabled(s, 'rd');
+  const showIdeaCellSection = isOptionalSectionEnabled(s, 'ideaCell');
+  const showClubActivitiesSection = isOptionalSectionEnabled(s, 'clubActivities');
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setActiveNavId(e.target.id);
+            break;
+          }
+        }
+      },
+      { rootMargin: '-15% 0px -65% 0px', threshold: 0 }
+    );
+    const t = setTimeout(() => {
+      visibleNavSections.forEach(({ id }) => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      });
+    }, 150);
+    return () => {
+      clearTimeout(t);
+      observer.disconnect();
+    };
+  }, [visibleNavSections]);
+
   const hero = s.hero ?? {};
   const hodMessageImage = (s.hod as { messageImage?: string } | undefined)?.messageImage;
   const heroImage = hero.image;
@@ -578,7 +600,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
         <div className="w-full px-4 md:px-8 lg:px-12">
           <div className="flex gap-0 overflow-x-auto py-2.5 scrollbar-hide md:justify-between">
-            {NAV_SECTIONS.map(({ id, label }) => (
+            {visibleNavSections.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => scrollTo(id)}
@@ -618,45 +640,42 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       </section>
 
       {/* Vision & Mission */}
-      <section id="vision-mission" ref={(el) => { sectionRefs.current['vision-mission'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-white border-t border-slate-200">
+      <section id="vision-mission" ref={(el) => { sectionRefs.current['vision-mission'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-[#fafafa] border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Vision & Mission" title="Vision & Mission" accent="emerald" />
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="p-6 md:p-8 rounded-2xl border border-blue-200 bg-blue-50/50 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-blue-700" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900">Vision</h3>
-              </div>
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+            <article className="bg-white border border-slate-200/90 border-l-[3px] border-l-slate-900 px-6 py-8 md:px-8 md:py-10">
+              <header className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                <Eye className="w-[18px] h-[18px] text-slate-700 shrink-0" strokeWidth={1.25} aria-hidden />
+                <h3 className="text-[13px] font-semibold tracking-[0.22em] uppercase text-slate-800">Vision</h3>
+              </header>
               {s.visionMission?.vision ? (
-                <p className="text-slate-600 italic leading-relaxed">{s.visionMission.vision}</p>
+                <p className="text-slate-700 text-[15px] md:text-base leading-[1.85] text-justify">{s.visionMission.vision}</p>
               ) : (
-                <p className="text-slate-500 text-sm">Vision can be edited in the Admin panel.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">Vision can be edited in the Admin panel.</p>
               )}
-            </div>
-            <div className="p-6 md:p-8 rounded-2xl border border-emerald-200 bg-emerald-50/50 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-emerald-700" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900">Mission</h3>
-              </div>
+            </article>
+
+            <article className="bg-white border border-slate-200/90 border-l-[3px] border-l-[#E1731A] px-6 py-8 md:px-8 md:py-10">
+              <header className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                <Compass className="w-[18px] h-[18px] text-slate-700 shrink-0" strokeWidth={1.25} aria-hidden />
+                <h3 className="text-[13px] font-semibold tracking-[0.22em] uppercase text-slate-800">Mission</h3>
+              </header>
               {missionList.length > 0 ? (
-                <ul className="space-y-3 text-slate-600 text-sm leading-relaxed">
+                <ul className="space-y-4">
                   {missionList.map((point, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="text-emerald-600 shrink-0">→</span>
-                      {point}
+                    <li key={i} className="flex gap-3 text-slate-700 text-[15px] md:text-base leading-[1.75] text-justify">
+                      <span className="mt-[0.6rem] w-1 h-1 shrink-0 rounded-full bg-slate-400" aria-hidden />
+                      <span>{point}</span>
                     </li>
                   ))}
                 </ul>
               ) : s.visionMission?.mission ? (
-                <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{s.visionMission.mission}</p>
+                <p className="text-slate-700 text-[15px] md:text-base leading-[1.85] whitespace-pre-wrap text-justify">{s.visionMission.mission}</p>
               ) : (
-                <p className="text-slate-500 text-sm">Mission can be edited in the Admin panel.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">Mission can be edited in the Admin panel.</p>
               )}
-            </div>
+            </article>
           </div>
         </div>
       </section>
@@ -1014,6 +1033,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       </section>
 
       {/* Projects */}
+      {showProjectsSection && (
       <section id="projects" ref={(el) => { sectionRefs.current['projects'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-100 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           {(Array.isArray(s.projects?.stats) && s.projects.stats.length > 0) || (Array.isArray(s.projects?.cards) && s.projects.cards.length > 0) ? (
@@ -1099,8 +1119,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           )}
         </div>
       </section>
+      )}
 
       {/* Placements */}
+      {showPlacementsSection && (
       <section id="placements" ref={(el) => { sectionRefs.current['placements'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-blue-50/40 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
           <SectionHead label="Placements" title="Placements" accent="blue" />
@@ -1222,8 +1244,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           )}
         </div>
       </section>
+      )}
 
       {/* R&D */}
+      {showRdSection && (
       <section
         id="rd"
         ref={(el) => { sectionRefs.current['rd'] = el; }}
@@ -1346,8 +1370,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           )}
         </div>
       </section>
+      )}
 
       {/* Idea Cell */}
+      {showIdeaCellSection && (
       <section
         id="idea-cell"
         ref={(el) => { sectionRefs.current['idea-cell'] = el; }}
@@ -1465,8 +1491,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           )}
         </div>
       </section>
+      )}
 
       {/* Club Activities */}
+      {showClubActivitiesSection && (
       <section
         id="club-activities"
         ref={(el) => { sectionRefs.current['club-activities'] = el; }}
@@ -1550,6 +1578,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           )}
         </div>
       </section>
+      )}
 
       {/* Gallery */}
       <section id="gallery" ref={(el) => { sectionRefs.current['gallery'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-amber-50/40 border-t border-slate-200">
