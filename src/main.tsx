@@ -32,6 +32,12 @@ function Root() {
     fetchSettings();
   }, []);
 
+  useEffect(() => {
+    if (!loading && introDone && !enableIntroVideo) {
+      window.dispatchEvent(new CustomEvent(INTRO_COMPLETE_EVENT));
+    }
+  }, [loading, introDone, enableIntroVideo]);
+
   const handleIntroComplete = () => {
     setIntroDone(true);
     requestAnimationFrame(() => {

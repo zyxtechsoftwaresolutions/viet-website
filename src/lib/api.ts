@@ -26,7 +26,8 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'An error occurred' }));
-    throw new Error(error.error || 'Request failed');
+    const msg = [error.error, error.detail].filter(Boolean).join(' — ');
+    throw new Error(msg || 'Request failed');
   }
 
   return response.json();
@@ -128,9 +129,9 @@ export const tickerAPI = {
 // Events API (image = Supabase Storage URL; upload from admin first)
 export const eventsAPI = {
   getAll: () => apiCall('/events'),
-  create: (data: { title: string; description: string; date: string; time: string; location?: string; link?: string; image?: string | null }) =>
+  create: (data: { title: string; description: string; date: string; time: string; time_end?: string; location?: string; link?: string; image?: string | null; featured?: boolean }) =>
     apiCall('/events', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: { title?: string; description?: string; date?: string; time?: string; location?: string; link?: string; image?: string | null }) =>
+  update: (id: number, data: { title?: string; description?: string; date?: string; time?: string; time_end?: string; location?: string; link?: string; image?: string | null; featured?: boolean }) =>
     apiCall(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/events/${id}`, { method: 'DELETE' }),
 };
@@ -415,5 +416,84 @@ export const aicteAffiliationLettersAPI = {
   update: (id: number, data: { year?: string; pdf_url?: string | null; is_latest?: boolean; sort_order?: number }) =>
     apiCall(`/aicte-affiliation-letters/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/aicte-affiliation-letters/${id}`, { method: 'DELETE' }),
+};
+
+// Admission popup settings (public read; admin write)
+export interface AdmissionPopupSettings {
+  id: number;
+  is_enabled: boolean;
+  title: string;
+  subtitle: string;
+  delay_seconds: number;
+  images?: string[];
+  spreadsheet_url?: string | null;
+  sheets_webhook_url?: string | null;
+  updated_at?: string;
+}
+
+export interface AdmissionLead {
+  id: number;
+  name: string;
+  mobile: string;
+  email?: string | null;
+  program?: string | null;
+  qualification?: string | null;
+  city?: string | null;
+  district?: string | null;
+  message?: string | null;
+  source?: string;
+  created_at: string;
+}
+
+export interface AdmissionLeadInput {
+  name: string;
+  mobile: string;
+  email?: string;
+  program: string;
+  qualification?: string;
+  city?: string;
+  district?: string;
+  message?: string;
+}
+
+export const admissionPopupSettingsAPI = {
+  get: (): Promise<Pick<AdmissionPopupSettings, 'id' | 'is_enabled' | 'title' | 'subtitle' | 'delay_seconds' | 'images'>> =>
+    apiCall('/admission-popup-settings'),
+  getAdmin: (): Promise<AdmissionPopupSettings> => apiCall('/admission-popup-settings'),
+  update: (data: Partial<AdmissionPopupSettings>) =>
+    apiCall('/admission-popup-settings', { method: 'PUT', body: JSON.stringify(data) }),
+  testSheetsWebhook: (sheets_webhook_url?: string) =>
+    apiCall('/admission-popup-settings/test-sheets', {
+      method: 'POST',
+      body: JSON.stringify(sheets_webhook_url ? { sheets_webhook_url } : {}),
+    }),
+};
+
+export const admissionLeadsAPI = {
+  getAll: (): Promise<AdmissionLead[]> => apiCall('/admission-leads'),
+  submit: async (data: AdmissionLeadInput) => {
+    const response = await fetch(`${API_BASE_URL}/admission-leads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Submission failed' }));
+      throw new Error(error.error || 'Submission failed');
+    }
+    return response.json();
+  },
+  delete: (id: number) => apiCall(`/admission-leads/${id}`, { method: 'DELETE' }),
+  exportCsv: async () => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admission-leads/export`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Export failed' }));
+      throw new Error(error.error || 'Export failed');
+    }
+    return response.blob();
+  },
 };
 

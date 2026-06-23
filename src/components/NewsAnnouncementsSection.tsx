@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, Pin, ImageIcon } from 'lucide-react';
 import { announcementsAPI, newsAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
-import { cn } from '@/lib/utils';
-
+import CampusAutoScrollViewport from '@/components/CampusAutoScrollViewport';
 interface Announcement {
   id: number;
   title: string;
@@ -30,12 +29,19 @@ const formatDateLong = (dateString: string) =>
 
 const ROW_HEIGHT_PX = 48;
 const VISIBLE_EXAM_ROWS = 8;
-const EXAM_VIEWPORT_HEIGHT = ROW_HEIGHT_PX * VISIBLE_EXAM_ROWS;
 
 const CARD_MIN_HEIGHT = 200;
 const GRID_GAP_PX = 16;
 const VISIBLE_UPDATE_ROWS = 2;
-const UPDATE_VIEWPORT_HEIGHT = VISIBLE_UPDATE_ROWS * (CARD_MIN_HEIGHT + GRID_GAP_PX) - GRID_GAP_PX;
+
+/** Shared layout — both panels align to the same height and scroll area */
+const CRAFT_HEADER_HEIGHT = 52;
+const SUBHEADER_HEIGHT = 36;
+const SCROLL_VIEWPORT_HEIGHT = 416;
+const CAMPUS_PANEL_HEIGHT = CRAFT_HEADER_HEIGHT + SUBHEADER_HEIGHT + SCROLL_VIEWPORT_HEIGHT;
+
+const EXAM_VIEWPORT_HEIGHT = SCROLL_VIEWPORT_HEIGHT;
+const UPDATE_VIEWPORT_HEIGHT = SCROLL_VIEWPORT_HEIGHT;
 
 function getScrollDuration(itemCount: number, visibleCount: number, baseSeconds = 8) {
   return Math.max(28, (itemCount / Math.max(visibleCount, 1)) * baseSeconds);
@@ -58,7 +64,8 @@ interface ExaminationCornerProps {
 }
 
 function ExaminationCorner({ items, emptyMessage }: ExaminationCornerProps) {
-  const needsScroll = items.length > VISIBLE_EXAM_ROWS;
+  const contentHeight = items.length * ROW_HEIGHT_PX;
+  const needsScroll = contentHeight > EXAM_VIEWPORT_HEIGHT;
   const scrollDuration = getScrollDuration(items.length, VISIBLE_EXAM_ROWS, 6);
 
   const renderRow = (item: ExaminationCornerProps['items'][0], copyKey: string) => {
@@ -112,50 +119,56 @@ function ExaminationCorner({ items, emptyMessage }: ExaminationCornerProps) {
   );
 
   return (
-    <div className="campus-craft-panel campus-craft-panel--sky flex flex-col h-full">
-      <div className="campus-craft-header campus-craft-header--sky flex items-center gap-2 shrink-0">
-        <Pin className="w-4 h-4 text-white/85 rotate-45 shrink-0" aria-hidden />
+    <div
+      className="campus-craft-panel campus-craft-panel--sky flex h-full w-full flex-col overflow-hidden"
+      style={{ height: CAMPUS_PANEL_HEIGHT, maxHeight: CAMPUS_PANEL_HEIGHT }}
+    >
+      <div
+        className="campus-craft-header campus-craft-header--sky flex shrink-0 items-center gap-2"
+        style={{ minHeight: CRAFT_HEADER_HEIGHT }}
+      >
+        <Pin className="h-4 w-4 shrink-0 rotate-45 text-white/85" aria-hidden />
         <h3 className="campus-craft-header-title">Examination Corner</h3>
       </div>
 
-      <div className="campus-craft-col-head campus-craft-col-head--sky grid grid-cols-[72px_1fr_24px] shrink-0 relative z-[3]">
+      <div
+        className="campus-craft-col-head campus-craft-col-head--sky relative z-[3] grid shrink-0 grid-cols-[72px_1fr_24px]"
+        style={{ minHeight: SUBHEADER_HEIGHT }}
+      >
         <span>Date</span>
         <span>Notice</span>
         <span className="sr-only">Link</span>
       </div>
 
-      <div
-        className="campus-panel-scroll-viewport relative z-[3] flex-1"
-        style={{ height: EXAM_VIEWPORT_HEIGHT }}
-      >
-        {items.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500 text-sm font-medium px-4 text-center">
-            {emptyMessage}
-          </div>
-        ) : needsScroll ? (
-          <div
-            className="notice-auto-scroll"
-            style={{
-              '--scroll-duration': `${scrollDuration}s`,
-              height: 2 * items.length * ROW_HEIGHT_PX,
-            } as React.CSSProperties}
+      {items.length === 0 ? (
+        <div
+          className="relative z-[3] flex items-center justify-center px-4 text-center text-sm font-medium text-slate-500"
+          style={{ height: EXAM_VIEWPORT_HEIGHT, maxHeight: EXAM_VIEWPORT_HEIGHT }}
+        >
+          {emptyMessage}
+        </div>
+      ) : (
+        <CampusAutoScrollViewport
+          height={EXAM_VIEWPORT_HEIGHT}
+          loop={needsScroll}
+          duration={scrollDuration}
+        >
+          <table
+            className="w-full border-collapse text-left font-notice"
+            style={{ height: items.length * ROW_HEIGHT_PX }}
           >
-            {[1, 2].map((copy) => (
-              <table
-                key={copy}
-                className="w-full text-left border-collapse font-notice"
-                style={{ height: items.length * ROW_HEIGHT_PX }}
-              >
-                {tableBody(String(copy))}
-              </table>
-            ))}
-          </div>
-        ) : (
-          <table className="w-full text-left border-collapse font-notice">
-            {tableBody('1')}
+            {tableBody('a')}
           </table>
-        )}
-      </div>
+          {needsScroll && (
+            <table
+              className="w-full border-collapse text-left font-notice"
+              style={{ height: items.length * ROW_HEIGHT_PX }}
+            >
+              {tableBody('b')}
+            </table>
+          )}
+        </CampusAutoScrollViewport>
+      )}
     </div>
   );
 }
@@ -229,8 +242,8 @@ interface LatestUpdatesGridProps {
 
 function LatestUpdatesGrid({ items, emptyMessage }: LatestUpdatesGridProps) {
   const rowCount = Math.ceil(items.length / 2);
-  const needsScroll = rowCount > VISIBLE_UPDATE_ROWS;
   const contentHeight = getGridContentHeight(items.length);
+  const needsScroll = contentHeight > UPDATE_VIEWPORT_HEIGHT;
   const scrollDuration = getScrollDuration(rowCount, VISIBLE_UPDATE_ROWS, 10);
 
   const grid = (keyPrefix: string) => (
@@ -247,8 +260,8 @@ function LatestUpdatesGrid({ items, emptyMessage }: LatestUpdatesGridProps) {
   if (items.length === 0) {
     return (
       <div
-        className="flex items-center justify-center border-2 border-dashed border-[#1a3a2a]/20 bg-[#fffef9] text-slate-500 text-sm font-medium relative z-[3]"
-        style={{ minHeight: UPDATE_VIEWPORT_HEIGHT }}
+        className="relative z-[3] flex items-center justify-center border-2 border-dashed border-[#1a3a2a]/20 bg-[#fffef9] text-sm font-medium text-slate-500"
+        style={{ height: UPDATE_VIEWPORT_HEIGHT, maxHeight: UPDATE_VIEWPORT_HEIGHT }}
       >
         {emptyMessage}
       </div>
@@ -256,47 +269,21 @@ function LatestUpdatesGrid({ items, emptyMessage }: LatestUpdatesGridProps) {
   }
 
   return (
-    <div
-      className="campus-panel-scroll-viewport relative z-[3]"
-      style={{ height: UPDATE_VIEWPORT_HEIGHT }}
+    <CampusAutoScrollViewport
+      height={UPDATE_VIEWPORT_HEIGHT}
+      loop={needsScroll}
+      duration={scrollDuration}
     >
-      {needsScroll ? (
-        <div
-          className="notice-auto-scroll"
-          style={{
-            '--scroll-duration': `${scrollDuration}s`,
-            height: contentHeight * 2,
-          } as React.CSSProperties}
-        >
-          {grid('a')}
-          {grid('b')}
-        </div>
-      ) : (
-        grid('static')
-      )}
-    </div>
+      {grid('a')}
+      {needsScroll && grid('b')}
+    </CampusAutoScrollViewport>
   );
 }
 
-const PANEL_FRAME_HEIGHT = Math.max(EXAM_VIEWPORT_HEIGHT, UPDATE_VIEWPORT_HEIGHT) + 96;
-
 const NewsAnnouncementsSection = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [isInView, setIsInView] = useState(false);
   const [news, setNews] = useState<News[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
-      { threshold: 0, rootMargin: '120px 0px' }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -319,11 +306,7 @@ const NewsAnnouncementsSection = () => {
 
   return (
     <section
-      ref={sectionRef}
-      className={cn(
-        'campus-updates-bg relative overflow-hidden border-y border-rose-100/60 font-notice',
-        isInView ? 'section-in-view' : 'section-offscreen'
-      )}
+      className="campus-updates-bg section-in-view relative overflow-hidden border-y border-rose-100/60 font-notice"
     >
       <div className="container relative z-10 mx-auto px-4 md:px-10 lg:px-12 py-12 md:py-16">
         <div className="mb-8 md:mb-10">
@@ -336,27 +319,42 @@ const NewsAnnouncementsSection = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-            <div className="lg:col-span-8 border-2 border-[#1a3a2a]/15 bg-white/70 animate-pulse" style={{ height: PANEL_FRAME_HEIGHT }} />
-            <div className="lg:col-span-4 border-2 border-[#1e3a5f]/15 bg-white/70 animate-pulse" style={{ height: PANEL_FRAME_HEIGHT }} />
+          <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-12 lg:items-stretch">
+            <div
+              className="animate-pulse border-2 border-[#1a3a2a]/15 bg-white/70 lg:col-span-7"
+              style={{ height: CAMPUS_PANEL_HEIGHT }}
+            />
+            <div
+              className="animate-pulse border-2 border-[#1e3a5f]/15 bg-white/70 lg:col-span-5"
+              style={{ height: CAMPUS_PANEL_HEIGHT }}
+            />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
-            <div className="lg:col-span-8 flex flex-col">
-              <div className="campus-craft-panel flex flex-col flex-1">
-                <div className="campus-craft-header flex items-center justify-between shrink-0">
-                  <h3 className="campus-craft-header-title">Latest Updates</h3>
-                  <span className="text-[10px] sm:text-xs text-emerald-100/90 font-semibold tracking-wide hidden sm:inline uppercase">
-                    News &amp; campus highlights
-                  </span>
+          <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-12 lg:items-stretch">
+            <div className="flex h-full lg:col-span-7">
+              <div
+                className="campus-craft-panel flex h-full flex-col overflow-hidden"
+                style={{ height: CAMPUS_PANEL_HEIGHT, maxHeight: CAMPUS_PANEL_HEIGHT }}
+              >
+                <div
+                  className="campus-craft-header flex shrink-0 items-center"
+                  style={{ minHeight: CRAFT_HEADER_HEIGHT }}
+                >
+                  <h3 className="campus-craft-header-title">News &amp; Campus Highlights</h3>
                 </div>
-                <div className="p-4 sm:p-5 flex-1 relative z-[3]">
+                <div
+                  className="campus-craft-col-head relative z-[3] flex shrink-0 items-center px-3"
+                  style={{ minHeight: SUBHEADER_HEIGHT }}
+                >
+                  <span>Latest updates</span>
+                </div>
+                <div className="relative z-[3] min-h-0 flex-1">
                   <LatestUpdatesGrid items={news} emptyMessage="No updates at the moment." />
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col">
+            <div className="flex h-full lg:col-span-5">
               <ExaminationCorner
                 items={announcements.map((a) => ({
                   id: a.id,

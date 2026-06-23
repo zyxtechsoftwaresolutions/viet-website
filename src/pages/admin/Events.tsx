@@ -26,6 +26,7 @@ import { eventsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { ImagePlus, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const eventImageUrl = (path: string | undefined) => (path && path.startsWith('http') ? path : path || null);
 
@@ -39,7 +40,35 @@ interface Event {
   location?: string;
   link?: string;
   image?: string;
+  featured?: boolean;
 }
+
+type EventStatus = 'upcoming' | 'live' | 'completed';
+
+const getEventStartMs = (e: Pick<Event, 'date' | 'time'>) =>
+  new Date(`${e.date}T${e.time || '00:00'}`).getTime();
+
+const getEventEndMs = (e: Pick<Event, 'date' | 'time' | 'time_end'>) => {
+  const endTime = e.time_end?.trim();
+  if (endTime) return new Date(`${e.date}T${endTime}`).getTime();
+  return new Date(`${e.date}T23:59:59`).getTime();
+};
+
+const getEventStatus = (e: Pick<Event, 'date' | 'time' | 'time_end'>): EventStatus => {
+  const now = Date.now();
+  const start = getEventStartMs(e);
+  const end = getEventEndMs(e);
+  if (now < start) return 'upcoming';
+  if (now <= end) return 'live';
+  return 'completed';
+};
+
+const isFeaturedOnHomepage = (event: Event) => {
+  if (event.featured === false) return false;
+  if (event.featured === true) return true;
+  const status = getEventStatus(event);
+  return status === 'upcoming' || status === 'live';
+};
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -55,6 +84,7 @@ const Events = () => {
     time_end: '',
     location: '',
     link: '',
+    featured: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -85,6 +115,7 @@ const Events = () => {
       time_end: '',
       location: '',
       link: '',
+      featured: true,
     });
     setImageFile(null);
     setImagePreview(null);
@@ -101,6 +132,7 @@ const Events = () => {
       time_end: (item as Event & { time_end?: string }).time_end || '',
       location: item.location || '',
       link: item.link || '',
+      featured: item.featured !== false,
     });
     setImageFile(null);
     setImagePreview(eventImageUrl(item.image) ?? null);
@@ -137,7 +169,11 @@ const Events = () => {
         toast.info('Uploading image…');
         imageUrl = await uploadToSupabase(imageFile, 'events', 'images');
       }
-      const payload = { ...formData, image: imageUrl ?? (selectedItem?.image ?? null) };
+      const payload = {
+        ...formData,
+        featured: formData.featured ? true : false,
+        image: imageUrl ?? (selectedItem?.image ?? null),
+      };
       if (selectedItem) {
         await eventsAPI.update(selectedItem.id, payload);
         toast.success('Event updated successfully');
@@ -161,6 +197,18 @@ const Events = () => {
       fetchEvents();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete event');
+    }
+  };
+
+  const handleFeaturedToggle = async (item: Event, checked: boolean) => {
+    try {
+      await eventsAPI.update(item.id, { featured: checked });
+      setEvents((prev) =>
+        prev.map((event) => (event.id === item.id ? { ...event, featured: checked } : event))
+      );
+      toast.success(checked ? 'Event marked as featured' : 'Event removed from featured');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update featured status');
     }
   };
 
@@ -190,6 +238,22 @@ const Events = () => {
     { key: 'date', header: 'Date' },
     { key: 'time', header: 'Time' },
     { key: 'location', header: 'Location' },
+    {
+      key: 'featured',
+      header: 'Featured',
+      render: (item: Event) => (
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={isFeaturedOnHomepage(item)}
+            onCheckedChange={(checked) => handleFeaturedToggle(item, checked)}
+            aria-label={`Toggle featured for ${item.title}`}
+          />
+          <span className="text-xs text-muted-foreground">
+            {isFeaturedOnHomepage(item) ? 'On' : 'Off'}
+          </span>
+        </div>
+      ),
+    },
   ];
 
   if (loading) {
@@ -345,6 +409,19 @@ const Events = () => {
                   placeholder="https://..."
                 />
               </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-1 pr-4">
+                <Label htmlFor="featured">Featured event</Label>
+                <p className="text-xs text-muted-foreground">
+                  Upcoming and ongoing events are featured by default. Turn this off to hide an event from the featured carousel.
+                </p>
+              </div>
+              <Switch
+                id="featured"
+                checked={formData.featured}
+                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+              />
             </div>
           </div>
           <DialogFooter>

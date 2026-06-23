@@ -638,6 +638,14 @@ html {
     6px 6px 0 rgba(30, 58, 95, 0.12);
 }
 
+.campus-craft-panel--orange {
+  background: linear-gradient(165deg, #fffaf5 0%, #fdf0e4 48%, #fae4cc 100%);
+  border-color: #9a4a0a;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    6px 6px 0 rgba(154, 74, 10, 0.14);
+}
+
 .campus-craft-panel::before {
   content: '';
   position: absolute;
@@ -649,6 +657,10 @@ html {
 
 .campus-craft-panel--sky::before {
   border-color: rgba(56, 120, 170, 0.35);
+}
+
+.campus-craft-panel--orange::before {
+  border-color: rgba(245, 130, 32, 0.38);
 }
 
 .campus-craft-panel::after {
@@ -668,6 +680,10 @@ html {
   border-color: rgba(56, 120, 170, 0.45);
 }
 
+.campus-craft-panel--orange::after {
+  border-color: rgba(245, 130, 32, 0.5);
+}
+
 .campus-craft-header {
   position: relative;
   z-index: 3;
@@ -681,6 +697,30 @@ html {
 .campus-craft-header--sky {
   border-bottom-color: rgba(100, 160, 210, 0.55);
   background: linear-gradient(90deg, #123a5c 0%, #1e5a8a 55%, #123a5c 100%);
+}
+
+.campus-craft-header--orange {
+  border-bottom-color: rgba(245, 180, 100, 0.55);
+  background: linear-gradient(90deg, #7a3b08 0%, #c45f0a 40%, #F58220 55%, #c45f0a 70%, #7a3b08 100%);
+}
+
+/* Admission popup — clean mobile card (no craft borders / grey outlines) */
+@media (max-width: 767px) {
+  .admission-popup-form-panel {
+    border: none !important;
+    box-shadow: none !important;
+    background: linear-gradient(165deg, #fffaf5 0%, #fdf0e4 48%, #fae4cc 100%) !important;
+  }
+
+  .admission-popup-form-panel::before,
+  .admission-popup-form-panel::after {
+    display: none;
+  }
+
+  .admission-popup-mobile-shell {
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .campus-craft-header-title {
@@ -771,6 +811,30 @@ html {
   display: none;
   width: 0;
   height: 0;
+}
+
+.campus-panel-scroll-manual {
+  touch-action: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 58, 95, 0.28) transparent;
+}
+
+.campus-panel-scroll-manual:hover {
+  scrollbar-color: rgba(30, 58, 95, 0.45) transparent;
+}
+
+.campus-panel-scroll-manual::-webkit-scrollbar {
+  display: block;
+  width: 5px;
+}
+
+.campus-panel-scroll-manual::-webkit-scrollbar-thumb {
+  background: rgba(30, 58, 95, 0.3);
+  border-radius: 4px;
+}
+
+.campus-panel-scroll-manual:hover::-webkit-scrollbar-thumb {
+  background: rgba(30, 58, 95, 0.5);
 }
 
 .campus-panel-scroll-viewport:hover .notice-auto-scroll {

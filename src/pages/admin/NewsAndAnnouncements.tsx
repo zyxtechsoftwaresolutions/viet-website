@@ -127,10 +127,24 @@ const NewsTab = () => {
 
   const handleSubmit = async () => {
     try {
-      const payload = { ...formData };
+      const payload: {
+        title: string;
+        description: string;
+        date: string;
+        link: string;
+        image?: string;
+      } = {
+        title: formData.title,
+        description: formData.description,
+        date: formData.date,
+        link: formData.link,
+      };
+
       if (imageFile) {
         toast.info('Uploading image…');
         payload.image = await uploadToSupabase(imageFile, 'campus-updates', 'images');
+      } else if (selectedItem?.image) {
+        payload.image = selectedItem.image;
       }
 
       if (selectedItem) {

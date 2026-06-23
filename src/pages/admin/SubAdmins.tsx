@@ -38,6 +38,7 @@ export const ADMIN_SECTIONS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'hero-videos', label: 'Hero Videos' },
   { key: 'intro-video', label: 'Intro Video' },
+  { key: 'admission-popup', label: 'Admission Popup' },
   { key: 'ticker', label: 'Scrolling Text' },
   { key: 'news-announcements', label: 'Campus Updates' },
   { key: 'events', label: 'Events' },

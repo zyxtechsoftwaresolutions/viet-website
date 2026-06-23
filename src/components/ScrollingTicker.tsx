@@ -71,7 +71,7 @@ const ScrollingTicker = () => {
     <div className="relative w-full bg-primary text-white overflow-hidden border-b border-primary/20 shadow-md">
       <div className="flex items-center h-10 md:h-12">
         <div className="flex-shrink-0 px-4 md:px-6 bg-primary z-10 border-r border-white/20">
-          <span className="text-xs md:text-sm font-semibold tracking-wide whitespace-nowrap">
+          <span className="whats-new-shine text-xs md:text-sm font-semibold tracking-wide whitespace-nowrap">
             What&apos;s New
           </span>
         </div>
@@ -100,6 +100,21 @@ const ScrollingTicker = () => {
         }
         .animate-scroll-left {
           animation: scroll-left linear infinite;
+        }
+        @keyframes whats-new-sizzle {
+          0%,
+          100% {
+            color: #000000;
+            text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+          }
+          50% {
+            color: #000000;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.85), 0 0 14px rgba(255, 214, 102, 0.6);
+          }
+        }
+        .whats-new-shine {
+          color: #000000;
+          animation: whats-new-sizzle 1.8s ease-in-out infinite;
         }
       `}</style>
     </div>

@@ -124,13 +124,6 @@ const Footer = () => {
     { name: 'Committees', href: '/committees' },
   ];
 
-  const policyLinks = [
-    { name: 'Anti-Ragging Policy', href: '/grievance-redressal' },
-    { name: 'AICTE Feedback', href: '/accreditations' },
-    { name: 'Mandatory Disclosure', href: '/accreditation' },
-    { name: 'IQAC', href: '/accreditations' },
-  ];
-
   const socialLinks = [
     {
       icon: FacebookIcon,
@@ -173,9 +166,9 @@ const Footer = () => {
               <img
                 src="/logo-viet.png"
                 alt="VIET Logo"
-                className="w-auto max-w-[7.5rem] sm:max-w-[8.5rem] h-auto object-contain mb-4"
-                width={136}
-                height={136}
+                className="w-auto max-w-[10rem] sm:max-w-[11.5rem] lg:max-w-[12.5rem] h-auto object-contain mb-4"
+                width={200}
+                height={200}
                 loading="lazy"
                 decoding="async"
               />
@@ -186,9 +179,11 @@ const Footer = () => {
                 (Autonomous)
               </p>
               <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-sm">
-                Approved by AICTE · NAAC Accredited
+                Approved by AICTE New Delhi,
                 <br />
-                Narava, Visakhapatnam, Andhra Pradesh 530027, India
+                Affiliated to JNTUGV, Vizianagaram,
+                <br />
+                88th Division, Narava, GVMC, Visakhapatnam, Andhra Pradesh - 530027, India.
               </p>
 
               <div className="flex items-center gap-3 mt-6">
@@ -264,11 +259,7 @@ const Footer = () => {
                       Anti-Ragging Policy
                     </h3>
                     <p className="text-slate-200 text-sm leading-relaxed mb-5 text-justify">
-                      Visakha Institute of Engineering &amp; Technology, in strict compliance with UGC
-                      Regulations on Curbing the Menace of Ragging in Higher Educational Institutions,
-                      2009, AICTE Notification, Supreme Court directives, and Andhra Pradesh Prohibition of
-                      Ragging Act, has decided to frame a Policy to Prohibit and Prevent Ragging Activities
-                      in its Campus. Ragging — A violation of Human Rights.
+                    Visakha Institute of Engineering & Technology, in strict compliance with UGC Regulations on Curbing the Menace of Ragging in Higher Educational Institutions, 2009, AICTE Notification, 2009, Supreme Court directives, 2007 and Andhra Pradesh Prohibition of Ragging Act, 1997 as adopted by the State Govt. of Telangana, has decided to frame a Policy to Prohibit and Prevent Ragging Activities in its Campus. Ragging - A violation of Human Rights.
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                       <Link
@@ -343,17 +334,54 @@ const Footer = () => {
 
         <FooterDottedDivider />
 
-        {/* ── Policy links ── */}
-        <div className="py-5 flex flex-wrap justify-center gap-x-6 gap-y-2">
-          {policyLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="text-sm text-slate-200 hover:text-primary transition-colors duration-200"
-            >
-              {link.name}
-            </a>
-          ))}
+        {/* ── Key contacts (replaces former policy links row) ── */}
+        <div className="py-6 md:py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center md:text-left">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-primary mb-2">
+                For Enquiry and Verification
+              </h3>
+              <p className="text-sm text-slate-200 leading-relaxed">
+                <span className="font-semibold text-white">Contact Person:</span> P Subba Raju
+                <br />
+                <span className="font-semibold text-white">Phone:</span>{' '}
+                <a href="tel:+919959617477" className="hover:text-primary transition-colors">9959617477</a>
+                {', '}
+                <a href="tel:+919959617476" className="hover:text-primary transition-colors">9959617476</a>
+                <br />
+                <span className="font-semibold text-white">Email:</span>{' '}
+                <a href="mailto:vietvsp@gmail.com" className="hover:text-primary transition-colors">vietvsp@gmail.com</a>
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-primary mb-2">
+                Training and Placements
+              </h3>
+              <p className="text-sm text-slate-200 leading-relaxed">
+                <span className="font-semibold text-white">Coordinator:</span> Dendukuri Devi Prasanna Varma
+                <br />
+                <span className="font-semibold text-white">Phone:</span>{' '}
+                <a href="tel:+918886888445" className="hover:text-primary transition-colors">+91 88868 88445</a>
+                <br />
+                <span className="font-semibold text-white">Email:</span>{' '}
+                <a href="mailto:deancdc@viet.edu.in" className="hover:text-primary transition-colors">deancdc@viet.edu.in</a>
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-primary mb-2">
+                Grievance Redressal
+              </h3>
+              <p className="text-sm text-slate-200 leading-relaxed">
+                For grievance submissions, please contact via WhatsApp:
+                <br />
+                <a href="https://wa.me/919494670501" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">+91 9494670501</a>
+                <br />
+                <a href="https://wa.me/919550957054" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">+91 9550957054</a>
+              </p>
+            </div>
+          </div>
         </div>
 
         <FooterDottedDivider />

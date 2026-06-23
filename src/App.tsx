@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Chatbot from "./components/Chatbot";
 import SocialFloatingIcons from "./components/SocialFloatingIcons";
+import AdmissionPopup from "./components/AdmissionPopup";
 // Critical components - loaded immediately (above the fold)
 import Index from "./pages/Index";
 
@@ -81,6 +82,7 @@ const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
+const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -97,6 +99,7 @@ const PublicSiteWidgets = () => {
 
   return (
     <>
+      <AdmissionPopup />
       <Chatbot />
       <SocialFloatingIcons />
     </>
@@ -180,6 +183,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="events" element={<Events />} />
               <Route path="hero-videos" element={<HeroVideos />} />
               <Route path="intro-video" element={<IntroVideoAdmin />} />
+              <Route path="admission-popup" element={<AdmissionPopupAdmin />} />
               <Route path="ticker" element={<Ticker />} />
               <Route path="departments" element={<Departments />} />
               <Route path="department-pages" element={<DepartmentPages />} />

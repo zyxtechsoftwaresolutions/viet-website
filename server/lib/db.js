@@ -304,7 +304,7 @@ export async function createEvent(item) {
     await writeJsonFile('events', d);
     return newItem;
   }
-  const { data, error } = await supabase.from('events').insert(item).select().single();
+  const { data, error } = await supabase.from('events').insert(toSnake(item)).select().single();
   if (error) throw error;
   return data;
 }
@@ -1649,4 +1649,149 @@ export async function incrementVisitorCount() {
   } catch (e) {
     return { count: 0, todayCount: 0 };
   }
+}
+
+// ==================== ADMISSION POPUP SETTINGS ====================
+function isMissingTableError(error) {
+  if (!error) return false;
+  const msg = String(error.message || '');
+  return (
+    error.code === 'PGRST116' ||
+    error.code === '42P01' ||
+    error.code === 'PGRST205' ||
+    msg.includes('Could not find the table')
+  );
+}
+
+const DEFAULT_ADMISSION_POPUP_SETTINGS = {
+  id: 1,
+  is_enabled: true,
+  title: 'Admissions Open 2025–26',
+  subtitle: 'Share your details and our admissions team will contact you shortly.',
+  delay_seconds: 2,
+  images: [],
+  spreadsheet_url: null,
+  sheets_webhook_url: null,
+};
+
+export async function getAdmissionPopupSettings() {
+  if (useJsonFallback) {
+    try {
+      const d = await readJsonFile('admission-popup-settings');
+      return { ...DEFAULT_ADMISSION_POPUP_SETTINGS, ...(d.settings || {}) };
+    } catch (e) {
+      return { ...DEFAULT_ADMISSION_POPUP_SETTINGS };
+    }
+  }
+  const { data, error } = await supabase
+    .from('admission_popup_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error) {
+    if (isMissingTableError(error)) {
+      return { ...DEFAULT_ADMISSION_POPUP_SETTINGS };
+    }
+    throw error;
+  }
+  return data || { ...DEFAULT_ADMISSION_POPUP_SETTINGS };
+}
+
+export async function updateAdmissionPopupSettings(item) {
+  const payload = {
+    updated_at: new Date().toISOString(),
+  };
+  if (item.is_enabled !== undefined) payload.is_enabled = Boolean(item.is_enabled);
+  if (item.title !== undefined) payload.title = String(item.title || '').trim();
+  if (item.subtitle !== undefined) payload.subtitle = String(item.subtitle || '').trim();
+  if (item.delay_seconds !== undefined) {
+    const delay = parseInt(item.delay_seconds, 10);
+    payload.delay_seconds = Number.isFinite(delay) ? Math.min(Math.max(delay, 0), 30) : 2;
+  }
+  if (item.spreadsheet_url !== undefined) {
+    payload.spreadsheet_url = item.spreadsheet_url ? String(item.spreadsheet_url).trim() : null;
+  }
+  if (item.sheets_webhook_url !== undefined) {
+    payload.sheets_webhook_url = item.sheets_webhook_url ? String(item.sheets_webhook_url).trim() : null;
+  }
+  if (item.images !== undefined) {
+    payload.images = Array.isArray(item.images)
+      ? item.images.map((url) => String(url || '').trim()).filter(Boolean)
+      : [];
+  }
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('admission-popup-settings');
+    d.settings = { id: 1, ...DEFAULT_ADMISSION_POPUP_SETTINGS, ...(d.settings || {}), ...payload };
+    await writeJsonFile('admission-popup-settings', d);
+    return d.settings;
+  }
+  const { data, error } = await supabase
+    .from('admission_popup_settings')
+    .upsert({ id: 1, ...payload }, { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ==================== ADMISSION LEADS ====================
+export async function getAdmissionLeads() {
+  if (useJsonFallback) {
+    const d = await readJsonFile('admission-leads');
+    const leads = Array.isArray(d.leads) ? d.leads : [];
+    return leads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  const { data, error } = await supabase
+    .from('admission_leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+  return data || [];
+}
+
+export async function createAdmissionLead(item) {
+  const payload = {
+    name: String(item.name || '').trim(),
+    mobile: String(item.mobile || '').trim(),
+    email: item.email ? String(item.email).trim() : null,
+    program: item.program ? String(item.program).trim() : null,
+    qualification: item.qualification ? String(item.qualification).trim() : null,
+    city: item.city ? String(item.city).trim() : null,
+    district: item.district ? String(item.district).trim() : null,
+    message: item.message ? String(item.message).trim() : null,
+    source: item.source ? String(item.source).trim() : 'popup',
+    created_at: new Date().toISOString(),
+  };
+
+  if (useJsonFallback) {
+    const d = await readJsonFile('admission-leads');
+    const leads = Array.isArray(d.leads) ? d.leads : [];
+    const id = leads.length > 0 ? Math.max(...leads.map((l) => l.id)) + 1 : 1;
+    const lead = { id, ...payload };
+    leads.unshift(lead);
+    await writeJsonFile('admission-leads', { leads });
+    return lead;
+  }
+  const { data, error } = await supabase
+    .from('admission_leads')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteAdmissionLead(id) {
+  if (useJsonFallback) {
+    const d = await readJsonFile('admission-leads');
+    d.leads = (Array.isArray(d.leads) ? d.leads : []).filter((l) => l.id !== parseInt(id));
+    await writeJsonFile('admission-leads', d);
+    return;
+  }
+  const { error } = await supabase.from('admission_leads').delete().eq('id', id);
+  if (error) throw error;
 }

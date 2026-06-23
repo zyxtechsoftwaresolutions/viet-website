@@ -3,6 +3,8 @@ import {
   ArrowRight,
   Calendar,
   CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   History,
   MapPin,
@@ -23,6 +25,7 @@ interface Event {
   location?: string;
   image?: string;
   link?: string;
+  featured?: boolean;
 }
 
 type EventTab = 'upcoming' | 'ongoing' | 'recent' | 'past';
@@ -31,8 +34,46 @@ const RIGHT_VISIBLE_ROWS = 4;
 const RIGHT_SCROLL_DURATION_BASE = 14;
 const ROW_GAP_PX = 10;
 const EVENT_ROW_HEIGHT = 88;
-/** Slight extra height for featured card image column (content drives total height) */
 const FEATURED_IMAGE_MIN_HEIGHT = 280;
+const FEATURED_SLIDE_INTERVAL_MS = 8000;
+
+type EventStatus = 'upcoming' | 'live' | 'completed';
+
+const getEventStartMs = (e: Pick<Event, 'date' | 'time'>) =>
+  new Date(`${e.date}T${e.time || '00:00'}`).getTime();
+
+const getEventEndMs = (e: Pick<Event, 'date' | 'time' | 'time_end'>) => {
+  const endTime = e.time_end?.trim();
+  if (endTime) return new Date(`${e.date}T${endTime}`).getTime();
+  return new Date(`${e.date}T23:59:59`).getTime();
+};
+
+const getEventStatus = (e: Pick<Event, 'date' | 'time' | 'time_end'>): EventStatus => {
+  const now = Date.now();
+  const start = getEventStartMs(e);
+  const end = getEventEndMs(e);
+  if (now < start) return 'upcoming';
+  if (now <= end) return 'live';
+  return 'completed';
+};
+
+const isFeaturedInCarousel = (e: Event) => {
+  if (e.featured === false) return false;
+  if (e.featured === true) return true;
+  const status = getEventStatus(e);
+  return status === 'upcoming' || status === 'live';
+};
+
+const sortFeaturedEvents = (events: Event[]) =>
+  [...events].sort((a, b) => {
+    const statusA = getEventStatus(a);
+    const statusB = getEventStatus(b);
+    const priority: Record<EventStatus, number> = { live: 0, upcoming: 1, completed: 2 };
+    if (priority[statusA] !== priority[statusB]) return priority[statusA] - priority[statusB];
+    if (statusA === 'upcoming') return getEventStartMs(a) - getEventStartMs(b);
+    if (statusA === 'live') return getEventStartMs(a) - getEventStartMs(b);
+    return getEventEndMs(b) - getEventEndMs(a);
+  });
 
 const EVENT_TABS: Array<{
   id: EventTab;
@@ -85,6 +126,8 @@ const AnnouncementsNewsEventsSection = () => {
   const [activeTab, setActiveTab] = useState<EventTab>('recent');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
+  const [isFeaturedAutoPlaying, setIsFeaturedAutoPlaying] = useState(true);
   const [countdowns, setCountdowns] = useState<
     Record<number, { days: number; hours: number; minutes: number; seconds: number }>
   >({});
@@ -133,23 +176,6 @@ const AnnouncementsNewsEventsSection = () => {
     };
   };
 
-  const getEventStartMs = (e: Event) => new Date(`${e.date}T${e.time || '00:00'}`).getTime();
-  const getEventEndMs = (e: Event) => {
-    const endTime = e.time_end?.trim();
-    if (endTime) return new Date(`${e.date}T${endTime}`).getTime();
-    return new Date(`${e.date}T23:59:59`).getTime();
-  };
-
-  type EventStatus = 'upcoming' | 'live' | 'completed';
-  const getEventStatus = (e: Event): EventStatus => {
-    const now = Date.now();
-    const start = getEventStartMs(e);
-    const end = getEventEndMs(e);
-    if (now < start) return 'upcoming';
-    if (now <= end) return 'live';
-    return 'completed';
-  };
-
   useEffect(() => {
     if (!isInView || events.length === 0) return;
     const updateCountdowns = () => {
@@ -185,16 +211,47 @@ const AnnouncementsNewsEventsSection = () => {
     [events]
   );
 
-  const featuredEvent = liveEvents[0] || upcomingEvents[0] || completedEvents[0] || null;
-  const featuredStatus = featuredEvent ? getEventStatus(featuredEvent) : null;
-  const featuredCountdown =
-    featuredEvent && featuredStatus === 'upcoming'
-      ? countdowns[featuredEvent.id] || calculateCountdown(featuredEvent.date, featuredEvent.time || '00:00')
-      : null;
+  const featuredEvents = useMemo(() => {
+    const featured = sortFeaturedEvents(events.filter(isFeaturedInCarousel));
+    if (featured.length > 0) return featured;
+    return completedEvents.length > 0 ? [completedEvents[0]] : [];
+  }, [events, completedEvents]);
+
+  const featuredIds = useMemo(() => new Set(featuredEvents.map((e) => e.id)), [featuredEvents]);
+
+  useEffect(() => {
+    setCurrentFeaturedIndex((prev) => {
+      if (featuredEvents.length === 0) return 0;
+      return prev >= featuredEvents.length ? 0 : prev;
+    });
+  }, [featuredEvents]);
+
+  useEffect(() => {
+    if (!isInView || !isFeaturedAutoPlaying || featuredEvents.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentFeaturedIndex((prev) => (prev + 1) % featuredEvents.length);
+    }, FEATURED_SLIDE_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [isInView, isFeaturedAutoPlaying, featuredEvents.length]);
+
+  const goToFeaturedSlide = (index: number) => {
+    setCurrentFeaturedIndex(index);
+    setIsFeaturedAutoPlaying(false);
+    window.setTimeout(() => setIsFeaturedAutoPlaying(true), 10000);
+  };
+
+  const goToPrevFeaturedSlide = () => {
+    const prev = currentFeaturedIndex === 0 ? featuredEvents.length - 1 : currentFeaturedIndex - 1;
+    goToFeaturedSlide(prev);
+  };
+
+  const goToNextFeaturedSlide = () => {
+    const next = (currentFeaturedIndex + 1) % featuredEvents.length;
+    goToFeaturedSlide(next);
+  };
 
   const tabEvents = useMemo(() => {
-    const excludeFeatured = (list: Event[]) =>
-      featuredEvent ? list.filter((e) => e.id !== featuredEvent.id) : list;
+    const excludeFeatured = (list: Event[]) => list.filter((e) => !featuredIds.has(e.id));
 
     switch (activeTab) {
       case 'upcoming':
@@ -208,7 +265,7 @@ const AnnouncementsNewsEventsSection = () => {
       default:
         return [];
     }
-  }, [activeTab, upcomingEvents, liveEvents, completedEvents, featuredEvent]);
+  }, [activeTab, upcomingEvents, liveEvents, completedEvents, featuredIds]);
 
   const listCards = useMemo(
     () =>
@@ -250,21 +307,15 @@ const AnnouncementsNewsEventsSection = () => {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [loading, featuredEvent?.id, featuredEvent?.image, featuredStatus]);
+  }, [loading, featuredEvents.length, currentFeaturedIndex]);
 
-  const statusLabel =
-    featuredStatus === 'live'
-      ? 'Live Now'
-      : featuredStatus === 'upcoming'
-        ? 'Upcoming'
-        : featuredStatus === 'completed'
-          ? 'Featured'
-          : '';
+  const getFeaturedStatusLabel = (status: EventStatus) =>
+    status === 'live' ? 'Live Now' : status === 'upcoming' ? 'Upcoming' : 'Featured';
 
-  const statusBadgeClass =
-    featuredStatus === 'live'
+  const getFeaturedStatusBadgeClass = (status: EventStatus) =>
+    status === 'live'
       ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-      : featuredStatus === 'upcoming'
+      : status === 'upcoming'
         ? 'bg-amber-50 text-amber-800 border-amber-200'
         : 'bg-slate-100 text-slate-700 border-slate-200';
 
@@ -274,7 +325,7 @@ const AnnouncementsNewsEventsSection = () => {
       : activeTab === 'ongoing'
         ? 'Ongoing Events'
         : activeTab === 'recent'
-          ? 'Recently Completed Events'
+          ? 'Recent Events'
           : 'Past Events';
 
   const renderEventRow = (card: (typeof listCards)[0], keyPrefix: string) => {
@@ -364,7 +415,7 @@ const AnnouncementsNewsEventsSection = () => {
             Happenings
           </h2>
           <p className="mt-2 text-sm sm:text-base text-white/90 max-w-xl">
-            Stay updated with all the events and activities at VIET
+            Stay updated with all the events and activities @ VIET
           </p>
         </div>
 
@@ -372,121 +423,191 @@ const AnnouncementsNewsEventsSection = () => {
         <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 lg:items-start">
           {/* Featured event — left */}
           <div className="lg:col-span-7">
-            <div ref={featuredRef} className="happenings-panel overflow-hidden w-full">
+            <div ref={featuredRef} className="happenings-panel overflow-hidden w-full relative">
               {loading ? (
                 <div className="p-8 text-center text-slate-500">Loading events...</div>
-              ) : !featuredEvent ? (
+              ) : featuredEvents.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No events yet. Add events in the admin panel.</div>
               ) : (
-                <div className="grid md:grid-cols-[minmax(0,52%)_minmax(160px,48%)]">
-                  <div className="p-6 md:p-9 flex flex-col">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">
-                        Featured Event
-                      </span>
-                      {statusLabel && (
-                        <span className={cn('text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border', statusBadgeClass)}>
-                          {statusLabel}
-                        </span>
-                      )}
-                    </div>
+                <>
+                  <div className={cn('relative', featuredEvents.length > 1 && 'pb-14')}>
+                    {featuredEvents.map((featuredEvent, index) => {
+                      const featuredStatus = getEventStatus(featuredEvent);
+                      const featuredCountdown =
+                        featuredStatus === 'upcoming'
+                          ? countdowns[featuredEvent.id] ||
+                            calculateCountdown(featuredEvent.date, featuredEvent.time || '00:00')
+                          : null;
+                      const isActive = index === currentFeaturedIndex;
 
-                    <h3 className="text-2xl md:text-3xl font-bold text-[#0a192f] leading-tight">
-                      {featuredEvent.title}
-                    </h3>
-                    {featuredEvent.description && (
-                      <p className="mt-3 text-sm text-slate-600 leading-relaxed line-clamp-5">
-                        {featuredEvent.description}
-                      </p>
-                    )}
-
-                    <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
-                      <li className="flex items-start gap-2.5">
-                        <Calendar className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
-                        <span>{formatDateRange(featuredEvent)}</span>
-                      </li>
-                      {featuredEvent.location && (
-                        <li className="flex items-start gap-2.5">
-                          <MapPin className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
-                          <span>{featuredEvent.location}</span>
-                        </li>
-                      )}
-                      <li className="flex items-start gap-2.5">
-                        <Users className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
-                        <span>Open for all students &amp; faculty</span>
-                      </li>
-                    </ul>
-
-                    {featuredCountdown && featuredStatus === 'upcoming' && (
-                      <div className="mt-6">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
-                          Event starts in
-                        </p>
-                        <div className="grid grid-cols-4 gap-2 max-w-sm">
-                          {(['days', 'hours', 'minutes', 'seconds'] as const).map((unit) => (
-                            <div key={unit} className="happenings-countdown-box px-2 py-2.5 text-center">
-                              <div className="text-xl md:text-2xl font-extrabold text-[#0a192f] leading-none">
-                                {featuredCountdown[unit]}
+                      return (
+                        <div
+                          key={featuredEvent.id}
+                          className={cn(
+                            'w-full transition-opacity duration-500',
+                            isActive
+                              ? 'relative opacity-100 z-10'
+                              : 'absolute top-0 left-0 right-0 opacity-0 z-0 pointer-events-none'
+                          )}
+                          aria-hidden={!isActive}
+                        >
+                          <div className="grid md:grid-cols-[minmax(0,52%)_minmax(160px,48%)]">
+                            <div className="p-6 md:p-9 flex flex-col">
+                              <div className="flex items-center justify-between gap-3 mb-4">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">
+                                  Featured Event{featuredEvents.length > 1 ? ` ${index + 1} of ${featuredEvents.length}` : ''}
+                                </span>
+                                <span
+                                  className={cn(
+                                    'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 border',
+                                    getFeaturedStatusBadgeClass(featuredStatus)
+                                  )}
+                                >
+                                  {getFeaturedStatusLabel(featuredStatus)}
+                                </span>
                               </div>
-                              <div className="text-[9px] uppercase tracking-wider text-slate-500 mt-1">
-                                {unit}
+
+                              <h3 className="text-2xl md:text-3xl font-bold text-[#0a192f] leading-tight">
+                                {featuredEvent.title}
+                              </h3>
+                              {featuredEvent.description && (
+                                <p className="mt-3 text-sm text-slate-600 leading-relaxed line-clamp-5">
+                                  {featuredEvent.description}
+                                </p>
+                              )}
+
+                              <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
+                                <li className="flex items-start gap-2.5">
+                                  <Calendar className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                                  <span>{formatDateRange(featuredEvent)}</span>
+                                </li>
+                                {featuredEvent.location && (
+                                  <li className="flex items-start gap-2.5">
+                                    <MapPin className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                                    <span>{featuredEvent.location}</span>
+                                  </li>
+                                )}
+                                <li className="flex items-start gap-2.5">
+                                  <Users className="h-4 w-4 shrink-0 text-emerald-700 mt-0.5" aria-hidden />
+                                  <span>Open for all students &amp; faculty</span>
+                                </li>
+                              </ul>
+
+                              {featuredCountdown && featuredStatus === 'upcoming' && (
+                                <div className="mt-6">
+                                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+                                    Event starts in
+                                  </p>
+                                  <div className="grid grid-cols-4 gap-2 max-w-sm">
+                                    {(['days', 'hours', 'minutes', 'seconds'] as const).map((unit) => (
+                                      <div key={unit} className="happenings-countdown-box px-2 py-2.5 text-center">
+                                        <div className="text-xl md:text-2xl font-extrabold text-[#0a192f] leading-none">
+                                          {featuredCountdown[unit]}
+                                        </div>
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-500 mt-1">
+                                          {unit}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="mt-6 flex flex-wrap gap-3">
+                                {featuredEvent.link && featuredEvent.link !== '#' ? (
+                                  <a
+                                    href={featuredEvent.link}
+                                    target={featuredEvent.link.startsWith('http') ? '_blank' : undefined}
+                                    rel={featuredEvent.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                    className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 transition-colors"
+                                  >
+                                    View Details
+                                    <ArrowRight className="h-4 w-4" aria-hidden />
+                                  </a>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-2 border-2 border-[#0a192f]/20 text-[#0a192f] text-xs font-bold uppercase tracking-wider px-4 py-2.5 hover:border-emerald-700/40 hover:text-emerald-800 transition-colors"
+                                  onClick={() => {
+                                    const dates = toGoogleCalendarDates(
+                                      featuredEvent.date,
+                                      featuredEvent.time,
+                                      featuredEvent.time_end
+                                    );
+                                    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(featuredEvent.title)}&dates=${dates}&details=${encodeURIComponent(featuredEvent.description || '')}&location=${encodeURIComponent(featuredEvent.location || 'VIET Campus')}`;
+                                    window.open(url, '_blank', 'noopener,noreferrer');
+                                  }}
+                                >
+                                  <CalendarPlus className="h-4 w-4" aria-hidden />
+                                  Add to Calendar
+                                </button>
                               </div>
                             </div>
-                          ))}
+
+                            <div
+                              className="relative bg-slate-100 border-t md:border-t-0 md:border-l border-[#0a192f]/10"
+                              style={{ minHeight: FEATURED_IMAGE_MIN_HEIGHT }}
+                            >
+                              {featuredEvent.image ? (
+                                <img
+                                  src={featuredEvent.image}
+                                  alt={featuredEvent.title}
+                                  className="absolute inset-0 h-full w-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-100">
+                                  <Calendar className="h-16 w-16 text-emerald-200" aria-hidden />
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })}
+                  </div>
 
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      {featuredEvent.link && featuredEvent.link !== '#' ? (
-                        <a
-                          href={featuredEvent.link}
-                          target={featuredEvent.link.startsWith('http') ? '_blank' : undefined}
-                          rel={featuredEvent.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 transition-colors"
+                  {featuredEvents.length > 1 && (
+                    <>
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                        {featuredEvents.map((event, index) => (
+                          <button
+                            key={event.id}
+                            type="button"
+                            onClick={() => goToFeaturedSlide(index)}
+                            className={cn(
+                              'transition-all duration-300 rounded-full',
+                              index === currentFeaturedIndex
+                                ? 'w-8 h-2 bg-emerald-700'
+                                : 'w-2 h-2 bg-emerald-700/35 hover:bg-emerald-700/55'
+                            )}
+                            aria-label={`Go to featured event ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={goToPrevFeaturedSlide}
+                          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/90 border border-[#0a192f]/15 text-[#0a192f] hover:bg-white hover:border-emerald-700/30 transition-colors"
+                          aria-label="Previous featured event"
                         >
-                          View Details
-                          <ArrowRight className="h-4 w-4" aria-hidden />
-                        </a>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 border-2 border-[#0a192f]/20 text-[#0a192f] text-xs font-bold uppercase tracking-wider px-4 py-2.5 hover:border-emerald-700/40 hover:text-emerald-800 transition-colors"
-                        onClick={() => {
-                          const dates = toGoogleCalendarDates(
-                            featuredEvent.date,
-                            featuredEvent.time,
-                            featuredEvent.time_end
-                          );
-                          const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(featuredEvent.title)}&dates=${dates}&details=${encodeURIComponent(featuredEvent.description || '')}&location=${encodeURIComponent(featuredEvent.location || 'VIET Campus')}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <CalendarPlus className="h-4 w-4" aria-hidden />
-                        Add to Calendar
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    className="relative bg-slate-100 border-t md:border-t-0 md:border-l border-[#0a192f]/10"
-                    style={{ minHeight: FEATURED_IMAGE_MIN_HEIGHT }}
-                  >
-                    {featuredEvent.image ? (
-                      <img
-                        src={featuredEvent.image}
-                        alt={featuredEvent.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-100">
-                        <Calendar className="h-16 w-16 text-emerald-200" aria-hidden />
+                          <ChevronLeft className="h-4 w-4" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={goToNextFeaturedSlide}
+                          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/90 border border-[#0a192f]/15 text-[#0a192f] hover:bg-white hover:border-emerald-700/30 transition-colors"
+                          aria-label="Next featured event"
+                        >
+                          <ChevronRight className="h-4 w-4" aria-hidden />
+                        </button>
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </>
+                  )}
+                </>
               )}
             </div>
           </div>

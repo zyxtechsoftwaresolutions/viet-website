@@ -178,6 +178,18 @@ async function initializeData() {
     'aicte-affiliation-letters': { letters: [] },
     'intro-video-settings': { settings: { id: 1, video_url: null, is_enabled: false } },
     'explore-path-video-settings': { settings: { id: 1, video_url: null } },
+    'admission-popup-settings': {
+      settings: {
+        id: 1,
+        is_enabled: true,
+        title: 'Admissions Open 2025–26',
+        subtitle: 'Share your details and our admissions team will contact you shortly.',
+        delay_seconds: 2,
+        spreadsheet_url: null,
+        sheets_webhook_url: null,
+      },
+    },
+    'admission-leads': { leads: [] },
     'faculty-settings': {
       settings: {
         id: 1,
@@ -280,6 +292,8 @@ const API_TO_SECTION = [
   [/^\/api\/hero-videos/, 'hero-videos'],
   [/^\/api\/intro-video-settings/, 'intro-video'],
   [/^\/api\/explore-path-video-settings/, 'intro-video'],
+  [/^\/api\/admission-popup-settings/, 'admission-popup'],
+  [/^\/api\/admission-leads/, 'admission-popup'],
   [/^\/api\/carousel/, 'hero-videos'],
   [/^\/api\/departments/, 'departments'],
   [/^\/api\/department-pages/, 'department-pages'],
@@ -560,7 +574,18 @@ app.get('/api/news', async (req, res) => {
 
 app.post('/api/news', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
-    const newNews = await db.createNews(req.body);
+    const body = req.body || {};
+    const image = typeof body.image === 'string' ? body.image.trim() : null;
+    if (image && !isValidStorageUrl(image)) {
+      return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+    }
+    const newNews = await db.createNews({
+      title: body.title || '',
+      description: body.description || '',
+      date: body.date || '',
+      link: body.link || '',
+      image: image || null,
+    });
     res.json(newNews);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -569,7 +594,20 @@ app.post('/api/news', authenticateToken, checkSectionAccess, async (req, res) =>
 
 app.put('/api/news/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
-    const updated = await db.updateNews(req.params.id, { ...req.body, updatedAt: new Date().toISOString() });
+    const body = req.body || {};
+    const updateData = {};
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.date !== undefined) updateData.date = body.date;
+    if (body.link !== undefined) updateData.link = body.link;
+    if (body.image !== undefined) {
+      const image = typeof body.image === 'string' ? body.image.trim() : null;
+      if (image && !isValidStorageUrl(image)) {
+        return res.status(400).json({ error: 'image must be a valid Supabase Storage URL' });
+      }
+      updateData.image = image || null;
+    }
+    const updated = await db.updateNews(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'News not found' });
     res.json(updated);
   } catch (error) {
@@ -653,7 +691,8 @@ app.post('/api/events', authenticateToken, checkSectionAccess, async (req, res) 
       time_end: body.time_end || null,
       location: body.location || '',
       link: body.link || '',
-      image: image || null
+      image: image || null,
+      featured: body.featured === false ? false : body.featured === true ? true : undefined,
     });
     res.json(newEvent);
   } catch (error) {
@@ -1663,6 +1702,293 @@ app.delete('/api/intro-video-settings', authenticateToken, checkSectionAccess, a
     }
     const updated = await db.updateIntroVideoSettings({ video_url: null, is_enabled: false });
     res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== ADMISSION POPUP ROUTES ====================
+
+function isValidIndianMobile(mobile) {
+  return /^[6-9]\d{9}$/.test(String(mobile || '').replace(/\D/g, '').slice(-10));
+}
+
+function isValidEmail(email) {
+  if (!email) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+}
+
+function parseGoogleScriptResponse(text) {
+  const trimmed = String(text || '').trim();
+  try {
+    const json = JSON.parse(trimmed);
+    if (json.success === true) {
+      return { ok: true, body: trimmed };
+    }
+    return {
+      ok: false,
+      reason: 'script_error',
+      body: trimmed,
+      message: json.error || 'Apps Script returned success: false',
+    };
+  } catch {
+    return {
+      ok: false,
+      reason: 'invalid_response',
+      body: trimmed.slice(0, 500),
+      message:
+        'Google returned an HTML page instead of JSON. Redeploy the Apps Script (New version, Anyone access, /exec URL) and ensure the script is created from Extensions → Apps Script inside your sheet.',
+    };
+  }
+}
+
+async function sendToGoogleAppsScript(url, payload) {
+  const baseUrl = url.trim().replace(/\/dev$/, '/exec');
+  const query = new URLSearchParams({ data: JSON.stringify(payload) }).toString();
+
+  const fetchGet = async (requestUrl) =>
+    fetch(requestUrl, { method: 'GET', redirect: 'manual' });
+
+  // GET + query string is the most reliable way to call GAS web apps from a server
+  let requestUrl = `${baseUrl}?${query}`;
+  let response = await fetchGet(requestUrl);
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (![301, 302, 303, 307, 308].includes(response.status)) break;
+    const location = response.headers.get('location');
+    if (!location) break;
+    requestUrl = location.includes('data=')
+      ? location
+      : `${location}${location.includes('?') ? '&' : '?'}${query}`;
+    response = await fetchGet(requestUrl);
+  }
+
+  return response;
+}
+
+async function syncAdmissionLeadToGoogleSheets(lead, webhookUrl) {
+  const url = webhookUrl || process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    console.warn('[Sheets] Webhook URL not configured — lead saved to database only');
+    return { ok: false, reason: 'no_url' };
+  }
+  if (!url.includes('script.google.com')) {
+    console.warn('[Sheets] Webhook URL must be a Google Apps Script URL (script.google.com/.../exec)');
+    return { ok: false, reason: 'invalid_url' };
+  }
+
+  try {
+    const response = await sendToGoogleAppsScript(url, lead);
+    const text = await response.text();
+    const parsed = parseGoogleScriptResponse(text);
+    if (!parsed.ok) {
+      console.error('[Sheets] Sync failed:', parsed.reason, parsed.message, text.slice(0, 300));
+      return {
+        ok: false,
+        reason: parsed.reason,
+        status: response.status,
+        body: parsed.body,
+        message: parsed.message,
+      };
+    }
+    console.log('[Sheets] Sync OK for lead id', lead.id);
+    return { ok: true, body: text };
+  } catch (error) {
+    console.error('[Sheets] Sync error:', error.message);
+    return { ok: false, reason: 'exception', message: error.message };
+  }
+}
+
+function admissionLeadToCsvRow(lead) {
+  const escape = (val) => {
+    const s = val == null ? '' : String(val);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+  return [
+    lead.created_at || '',
+    lead.name || '',
+    lead.mobile || '',
+    lead.email || '',
+    lead.program || '',
+    lead.qualification || '',
+    lead.city || '',
+    lead.district || '',
+    lead.message || '',
+  ].map(escape).join(',');
+}
+
+app.get('/api/admission-popup-settings', async (req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const settings = await db.getAdmissionPopupSettings();
+    const token = req.headers.authorization?.split(' ')[1];
+    let isAdmin = false;
+    if (token) {
+      try {
+        jwt.verify(token, JWT_SECRET);
+        isAdmin = true;
+      } catch {
+        isAdmin = false;
+      }
+    }
+    if (isAdmin) {
+      return res.json(settings);
+    }
+    res.json({
+      id: settings.id,
+      is_enabled: settings.is_enabled,
+      title: settings.title,
+      subtitle: settings.subtitle,
+      delay_seconds: settings.delay_seconds ?? 2,
+      images: Array.isArray(settings.images) ? settings.images : [],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/admission-popup-settings', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const updateData = {};
+    if (body.is_enabled !== undefined) updateData.is_enabled = Boolean(body.is_enabled);
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.subtitle !== undefined) updateData.subtitle = body.subtitle;
+    if (body.delay_seconds !== undefined) updateData.delay_seconds = body.delay_seconds;
+    if (body.spreadsheet_url !== undefined) updateData.spreadsheet_url = body.spreadsheet_url;
+    if (body.sheets_webhook_url !== undefined) updateData.sheets_webhook_url = body.sheets_webhook_url;
+    if (body.images !== undefined) updateData.images = body.images;
+    const updated = await db.updateAdmissionPopupSettings(updateData);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to update admission popup settings' });
+  }
+});
+
+app.post('/api/admission-popup-settings/test-sheets', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const settings = await db.getAdmissionPopupSettings();
+    const webhookUrl = req.body?.sheets_webhook_url || settings.sheets_webhook_url;
+    const result = await syncAdmissionLeadToGoogleSheets(
+      {
+        created_at: new Date().toISOString(),
+        name: 'Test Connection',
+        mobile: '9999999999',
+        email: 'test@viet.edu.in',
+        program: 'Test Programme',
+        qualification: 'Test',
+        city: 'Visakhapatnam',
+        district: 'Test',
+        message: 'Webhook test from VIET admin panel — you can delete this row',
+      },
+      webhookUrl
+    );
+
+    if (result.ok) {
+      return res.json({
+        success: true,
+        message: 'Test row sent successfully. Check your Google Sheet (last row).',
+      });
+    }
+
+    const messages = {
+      no_url: 'Webhook URL is empty. Paste your Google Apps Script Web App URL and click Save.',
+      invalid_url: 'Webhook URL must look like https://script.google.com/macros/s/.../exec',
+      http_error: `Google returned HTTP ${result.status}. Re-deploy the Apps Script (Anyone access) and use the /exec URL.`,
+      script_error: result.message || 'Apps Script failed to write the row.',
+      invalid_response: result.message || 'Google did not confirm the write. Update Apps Script and redeploy.',
+      exception: result.message || 'Connection failed',
+    };
+
+    res.status(400).json({
+      success: false,
+      reason: result.reason,
+      error: messages[result.reason] || result.message || 'Spreadsheet sync failed',
+      detail: result.body ? String(result.body).slice(0, 200) : undefined,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Test failed' });
+  }
+});
+
+app.get('/api/admission-leads', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const leads = await db.getAdmissionLeads();
+    res.json(leads);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admission-leads/export', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const leads = await db.getAdmissionLeads();
+    const header = 'Timestamp,Name,Mobile,Email,Program,Qualification,City,District,Message\n';
+    const rows = leads.map(admissionLeadToCsvRow).join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="admission-leads.csv"');
+    res.send(header + rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admission-leads', async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (body._website) {
+      return res.json({ success: true });
+    }
+
+    const name = String(body.name || '').trim();
+    const mobileRaw = String(body.mobile || '').replace(/\D/g, '');
+    const mobile = mobileRaw.slice(-10);
+    const email = body.email ? String(body.email).trim() : '';
+    const program = body.program ? String(body.program).trim() : '';
+
+    if (!name || name.length < 2) {
+      return res.status(400).json({ error: 'Please enter your full name' });
+    }
+    if (!isValidIndianMobile(mobile)) {
+      return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+    if (!program) {
+      return res.status(400).json({ error: 'Please select a programme' });
+    }
+
+    const lead = await db.createAdmissionLead({
+      name,
+      mobile,
+      email: email || null,
+      program,
+      qualification: body.qualification,
+      city: body.city,
+      district: body.district,
+      message: body.message,
+      source: 'popup',
+    });
+
+    const settings = await db.getAdmissionPopupSettings();
+    syncAdmissionLeadToGoogleSheets(lead, settings.sheets_webhook_url).catch((err) => {
+      console.error('[Sheets] Unhandled sync error:', err?.message || err);
+    });
+
+    res.status(201).json({ success: true, id: lead.id });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to submit form' });
+  }
+});
+
+app.delete('/api/admission-leads/:id', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    await db.deleteAdmissionLead(req.params.id);
+    res.json({ message: 'Lead deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

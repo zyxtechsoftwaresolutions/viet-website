@@ -24,6 +24,7 @@ import {
   Film,
   Warehouse,
   Shield,
+  GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -48,6 +49,7 @@ const AdminLayout = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', section: 'dashboard', adminOnly: false },
     { icon: PlayCircle, label: 'Hero Slides', path: '/admin/hero-videos', section: 'hero-videos', adminOnly: false },
     { icon: Film, label: 'Intro Video', path: '/admin/intro-video', section: 'intro-video', adminOnly: false },
+    { icon: GraduationCap, label: 'Admission Popup', path: '/admin/admission-popup', section: 'admission-popup', adminOnly: false },
     { icon: ScrollText, label: 'SCROLLING TEXT', path: '/admin/ticker', section: 'ticker', adminOnly: false },
     { icon: Newspaper, label: 'Campus Updates', path: '/admin/news-announcements', section: 'news-announcements', adminOnly: false },
     { icon: Calendar, label: 'Events', path: '/admin/events', section: 'events', adminOnly: false },
