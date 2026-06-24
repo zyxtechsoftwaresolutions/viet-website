@@ -24,6 +24,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { recruitersAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 
 interface Recruiter {
@@ -188,14 +190,17 @@ const Recruiters = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="logo">Logo</Label>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Input
                   id="logo"
                   type="file"
                   accept="image/*"
                   onChange={handleLogoChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer max-w-xs"
                 />
+                <ImageUploadGuide {...IMAGE_SPECS.recruiterLogo} inline />
+              </div>
+              <div className="flex items-center gap-4">
                 {preview && (
                   <img
                     src={preview.startsWith('/') ? preview : `http://localhost:3001${preview}`}

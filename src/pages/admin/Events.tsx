@@ -24,6 +24,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { eventsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { ImagePlus, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -340,9 +342,7 @@ const Events = () => {
             </div>
             <div className="space-y-2">
               <Label>Cover image (optional)</Label>
-              <p className="text-xs text-muted-foreground">
-                Shown on the event card. Recommended size similar to other Happenings cards.
-              </p>
+              <ImageUploadGuide {...IMAGE_SPECS.happeningsEvent} />
               <div className="flex items-start gap-4">
                 <div className="shrink-0">
                   {imagePreview ? (

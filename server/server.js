@@ -1390,7 +1390,7 @@ app.post('/api/vibe-at-viet', authenticateToken, checkSectionAccess, async (req,
   try {
     const body = req.body || {};
     const caption = body.caption ?? '';
-    const position = body.position !== undefined ? Math.max(1, Math.min(13, parseInt(body.position, 10) || 1)) : 1;
+    const position = body.position !== undefined ? Math.max(1, Math.min(11, parseInt(body.position, 10) || 1)) : 1;
     const image = (typeof body.image === 'string' ? body.image.trim() : null) || (body.imageLink?.trim() || null) || null;
     const videoUrl = body.video?.trim() || null;
     const videoLink = body.videoLink?.trim() || null;
@@ -1420,7 +1420,7 @@ app.put('/api/vibe-at-viet/:id', authenticateToken, checkSectionAccess, async (r
     if (body.video !== undefined) updateData.video = body.video?.trim() || null;
     if (body.videoLink !== undefined) updateData.videoLink = body.videoLink?.trim() || null;
     if (body.caption !== undefined) updateData.caption = body.caption;
-    if (body.order !== undefined) updateData.order = Math.max(0, Math.min(12, parseInt(body.order, 10) || 0));
+    if (body.order !== undefined) updateData.order = Math.max(0, Math.min(10, parseInt(body.order, 10) || 0));
 
     const updated = await db.updateVibeAtVietItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Item not found' });

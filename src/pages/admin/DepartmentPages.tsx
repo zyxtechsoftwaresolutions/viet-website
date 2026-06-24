@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 import { FileText, Upload, Trash2, Plus } from 'lucide-react';
 import { imgUrl } from '@/lib/imageUtils';
 import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -1002,12 +1004,15 @@ const DepartmentPages = () => {
                     </div>
                   )}
                   <div>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setHeroImageFile(e.target.files?.[0] ?? null)}
-                      className="max-w-xs"
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setHeroImageFile(e.target.files?.[0] ?? null)}
+                        className="max-w-xs"
+                      />
+                      <ImageUploadGuide {...IMAGE_SPECS.departmentHero} inline />
+                    </div>
                     {heroImageFile && (
                       <span className="text-sm text-muted-foreground ml-2">{heroImageFile.name}</span>
                     )}
@@ -1209,13 +1214,16 @@ const DepartmentPages = () => {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Input
-                      ref={hodMessageImageInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleHodMessageImageChange}
-                      className="max-w-xs"
-                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Input
+                        ref={hodMessageImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHodMessageImageChange}
+                        className="max-w-xs"
+                      />
+                      <ImageUploadGuide {...IMAGE_SPECS.departmentHodPhoto} inline />
+                    </div>
                     {hodMessagePreviewSrc && (
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={handleAdjustHodMessagePhoto}>
@@ -1523,8 +1531,9 @@ const DepartmentPages = () => {
                       <Input value={card.name} onChange={(e) => updateFacilityCard(card.id, 'name', e.target.value)} placeholder="Facility name" />
                       <Input value={card.href || ''} onChange={(e) => updateFacilityCard(card.id, 'href', e.target.value)} placeholder="Link URL (optional)" />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Input type="file" accept="image/svg+xml,image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFacilityIconUpload(card.id, f); }} className="w-32" />
+                      <ImageUploadGuide {...IMAGE_SPECS.departmentFacilityIcon} inline />
                       <Button variant="destructive" size="icon" onClick={() => deleteFacilityCard(card.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1670,7 +1679,10 @@ const DepartmentPages = () => {
                     </div>
                   ))}
                 </div>
-                <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) addRecruiterImage(f); e.target.value = ''; }} className="max-w-xs" />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) addRecruiterImage(f); e.target.value = ''; }} className="max-w-xs" />
+                  <ImageUploadGuide {...IMAGE_SPECS.departmentRecruiterLogo} inline />
+                </div>
               </div>
               <div>
                 <Label className="mb-3 block">Recent Placements</Label>
@@ -1689,7 +1701,10 @@ const DepartmentPages = () => {
                         <Input value={card.package} onChange={(e) => updatePlacementCard(card.id, 'package', e.target.value)} placeholder="Package" />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePlacementImageUpload(card.id, f); }} className="w-32" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePlacementImageUpload(card.id, f); }} className="w-32" />
+                          <ImageUploadGuide {...IMAGE_SPECS.departmentPlacementCard} inline />
+                        </div>
                         <Button variant="destructive" size="icon" onClick={() => deletePlacementCard(card.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

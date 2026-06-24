@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { placementSectionAPI, placementCarouselAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { Briefcase, Link2, ImagePlus, Edit, Trash2 } from 'lucide-react';
 
@@ -341,7 +343,10 @@ const PlacementSection = () => {
           <div className="space-y-4 py-4">
             <div>
               <Label>Photo</Label>
-              <Input type="file" accept="image/*" onChange={handleImageFileChange} className="mt-1" />
+              <div className="flex flex-wrap items-center gap-3 mt-1">
+                <Input type="file" accept="image/*" onChange={handleImageFileChange} className="max-w-xs" />
+                <ImageUploadGuide {...IMAGE_SPECS.placementCarousel} inline />
+              </div>
               {imagePreview && (
                 <img src={imagePreview} alt="Preview" className="mt-2 w-full max-h-40 object-contain rounded" />
               )}

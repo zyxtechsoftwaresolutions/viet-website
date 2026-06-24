@@ -11,7 +11,7 @@ import {
   type VideoPlatform,
 } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
-import { getVibeAtVietGridClass, VIBE_AT_VIET_SLOT_COUNT } from '@/lib/vibeAtVietLayout';
+import { getVibeAtVietGridClass, VIBE_AT_VIET_SLOT_COUNT, remapLegacyVibeOrder } from '@/lib/vibeAtVietLayout';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const VIMEO_PLATFORM: VideoPlatform = 'vimeo';
@@ -252,7 +252,7 @@ const VibeAtViet = () => {
 
   const orderedSlots: (VibeAtVietItem | null)[] = Array(VIBE_AT_VIET_SLOT_COUNT).fill(null);
   galleryItems.forEach((item) => {
-    const o = item.order ?? 999;
+    const o = remapLegacyVibeOrder(item.order ?? 999);
     if (o >= 0 && o < VIBE_AT_VIET_SLOT_COUNT && orderedSlots[o] === null) {
       orderedSlots[o] = item;
     }

@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/select';
 import { departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 
 interface Department {
@@ -250,14 +252,17 @@ const Departments = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="image">Image</Label>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Input
                   id="image"
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="cursor-pointer"
+                  className="cursor-pointer max-w-xs"
                 />
+                <ImageUploadGuide {...IMAGE_SPECS.departmentLogo} inline />
+              </div>
+              <div className="flex items-center gap-4">
                 {preview && (
                   <img
                     src={preview.startsWith('/') ? preview : `http://localhost:3001${preview}`}

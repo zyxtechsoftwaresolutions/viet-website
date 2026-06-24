@@ -33,6 +33,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { newsAPI, announcementsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { imgUrl } from '@/lib/imageUtils';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { Newspaper, Bell } from 'lucide-react';
 
@@ -243,12 +245,16 @@ const NewsTab = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="news-image">Photo (Optional)</Label>
-              <Input
-                id="news-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <Input
+                  id="news-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="max-w-xs"
+                />
+                <ImageUploadGuide {...IMAGE_SPECS.newsCard} inline />
+              </div>
               {imagePreview && (
                 <img src={imagePreview} alt="Preview" className="mt-2 h-28 w-full max-w-xs rounded-lg object-cover border" />
               )}

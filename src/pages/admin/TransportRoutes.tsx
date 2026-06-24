@@ -23,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { transportRoutesAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { ImagePlus, X } from 'lucide-react';
 
@@ -345,9 +347,7 @@ const TransportRoutes = () => {
             </div>
             <div className="space-y-2">
               <Label>Route / Bus image (hover overlay)</Label>
-              <p className="text-xs text-muted-foreground">
-                Shown when user hovers over the card. Recommended: bus or driver photo.
-              </p>
+              <ImageUploadGuide {...IMAGE_SPECS.transportCard} />
               <div className="flex items-start gap-4">
                 <div className="shrink-0">
                   {imagePreview ? (

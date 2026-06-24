@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { pagesAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { Edit, User, Award, GraduationCap, Lightbulb, Briefcase, Image as ImageIcon, X, Quote } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -378,13 +380,14 @@ const LeaderPagesAdmin = () => {
                       <ImageIcon className="h-4 w-4" />
                       Hero Background Image
                     </Label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
                       <Input
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
                         className="max-w-xs"
                       />
+                      <ImageUploadGuide {...IMAGE_SPECS.leaderHero} inline />
                       {(formData.heroImage || formData.heroImageFile) && (
                         <Button variant="ghost" size="sm" onClick={removeHeroImage} className="text-destructive">
                           <X className="h-4 w-4 mr-1" />

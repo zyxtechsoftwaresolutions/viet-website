@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { pagesAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { FileText, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -261,11 +263,15 @@ const AboutUsAdmin = () => {
               </div>
               <div className="space-y-2">
                 <Label>Hero background image</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageChange('heroImage', e.target.files?.[0] ?? null)}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange('heroImage', e.target.files?.[0] ?? null)}
+                    className="max-w-xs"
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.aboutHero} inline />
+                </div>
                 {((content.hero as any)?.heroImage as string) && (
                   <p className="text-xs text-muted-foreground">Current: {(content.hero as any).heroImage}</p>
                 )}
@@ -411,11 +417,15 @@ const AboutUsAdmin = () => {
               </div>
               <div className="space-y-2">
                 <Label>Vision image</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageChange('visionImage', e.target.files?.[0] ?? null)}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange('visionImage', e.target.files?.[0] ?? null)}
+                    className="max-w-xs"
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.aboutProfile} inline />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -463,11 +473,15 @@ const AboutUsAdmin = () => {
                     />
                     <div>
                       <Label className="text-xs">Section image</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageChange(`missionSectionImage${index}`, e.target.files?.[0] ?? null)}
-                      />
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(`missionSectionImage${index}`, e.target.files?.[0] ?? null)}
+                          className="max-w-xs"
+                        />
+                        <ImageUploadGuide {...IMAGE_SPECS.aboutGallery} inline />
+                      </div>
                     </div>
                     <Button type="button" variant="ghost" size="sm" onClick={() => setDeleteSectionIndex(index)}>
                       <Trash2 className="h-4 w-4 mr-1" /> Remove section

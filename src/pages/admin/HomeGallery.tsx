@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { homeGalleryAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { Image } from 'lucide-react';
 
@@ -184,13 +186,16 @@ const HomeGallery = () => {
             <div className="space-y-2">
               <Label htmlFor="image">Image</Label>
               <div className="flex flex-col gap-4">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="cursor-pointer max-w-xs"
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.homeGallery} inline />
+                </div>
                 {(preview || imageFile) && (
                   <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
                     <p className="text-sm font-medium mb-2">Preview:</p>

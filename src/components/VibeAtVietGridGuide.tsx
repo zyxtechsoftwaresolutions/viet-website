@@ -29,7 +29,7 @@ export function VibeAtVietGridGuide({ highlightSlot, className = '' }: VibeAtVie
       viewBox={`0 0 ${TOTAL_W} ${TOTAL_H}`}
       className={`w-full max-w-sm ${className}`}
       role="img"
-      aria-label="Vibe@Viet grid layout guide showing 13 numbered positions"
+      aria-label="Vibe@Viet grid layout guide showing 11 numbered positions"
     >
       {VIBE_AT_VIET_SLOTS.map((s) => {
         const { x, y, w, h } = slotRect(s);

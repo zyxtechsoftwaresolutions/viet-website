@@ -23,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { heroVideosAPI } from '@/lib/api';
 import { uploadVideoToSupabase, uploadImageToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS, type ImageUploadSpec } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import { Monitor, Smartphone, Video } from 'lucide-react';
 
@@ -62,6 +64,7 @@ function HeroMediaFields({
   onVideoChange,
   onPhotoChange,
   hint,
+  photoSpec,
 }: {
   label: string;
   icon: typeof Monitor;
@@ -70,6 +73,7 @@ function HeroMediaFields({
   onVideoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   hint: string;
+  photoSpec: ImageUploadSpec;
 }) {
   return (
     <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
@@ -88,12 +92,13 @@ function HeroMediaFields({
       </div>
       <div className="space-y-2">
         <Label>Photo (optional fallback)</Label>
-        <div className="flex items-center gap-4 flex-wrap">
-          <Input type="file" accept="image/*" onChange={onPhotoChange} className="cursor-pointer max-w-md" />
-          {photoPreview && (
-            <img src={photoPreview} alt="" className="w-32 h-20 object-cover rounded" />
-          )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Input type="file" accept="image/*" onChange={onPhotoChange} className="cursor-pointer max-w-xs" />
+          <ImageUploadGuide {...photoSpec} inline />
         </div>
+        {photoPreview && (
+          <img src={photoPreview} alt="" className="w-32 h-20 object-cover rounded" />
+        )}
       </div>
       <p className="text-xs text-muted-foreground">{hint}</p>
     </div>
@@ -358,6 +363,7 @@ const HeroVideos = () => {
               onVideoChange={handleVideoChange}
               onPhotoChange={handlePosterChange}
               hint="Shown on screens 768px and wider. Video takes priority; photo is fallback."
+              photoSpec={IMAGE_SPECS.heroVideoPoster}
             />
             <HeroMediaFields
               label="Mobile view"
@@ -367,6 +373,7 @@ const HeroVideos = () => {
               onVideoChange={handleMobileVideoChange}
               onPhotoChange={handleMobilePosterChange}
               hint="Shown on screens below 768px. Video takes priority; photo is fallback."
+              photoSpec={IMAGE_SPECS.heroVideoMobilePoster}
             />
             <div className="space-y-2">
               <Label htmlFor="badge">Badge Text (Optional)</Label>

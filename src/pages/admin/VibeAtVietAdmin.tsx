@@ -34,7 +34,9 @@ import { ImagePlus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { convertGoogleDriveLink, isGoogleDriveLink } from '@/lib/googleDriveUtils';
-import { VIBE_AT_VIET_SLOT_COUNT } from '@/lib/vibeAtVietLayout';
+import { VIBE_AT_VIET_SLOT_COUNT, remapLegacyVibeOrder } from '@/lib/vibeAtVietLayout';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import VibeAtVietGridGuide from '@/components/VibeAtVietGridGuide';
 
 const VibeAtVietAdmin = () => {
@@ -94,7 +96,7 @@ const VibeAtVietAdmin = () => {
   const openEdit = (item: VibeAtVietItem) => {
     setEditingItem(item);
     setCaption(item.caption || '');
-    setGridPosition((item.order ?? 0) + 1);
+    setGridPosition(remapLegacyVibeOrder(item.order ?? 0) + 1);
     setImageFile(null);
     setVideoFile(null);
     
@@ -373,7 +375,9 @@ const VibeAtVietAdmin = () => {
             </div>
             <div className="p-3">
               <p className="text-sm font-medium line-clamp-2">{item.caption || 'No caption'}</p>
-              <p className="text-xs text-muted-foreground mt-1">Grid position: {(item.order ?? index) + 1}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Grid position: {remapLegacyVibeOrder(item.order ?? index) + 1}
+              </p>
             </div>
           </div>
         ))}
@@ -400,7 +404,7 @@ const VibeAtVietAdmin = () => {
             <div className="space-y-2">
               <Label>Grid position in layout</Label>
               <p className="text-xs text-muted-foreground">
-                The Vibe@Viet section has {VIBE_AT_VIET_SLOT_COUNT} grid slots. Choose which slot (1–{VIBE_AT_VIET_SLOT_COUNT}) this image or video should appear in.
+                The Vibe@Viet section has {VIBE_AT_VIET_SLOT_COUNT} grid slots (positions 1–{VIBE_AT_VIET_SLOT_COUNT}). Old positions 7, 10, and 11 are now combined into slot 7.
               </p>
               <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Layout guide — highlighted slot is your selection</p>
@@ -421,6 +425,7 @@ const VibeAtVietAdmin = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <ImageUploadGuide {...IMAGE_SPECS.vibeAtViet(gridPosition)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="caption">Caption</Label>
@@ -451,7 +456,10 @@ const VibeAtVietAdmin = () => {
               
               {imageInputType === 'file' ? (
                 <>
-                  <Input type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Input type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer max-w-xs" />
+                    <ImageUploadGuide {...IMAGE_SPECS.vibeAtViet(gridPosition)} inline />
+                  </div>
                   {(imagePreview || imageFile) && (
                     <div className="mt-2 border rounded-lg p-2 bg-muted/50">
                       <p className="text-sm font-medium mb-1">Preview:</p>

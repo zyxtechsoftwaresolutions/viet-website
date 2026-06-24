@@ -22,6 +22,8 @@ import {
   type AdmissionPopupSettings,
   type AdmissionLead,
 } from '@/lib/api';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import {
   GraduationCap,
@@ -313,7 +315,7 @@ const AdmissionPopupAdmin = () => {
         <CardHeader>
           <CardTitle className="text-lg">Popup images</CardTitle>
           <CardDescription>
-            Images shown beside the enquiry form (3:2 ratio). Multiple images auto-scroll in the popup.
+            Images shown beside the enquiry form. Multiple images auto-scroll in the popup.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -332,6 +334,7 @@ const AdmissionPopupAdmin = () => {
                 />
               </label>
             </Button>
+            <ImageUploadGuide {...IMAGE_SPECS.admissionPopup} inline />
             <span className="text-sm text-muted-foreground">
               {popupImages.length} image{popupImages.length === 1 ? '' : 's'}
             </span>

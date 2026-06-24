@@ -40,6 +40,8 @@ import { hodsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { imgUrl } from '@/lib/imageUtils';
 import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 
 interface HOD {
@@ -430,14 +432,17 @@ const HODs = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="image">Profile Image</Label>
-                <Input
-                  ref={imageInputRef}
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    ref={imageInputRef}
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="cursor-pointer max-w-xs"
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.hodPortrait} inline />
+                </div>
                 {preview && (
                   <div className="mt-2 space-y-2">
                     <div className="max-w-[120px] border border-slate-200/80 rounded overflow-hidden bg-white">

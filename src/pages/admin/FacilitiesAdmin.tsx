@@ -24,6 +24,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { pagesAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -425,14 +427,18 @@ const FacilitiesAdmin = () => {
                 />
                 <div>
                   <Label className="text-sm">Hero image</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) setFormData((prev) => ({ ...prev, heroImageFile: f }));
-                    }}
-                  />
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) setFormData((prev) => ({ ...prev, heroImageFile: f }));
+                      }}
+                      className="max-w-xs"
+                    />
+                    <ImageUploadGuide {...IMAGE_SPECS.facilityHero} inline />
+                  </div>
                   {formData.heroImage && (
                     <div className="mt-2 relative inline-block">
                       <img
@@ -532,12 +538,16 @@ const FacilitiesAdmin = () => {
 
             <div>
               <Label>Gallery images</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={addGalleryImages}
-              />
+              <div className="flex flex-wrap items-center gap-3 mt-1">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={addGalleryImages}
+                  className="max-w-xs"
+                />
+                <ImageUploadGuide {...IMAGE_SPECS.facilityGallery} inline />
+              </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.gallery.map((img, i) => (
                   <div key={`g-${i}`} className="relative">

@@ -49,7 +49,8 @@ import {
 import { facultyAPI, facultySettingsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
 import { imgUrl } from '@/lib/imageUtils';
-import { toast } from 'sonner';
+import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import FacultyImageCropper from '@/components/admin/FacultyImageCropper';
 
 interface Faculty {
@@ -596,17 +597,21 @@ const Faculty = () => {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="hero-bg">Hero background image (optional)</Label>
-              <Input
-                id="hero-bg"
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  setHeroForm((prev) => ({
-                    ...prev,
-                    heroBackgroundFile: e.target.files?.[0] || null,
-                  }))
-                }
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <Input
+                  id="hero-bg"
+                  type="file"
+                  accept="image/*"
+                  className="max-w-xs"
+                  onChange={(e) =>
+                    setHeroForm((prev) => ({
+                      ...prev,
+                      heroBackgroundFile: e.target.files?.[0] || null,
+                    }))
+                  }
+                />
+                <ImageUploadGuide {...IMAGE_SPECS.facultyHeroBackground} inline />
+              </div>
               {heroForm.hero_background_image && (
                 <p className="text-xs text-muted-foreground break-all">
                   Current image: {heroForm.hero_background_image}
@@ -813,14 +818,17 @@ const Faculty = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="image">Profile Image</Label>
-                <Input
-                  ref={imageInputRef}
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    ref={imageInputRef}
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="cursor-pointer max-w-xs"
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.facultyPortrait} inline />
+                </div>
                 {preview && (
                   <div className="mt-2 space-y-2">
                     <div className="max-w-[120px] border border-slate-200/80 rounded overflow-hidden bg-white">
