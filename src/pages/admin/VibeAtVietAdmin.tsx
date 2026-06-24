@@ -34,6 +34,8 @@ import { ImagePlus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { convertGoogleDriveLink, isGoogleDriveLink } from '@/lib/googleDriveUtils';
+import { VIBE_AT_VIET_SLOT_COUNT } from '@/lib/vibeAtVietLayout';
+import VibeAtVietGridGuide from '@/components/VibeAtVietGridGuide';
 
 const VibeAtVietAdmin = () => {
   const [items, setItems] = useState<VibeAtVietItem[]>([]);
@@ -306,6 +308,14 @@ const VibeAtVietAdmin = () => {
         </Button>
       </div>
 
+      <div className="border rounded-lg p-4 md:p-6 bg-muted/30">
+        <h2 className="text-lg font-semibold mb-1">Grid layout guide</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          The Vibe@Viet section uses {VIBE_AT_VIET_SLOT_COUNT} grid slots (positions 1–{VIBE_AT_VIET_SLOT_COUNT}). Use this guide when assigning photos and videos.
+        </p>
+        <VibeAtVietGridGuide className="max-w-sm" />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {items.map((item, index) => (
           <div
@@ -390,8 +400,12 @@ const VibeAtVietAdmin = () => {
             <div className="space-y-2">
               <Label>Grid position in layout</Label>
               <p className="text-xs text-muted-foreground">
-                The Vibe@Viet section has 12 grid slots. Choose which slot (1–12) this image or video should appear in.
+                The Vibe@Viet section has {VIBE_AT_VIET_SLOT_COUNT} grid slots. Choose which slot (1–{VIBE_AT_VIET_SLOT_COUNT}) this image or video should appear in.
               </p>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Layout guide — highlighted slot is your selection</p>
+                <VibeAtVietGridGuide highlightSlot={gridPosition} />
+              </div>
               <Select
                 value={String(gridPosition ?? 1)}
                 onValueChange={(v) => setGridPosition(parseInt(v, 10) || 1)}
@@ -400,7 +414,7 @@ const VibeAtVietAdmin = () => {
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                  {Array.from({ length: VIBE_AT_VIET_SLOT_COUNT }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={String(num)}>
                       Position {num}
                     </SelectItem>

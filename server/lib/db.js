@@ -1499,22 +1499,74 @@ export async function updateExplorePathVideoSettings(item) {
 }
 
 // ==================== FACULTY SETTINGS ====================
-export async function getFacultySettings() {
-  const defaults = {
-    id: 1,
-    sort_by: 'custom',
-    hero_badge: 'Faculty',
-    hero_title: 'Faculty',
-    hero_subtitle: 'Our faculty across all departments and streams.',
-    hero_background_image: null,
+const FACULTY_HERO_KEYS = ['hero_badge', 'hero_title', 'hero_subtitle', 'hero_background_image'];
+
+const FACULTY_SETTINGS_DEFAULTS = {
+  id: 1,
+  sort_by: 'custom',
+  hero_badge: 'Faculty',
+  hero_title: 'Faculty',
+  hero_subtitle: 'Our faculty across all departments and streams.',
+  hero_background_image: null,
+};
+
+function coalesceSetting(dbVal, jsonVal, defaultVal) {
+  if (dbVal !== undefined && dbVal !== null && dbVal !== '') return dbVal;
+  if (jsonVal !== undefined && jsonVal !== null && jsonVal !== '') return jsonVal;
+  return defaultVal;
+}
+
+function mergeFacultySettings(fromDb, jsonSettings) {
+  const merged = {
+    ...FACULTY_SETTINGS_DEFAULTS,
+    ...fromDb,
+    sort_by: fromDb.sort_by ?? jsonSettings.sort_by ?? FACULTY_SETTINGS_DEFAULTS.sort_by,
+    hero_badge: coalesceSetting(fromDb.hero_badge, jsonSettings.hero_badge, FACULTY_SETTINGS_DEFAULTS.hero_badge),
+    hero_title: coalesceSetting(fromDb.hero_title, jsonSettings.hero_title, FACULTY_SETTINGS_DEFAULTS.hero_title),
+    hero_subtitle: coalesceSetting(fromDb.hero_subtitle, jsonSettings.hero_subtitle, FACULTY_SETTINGS_DEFAULTS.hero_subtitle),
+    hero_background_image: coalesceSetting(
+      fromDb.hero_background_image,
+      jsonSettings.hero_background_image,
+      FACULTY_SETTINGS_DEFAULTS.hero_background_image
+    ),
   };
-  if (useJsonFallback) {
-    try {
-      const d = await readJsonFile('faculty-settings');
-      return { ...defaults, ...(d.settings || {}) };
-    } catch (e) {
-      return defaults;
+  return merged;
+}
+
+async function readFacultySettingsJson() {
+  try {
+    const d = await readJsonFile('faculty-settings');
+    return d.settings || {};
+  } catch {
+    return {};
+  }
+}
+
+async function writeFacultySettingsJson(updates) {
+  const d = await readJsonFile('faculty-settings').catch(() => ({ settings: { id: 1 } }));
+  d.settings = { id: 1, ...(d.settings || {}), ...updates };
+  await writeJsonFile('faculty-settings', d);
+  return d.settings;
+}
+
+async function syncJsonHeroToDbIfNeeded(fromDb, jsonSettings) {
+  if (!fromDb || fromDb.hero_badge === undefined) return;
+  const syncPayload = { updated_at: new Date().toISOString() };
+  for (const key of FACULTY_HERO_KEYS) {
+    const dbVal = fromDb[key];
+    const jsonVal = jsonSettings[key];
+    if ((dbVal === undefined || dbVal === null || dbVal === '') && jsonVal) {
+      syncPayload[key] = jsonVal;
     }
+  }
+  if (Object.keys(syncPayload).length <= 1) return;
+  await supabase.from('faculty_settings').update(syncPayload).eq('id', 1);
+}
+
+export async function getFacultySettings() {
+  const jsonSettings = await readFacultySettingsJson();
+  if (useJsonFallback) {
+    return { ...FACULTY_SETTINGS_DEFAULTS, ...jsonSettings };
   }
   try {
     const { data, error } = await supabase
@@ -1524,37 +1576,60 @@ export async function getFacultySettings() {
       .single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '42P01') {
-        return defaults;
+        return { ...FACULTY_SETTINGS_DEFAULTS, ...jsonSettings };
       }
       throw error;
     }
-    return { ...defaults, ...(data || {}) };
+    const fromDb = data || {};
+    await syncJsonHeroToDbIfNeeded(fromDb, jsonSettings).catch(() => {});
+    return mergeFacultySettings(fromDb, jsonSettings);
   } catch (e) {
-    return defaults;
+    return { ...FACULTY_SETTINGS_DEFAULTS, ...jsonSettings };
   }
 }
 
 export async function updateFacultySettings(item) {
-  const payload = { updated_at: new Date().toISOString() };
-  if (item.sort_by !== undefined) payload.sort_by = item.sort_by;
-  if (item.hero_badge !== undefined) payload.hero_badge = item.hero_badge;
-  if (item.hero_title !== undefined) payload.hero_title = item.hero_title;
-  if (item.hero_subtitle !== undefined) payload.hero_subtitle = item.hero_subtitle;
-  if (item.hero_background_image !== undefined) payload.hero_background_image = item.hero_background_image;
+  const updatedAt = new Date().toISOString();
+  const heroUpdates = {};
+  for (const key of FACULTY_HERO_KEYS) {
+    if (item[key] !== undefined) heroUpdates[key] = item[key];
+  }
 
   if (useJsonFallback) {
-    const d = await readJsonFile('faculty-settings');
-    d.settings = { id: 1, ...(d.settings || {}), ...payload };
-    await writeJsonFile('faculty-settings', d);
-    return d.settings;
+    const settings = await writeFacultySettingsJson({
+      updated_at: updatedAt,
+      ...(item.sort_by !== undefined ? { sort_by: item.sort_by } : {}),
+      ...heroUpdates,
+    });
+    return settings;
   }
-  const { data, error } = await supabase
+
+  const dbPayload = { id: 1, updated_at: updatedAt };
+  if (item.sort_by !== undefined) dbPayload.sort_by = item.sort_by;
+  Object.assign(dbPayload, heroUpdates);
+
+  let { data, error } = await supabase
     .from('faculty_settings')
-    .upsert({ id: 1, ...payload }, { onConflict: 'id' })
+    .upsert(dbPayload, { onConflict: 'id' })
     .select()
     .single();
+
+  if (error?.code === 'PGRST204') {
+    if (Object.keys(heroUpdates).length > 0) {
+      await writeFacultySettingsJson(heroUpdates);
+    }
+    const sortPayload = { id: 1, updated_at: updatedAt };
+    if (item.sort_by !== undefined) sortPayload.sort_by = item.sort_by;
+    ({ data, error } = await supabase
+      .from('faculty_settings')
+      .upsert(sortPayload, { onConflict: 'id' })
+      .select()
+      .single());
+  }
   if (error) throw error;
-  return data;
+
+  const jsonSettings = await readFacultySettingsJson();
+  return mergeFacultySettings(data || {}, jsonSettings);
 }
 
 // ==================== VISITOR COUNT ====================

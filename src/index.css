@@ -704,22 +704,61 @@ html {
   background: linear-gradient(90deg, #7a3b08 0%, #c45f0a 40%, #F58220 55%, #c45f0a 70%, #7a3b08 100%);
 }
 
-/* Admission popup — clean mobile card (no craft borders / grey outlines) */
+/* Admission popup — pure white full-screen mobile; craft panel on tablet+ */
 @media (max-width: 767px) {
-  .admission-popup-form-panel {
+  .admission-popup-mobile-shell {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    height: 100svh;
+    max-height: 100dvh;
+    background: #ffffff !important;
     border: none !important;
     box-shadow: none !important;
-    background: linear-gradient(165deg, #fffaf5 0%, #fdf0e4 48%, #fae4cc 100%) !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .admission-popup-mobile-layout {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .admission-popup-form-panel::before,
   .admission-popup-form-panel::after {
-    display: none;
+    display: none !important;
   }
 
-  .admission-popup-mobile-shell {
-    border: none !important;
-    box-shadow: none !important;
+  .admission-popup-mobile-header {
+    grid-row: 1;
+  }
+
+  .admission-popup-mobile-scroll {
+    grid-row: 2;
+    min-height: 0;
+    max-height: 100%;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    background: #ffffff;
+  }
+
+  .admission-popup-mobile-footer {
+    grid-row: 3;
+    flex-shrink: 0;
+    background: #ffffff;
+    z-index: 5;
   }
 }
 
@@ -1451,6 +1490,11 @@ html {
 }
 
 /* Vibe@VIET Section - Life@Amrita Style */
+.vibe-at-viet-grid {
+  grid-template-rows: repeat(8, minmax(64px, auto));
+  width: 100%;
+}
+
 .vibe-gallery-item {
   position: relative;
   overflow: hidden;
@@ -1831,7 +1875,9 @@ footer {
 /* Mobile: smooth momentum scrolling for all overflow areas */
 @media (max-width: 767px) {
   [class*="overflow-y-auto"],
-  [class*="overflow-x-auto"] {
+  [class*="overflow-y-scroll"],
+  [class*="overflow-x-auto"],
+  .admission-popup-mobile-scroll {
     -webkit-overflow-scrolling: touch;
   }
 }

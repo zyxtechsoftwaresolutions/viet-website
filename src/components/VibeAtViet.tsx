@@ -11,6 +11,7 @@ import {
   type VideoPlatform,
 } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
+import { getVibeAtVietGridClass, VIBE_AT_VIET_SLOT_COUNT } from '@/lib/vibeAtVietLayout';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const VIMEO_PLATFORM: VideoPlatform = 'vimeo';
@@ -249,34 +250,16 @@ const VibeAtViet = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const getGridClass = (index: number) => {
-    const patterns: { [key: number]: string } = {
-      0: 'col-span-1 row-span-1',
-      1: 'col-span-1 row-span-1',
-      2: 'col-start-1 row-start-2 col-span-1 row-span-1',
-      3: 'col-start-2 row-start-2 col-span-1 row-span-1',
-      4: 'col-start-3 row-start-1 col-span-1 row-span-2',
-      5: 'col-start-4 row-start-1 col-span-2 row-span-1',
-      6: 'col-start-5 row-start-2 col-span-1 row-span-3',
-      7: 'col-start-4 row-start-5 col-span-2 row-span-1',
-      8: 'col-start-4 row-start-2 col-span-1 row-span-1',
-      9: 'col-start-4 row-start-3 col-span-1 row-span-2',
-      10: 'col-start-1 row-start-3 col-span-1 row-span-3',
-      11: 'col-start-2 row-start-3 col-span-2 row-span-3',
-    };
-    return patterns[index] || 'col-span-1 row-span-1';
-  };
-
-  const orderedSlots: (VibeAtVietItem | null)[] = Array(12).fill(null);
+  const orderedSlots: (VibeAtVietItem | null)[] = Array(VIBE_AT_VIET_SLOT_COUNT).fill(null);
   galleryItems.forEach((item) => {
     const o = item.order ?? 999;
-    if (o >= 0 && o <= 11 && orderedSlots[o] === null) {
+    if (o >= 0 && o < VIBE_AT_VIET_SLOT_COUNT && orderedSlots[o] === null) {
       orderedSlots[o] = item;
     }
   });
   const hasOrdered = orderedSlots.some((s) => s !== null);
   if (!hasOrdered && galleryItems.length > 0) {
-    galleryItems.slice(0, 12).forEach((item, i) => {
+    galleryItems.slice(0, VIBE_AT_VIET_SLOT_COUNT).forEach((item, i) => {
       orderedSlots[i] = item;
     });
   }
@@ -312,7 +295,7 @@ const VibeAtViet = () => {
   );
 
   return (
-    <section id="vibe-at-viet" className="py-8 md:py-10 bg-white overflow-hidden">
+    <section id="vibe-at-viet" className="py-8 md:py-10 mb-3 md:mb-5 bg-white">
       <div className="container mx-auto px-4 md:px-10 lg:px-12">
         <div className="mb-6 md:mb-8 flex items-center gap-3">
           <h2
@@ -348,14 +331,10 @@ const VibeAtViet = () => {
             </div>
 
             <div
-              className="hidden md:grid grid-cols-5 gap-1.5 md:gap-2 lg:gap-2.5"
-              style={{
-                gridTemplateRows: 'repeat(5, minmax(90px, 1fr))',
-                maxHeight: 'calc(100vh - 180px)',
-              }}
+              className="hidden md:grid grid-cols-5 gap-2 vibe-at-viet-grid"
             >
               {orderedSlots.map((item, slotIndex) => {
-                const gridClass = getGridClass(slotIndex);
+                const gridClass = getVibeAtVietGridClass(slotIndex);
                 if (!item) {
                   return (
                     <div
@@ -371,21 +350,24 @@ const VibeAtViet = () => {
           </>
         )}
 
-        <div className="flex justify-start mt-4 md:mt-6">
-          <button
-            onClick={() => {
-              window.scrollTo(0, 0);
-              navigate('/gallery');
-            }}
-            className="group inline-flex items-center gap-3 text-[#0a192f] font-medium text-base hover:gap-4 transition-all duration-300"
-            style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-          >
-            <span className="w-10 h-10 rounded-full bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors duration-300">
-              <ArrowRight className="w-5 h-5 text-white" />
-            </span>
-            <span className="group-hover:underline underline-offset-4">View More</span>
-          </button>
-        </div>
+        {!loading && galleryItems.length > 0 && (
+          <div className="relative z-10 flex justify-start mt-4 md:mt-5">
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo(0, 0);
+                navigate('/gallery');
+              }}
+              className="group inline-flex items-center gap-3 text-[#0a192f] font-medium text-base hover:gap-4 transition-all duration-300"
+              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+            >
+              <span className="w-10 h-10 rounded-full bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors duration-300">
+                <ArrowRight className="w-5 h-5 text-white" />
+              </span>
+              <span className="group-hover:underline underline-offset-4">View More</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <Dialog open={!!watchVideo} onOpenChange={(open) => !open && setWatchVideo(null)}>

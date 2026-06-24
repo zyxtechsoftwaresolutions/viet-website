@@ -1,1 +1,9 @@
-{"settings":{"id":1,"sort_by":"custom"}}
+{
+  "settings": {
+    "id": 1,
+    "hero_badge": "Faculty",
+    "hero_title": "Faculty",
+    "hero_subtitle": "Our faculty across all departments and streams.",
+    "hero_background_image": "https://zjjtmxaoaqqeatytutgf.supabase.co/storage/v1/object/public/images/faculty/1782283794227-DSC09014.webp"
+  }
+}

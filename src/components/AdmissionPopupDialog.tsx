@@ -159,12 +159,28 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
   const images = settings.images ?? [];
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
+    const scrollY = window.scrollY;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevBodyTop = document.body.style.top;
+    const prevBodyWidth = document.body.style.width;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
     const frame = requestAnimationFrame(() => setVisible(true));
     return () => {
       cancelAnimationFrame(frame);
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.position = prevBodyPosition;
+      document.body.style.top = prevBodyTop;
+      document.body.style.width = prevBodyWidth;
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -219,62 +235,85 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
   return createPortal(
     <div
       className={cn(
-        'fixed inset-0 z-[10000] flex items-center justify-center transition-opacity duration-200 ease-out',
-        'px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]',
-        'md:p-5',
+        'fixed inset-0 z-[10000] flex transition-opacity duration-200 ease-out',
+        'items-stretch justify-stretch md:items-center md:justify-center md:p-5',
         visible ? 'opacity-100' : 'opacity-0'
       )}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="admission-popup-title"
+      aria-label="Admission Enquiry"
     >
       <div
-        className="absolute inset-0 bg-[#0f1c33]/70"
+        className="absolute inset-0 bg-[#0f1c33]/70 max-md:hidden"
         onClick={handleDismiss}
         aria-hidden
       />
 
       <div
         className={cn(
-          'admission-popup-mobile-shell relative z-[1] flex w-full flex-col overflow-hidden rounded-none transition-opacity duration-200 ease-out',
-          'h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)]',
-          'max-w-[min(100%,22.5rem)]',
-          'md:h-[min(92vh,760px)] md:max-h-[min(92vh,760px)] md:max-w-[980px]',
+          'admission-popup-mobile-shell relative z-[1] flex w-full flex-col overflow-hidden rounded-none bg-white transition-opacity duration-200 ease-out',
+          'max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:w-full',
+          'md:relative md:h-[min(92vh,760px)] md:max-h-[min(92vh,760px)] md:max-w-[980px] md:bg-transparent',
           'md:border-2 md:border-[#9a4a0a] md:shadow-[6px_6px_0_rgba(154,74,10,0.18)]',
           visible ? 'opacity-100' : 'opacity-0'
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-          {/* Left — image (desktop only) */}
+        <div className="flex h-full min-h-0 w-full flex-1 flex-col max-md:min-h-0 md:flex-row">
+          {/* Left — image (tablet & desktop only) */}
           <div className="relative hidden h-full shrink-0 md:block md:w-[42%]">
             <AdmissionImageCarousel images={images} />
           </div>
 
-          {/* Form panel */}
-          <div className="campus-craft-panel campus-craft-panel--orange admission-popup-form-panel flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 shadow-none md:border-l-2 md:border-l-[#9a4a0a]">
-            <div className="campus-craft-header campus-craft-header--orange relative z-[3] flex shrink-0 items-center justify-between gap-2 px-3 py-2.5 pr-2.5 md:gap-3 md:px-[1.15rem] md:py-[0.85rem]">
-              <div className="min-w-0">
-                <h2 id="admission-popup-title" className="campus-craft-header-title text-[0.72rem] md:text-[0.8rem]">
-                  Student enquiry form
+          {/* Form panel — mobile sheet vs desktop craft panel */}
+          <div className="admission-popup-mobile-layout campus-craft-panel campus-craft-panel--orange admission-popup-form-panel flex h-full min-h-0 w-full flex-1 flex-col rounded-none border-0 shadow-none md:overflow-hidden md:border-l-2 md:border-l-[#9a4a0a]">
+            {/* Mobile header */}
+            <div className="admission-popup-mobile-header relative z-[3] flex shrink-0 items-center justify-between gap-2 border-b border-[#F58220]/20 bg-gradient-to-r from-[#7a3b08] via-[#c45f0a] to-[#7a3b08] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:hidden">
+              <div className="min-w-0 flex-1">
+                <h2
+                  id="admission-popup-title-mobile"
+                  className="font-[Montserrat] text-lg font-bold uppercase leading-tight tracking-wide text-white"
+                >
+                  Admission Enquiry
                 </h2>
-                <p className="mt-0.5 text-[10px] font-medium tracking-wide text-white/85 md:mt-1 md:text-[11px]">
-                  <span className="hidden md:inline">Fields marked with </span>
-                  <span className="md:hidden">Required </span>
-                  <span className="font-bold text-white">*</span>
+                <p className="mt-1 text-xs font-medium text-white/90">
+                  Fields marked with <span className="font-bold text-white">*</span> are required
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="flex h-7 w-7 shrink-0 items-center justify-center border border-white/30 bg-white/10 text-white transition-colors hover:bg-white/20 md:h-8 md:w-8"
-                aria-label="Close"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/15 text-white active:bg-white/30"
+                aria-label="Close admission enquiry"
               >
-                <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="relative z-[3] min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2.5 md:px-5 md:py-5">
-              {submitted ? (
+            {/* Tablet & desktop header */}
+            <div className="campus-craft-header campus-craft-header--orange relative z-[3] hidden shrink-0 items-start justify-between gap-3 px-[1.15rem] py-[0.85rem] md:flex md:items-center">
+              <div className="min-w-0 flex-1 pr-1">
+                <h2
+                  id="admission-popup-title"
+                  className="campus-craft-header-title text-[1.05rem] leading-tight tracking-[0.12em]"
+                >
+                  Admission Enquiry
+                </h2>
+                <p className="mt-1.5 text-xs font-medium leading-snug text-white/90">
+                  Fields marked with <span className="font-bold text-white">*</span> are required
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="flex h-8 w-8 shrink-0 items-center justify-center border border-white/30 bg-white/10 text-white transition-colors hover:bg-white/20"
+                aria-label="Close admission enquiry"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {submitted ? (
+              <div className="relative z-[3] min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-5 md:py-5">
                 <div className="flex min-h-[200px] flex-col items-start justify-center py-4">
                   <div className="flex h-12 w-12 items-center justify-center bg-[#76B82A]/15">
                     <CheckCircle2 className="h-6 w-6 text-[#76B82A]" />
@@ -293,11 +332,14 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                     Continue browsing
                   </Button>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col space-y-2 md:space-y-3.5">
-                  <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2 md:gap-3.5">
+              </div>
+            ) : (
+              <>
+                <div className="admission-popup-mobile-scroll relative z-[3] min-h-0 overflow-x-hidden overflow-y-auto max-md:px-4 max-md:py-4 max-md:pb-6 md:flex-1 md:px-5 md:py-5">
+                  <form id="admission-enquiry-form" onSubmit={handleSubmit} className="admission-popup-mobile-form">
+                    <div className="grid grid-cols-1 gap-3 max-md:gap-y-3.5 md:grid-cols-2 md:gap-3.5">
                     <div className="md:col-span-2">
-                      <Label htmlFor="adm-name" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
+                      <Label htmlFor="adm-name" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
                         Full name <span className="text-[#F58220]">*</span>
                       </Label>
                       <Input
@@ -305,15 +347,18 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         value={form.name}
                         onChange={(e) => handleChange('name', e.target.value)}
                         placeholder="Enter your full name"
-                        className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
+                        className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus-visible:ring-[#F58220] md:h-10 md:text-base"
                         autoComplete="name"
                         required
                       />
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3 md:contents">
                     <div>
-                      <Label htmlFor="adm-mobile" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
-                        Mobile number <span className="text-[#F58220]">*</span>
+                      <Label htmlFor="adm-mobile" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
+                        <span className="md:hidden">Mobile </span>
+                        <span className="hidden md:inline">Mobile number </span>
+                        <span className="text-[#F58220]">*</span>
                       </Label>
                       <Input
                         id="adm-mobile"
@@ -321,16 +366,18 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         value={form.mobile}
                         onChange={(e) => handleChange('mobile', e.target.value)}
                         placeholder="10-digit mobile"
-                        className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
+                        className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
                         autoComplete="tel"
+                        inputMode="numeric"
                         maxLength={14}
                         required
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="adm-email" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
-                        Email address
+                      <Label htmlFor="adm-email" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
+                        <span className="md:hidden">Email</span>
+                        <span className="hidden md:inline">Email address</span>
                       </Label>
                       <Input
                         id="adm-email"
@@ -338,21 +385,24 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         value={form.email}
                         onChange={(e) => handleChange('email', e.target.value)}
                         placeholder="you@email.com"
-                        className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
+                        className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
                         autoComplete="email"
                       />
                     </div>
+                    </div>
 
                     <div className="md:col-span-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
-                        Programme interested in <span className="text-[#F58220]">*</span>
+                      <Label className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
+                        <span className="md:hidden">Programme </span>
+                        <span className="hidden md:inline">Programme interested in </span>
+                        <span className="text-[#F58220]">*</span>
                       </Label>
                       <Select
                         value={form.program}
                         onValueChange={(v) => handleChange('program', v)}
                         modal={false}
                       >
-                        <SelectTrigger className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base">
+                        <SelectTrigger className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base">
                           <SelectValue placeholder="Select a programme" />
                         </SelectTrigger>
                         <SelectContent className="z-[10050] max-h-64 rounded-none" position="popper">
@@ -372,8 +422,9 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                       </Select>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3 md:contents">
                     <div>
-                      <Label className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
+                      <Label className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
                         Qualification
                       </Label>
                       <Select
@@ -381,7 +432,7 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         onValueChange={(v) => handleChange('qualification', v)}
                         modal={false}
                       >
-                        <SelectTrigger className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base">
+                        <SelectTrigger className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base">
                           <SelectValue placeholder="Select qualification" />
                         </SelectTrigger>
                         <SelectContent className="z-[10050] rounded-none" position="popper">
@@ -395,20 +446,22 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                     </div>
 
                     <div>
-                      <Label htmlFor="adm-city" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
-                        City / Town
+                      <Label htmlFor="adm-city" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08]">
+                        <span className="md:hidden">City</span>
+                        <span className="hidden md:inline">City / Town</span>
                       </Label>
                       <Input
                         id="adm-city"
                         value={form.city}
                         onChange={(e) => handleChange('city', e.target.value)}
                         placeholder="Your city"
-                        className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
+                        className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
                       />
+                    </div>
                     </div>
 
                     <div className="md:col-span-2">
-                      <Label htmlFor="adm-district" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
+                      <Label htmlFor="adm-district" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
                         District
                       </Label>
                       <Input
@@ -416,12 +469,12 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         value={form.district}
                         onChange={(e) => handleChange('district', e.target.value)}
                         placeholder="Your district"
-                        className="mt-0.5 h-8 rounded-none border-[#9a4a0a]/20 bg-white px-2 text-sm focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
+                        className="mt-1 h-11 rounded-none border-[#9a4a0a]/20 bg-white px-3 text-base focus-visible:ring-[#F58220] md:mt-1 md:h-10 md:px-3 md:text-base"
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <Label htmlFor="adm-message" className="text-[10px] font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
+                      <Label htmlFor="adm-message" className="text-xs font-bold uppercase tracking-wide text-[#7a3b08] md:text-xs">
                         Message / Query
                       </Label>
                       <Textarea
@@ -429,44 +482,81 @@ const AdmissionPopupDialog = ({ settings, onClose }: Props) => {
                         value={form.message}
                         onChange={(e) => handleChange('message', e.target.value)}
                         placeholder="Any specific questions about admission, fees, or hostel?"
-                        rows={2}
-                        className="mt-0.5 min-h-[3.25rem] resize-none rounded-none border-[#9a4a0a]/20 bg-white px-2 py-1.5 text-sm focus-visible:ring-[#F58220] md:mt-1 md:min-h-[5.5rem] md:px-3 md:text-base"
+                        rows={3}
+                        className="mt-1 min-h-[5rem] resize-none rounded-none border-[#9a4a0a]/20 bg-white px-3 py-2 text-base focus-visible:ring-[#F58220] md:min-h-[5.5rem] md:text-base"
                       />
                     </div>
                   </div>
-
-                  {error && (
-                    <p className="border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600 md:px-3 md:py-2 md:text-sm">
-                      {error}
-                    </p>
-                  )}
-
-                  <div className="mt-auto shrink-0 flex flex-col-reverse gap-2 border-t border-[#9a4a0a]/10 pt-2 md:flex-row md:items-center md:justify-between md:gap-3 md:pt-3">
-                    <button
-                      type="button"
-                      onClick={handleDismiss}
-                      className="text-xs font-medium text-[#4D545D] transition-colors hover:text-[#7a3b08] md:text-sm"
-                    >
-                      Maybe later
-                    </button>
-                    <Button
-                      type="submit"
-                      disabled={submitting}
-                      className="h-9 w-full rounded-none bg-[#F58220] px-6 text-sm font-semibold text-white shadow-none hover:bg-[#e07418] md:h-10 md:w-auto md:px-8"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Submitting…
-                        </>
-                      ) : (
-                        'Submit enquiry'
-                      )}
-                    </Button>
-                  </div>
                 </form>
-              )}
-            </div>
+              </div>
+
+              {/* Mobile sticky footer — submit always visible */}
+              <div className="admission-popup-mobile-footer relative z-[3] shrink-0 border-t border-[#e8e8e8] bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:hidden">
+                {error && (
+                  <p className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {error}
+                  </p>
+                )}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDismiss}
+                    className="shrink-0 py-2 text-sm font-medium text-[#4D545D]"
+                  >
+                    Maybe later
+                  </button>
+                  <Button
+                    type="submit"
+                    form="admission-enquiry-form"
+                    disabled={submitting}
+                    className="h-12 min-w-0 flex-1 rounded-none bg-[#F58220] text-base font-semibold text-white shadow-none hover:bg-[#e07418]"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                        Submitting…
+                      </>
+                    ) : (
+                      'Submit enquiry'
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tablet & desktop footer */}
+              <div className="relative z-[3] hidden shrink-0 border-t border-[#9a4a0a]/15 bg-[#fffaf5] px-5 py-4 md:block">
+                {error && (
+                  <p className="mb-3 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {error}
+                  </p>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDismiss}
+                    className="text-sm font-medium text-[#4D545D] transition-colors hover:text-[#7a3b08]"
+                  >
+                    Maybe later
+                  </button>
+                  <Button
+                    type="submit"
+                    form="admission-enquiry-form"
+                    disabled={submitting}
+                    className="h-10 rounded-none bg-[#F58220] px-8 text-sm font-semibold text-white shadow-none hover:bg-[#e07418]"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting…
+                      </>
+                    ) : (
+                      'Submit enquiry'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+            )}
           </div>
         </div>
       </div>

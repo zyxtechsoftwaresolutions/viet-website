@@ -206,14 +206,24 @@ const FacultyPage = () => {
 
       {/* Hero — site standard (Library/Chairman style) */}
       <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-center text-white"
-        style={{
-          background: heroSettings.hero_background_image
-            ? `linear-gradient(rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.78)), url(${imgUrl(heroSettings.hero_background_image)}) center/cover no-repeat`
-            : 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)',
-        }}
+        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-center text-white bg-slate-900"
+        style={
+          heroSettings.hero_background_image
+            ? {
+                backgroundImage: `url(${imgUrl(heroSettings.hero_background_image)})`,
+                backgroundPosition: 'center',
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+              }
+            : { background: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)' }
+        }
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden />
+        {heroSettings.hero_background_image && (
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-black/50 from-30% via-black/15 to-transparent"
+            aria-hidden
+          />
+        )}
         <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
           <motion.div
             className="max-w-2xl"
