@@ -3,7 +3,7 @@
  * Use uploadToSupabase() for all media. Videos go to "videos" bucket, images/documents to "images" bucket.
  * Large videos (>6MB) use resumable (TUS) uploads for reliability and to respect higher size limits.
  */
-import { supabase, VIDEOS_BUCKET, IMAGES_BUCKET, getVideosPublicUrl, getImagesPublicUrl } from './supabase';
+import { getSupabase, readSupabasePublicConfig, VIDEOS_BUCKET, IMAGES_BUCKET, getVideosPublicUrl, getImagesPublicUrl } from './supabase';
 
 export type StorageBucket = 'videos' | 'images';
 
@@ -43,9 +43,8 @@ async function uploadVideoResumable(
   bucketName: string,
   contentType: string
 ): Promise<void> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!supabaseUrl || !anonKey) {
+  const { supabaseUrl, supabaseAnonKey } = readSupabasePublicConfig();
+  if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase URL and anon key are required for resumable upload.');
   }
 
@@ -68,7 +67,7 @@ async function uploadVideoResumable(
       endpoint,
       retryDelays: [0, 3000, 5000, 10000, 20000],
       headers: {
-        authorization: `Bearer ${anonKey}`,
+        authorization: `Bearer ${supabaseAnonKey}`,
         'x-upsert': 'true',
       },
       uploadDataDuringCreation: true,
@@ -102,9 +101,10 @@ export async function uploadToSupabase(
   folder: string,
   bucket?: StorageBucket
 ): Promise<string> {
+  const supabase = await getSupabase();
   if (!supabase) {
     throw new Error(
-      'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
+      'Supabase is not configured. On Render set SUPABASE_URL and SUPABASE_ANON_KEY (or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), then redeploy.'
     );
   }
 
@@ -119,6 +119,7 @@ export async function uploadToSupabase(
 
   if (resolvedBucket === 'videos' && file.size > RESUMABLE_THRESHOLD) {
     try {
+      await getSupabase();
       await uploadVideoResumable(file, path, bucketName, contentType);
       return getVideosPublicUrl(path);
     } catch (err) {
@@ -173,9 +174,10 @@ export async function uploadPosterToSupabase(
   file: File,
   folder: string = 'hero-videos'
 ): Promise<string> {
+  const supabase = await getSupabase();
   if (!supabase) {
     throw new Error(
-      'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
+      'Supabase is not configured. On Render set SUPABASE_URL and SUPABASE_ANON_KEY (or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), then redeploy.'
     );
   }
   const ext = file.name.split('.').pop() || 'jpg';

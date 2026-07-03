@@ -101,6 +101,40 @@ app.use(cors({
 applySecurityMiddleware(app);
 app.use(express.json({ limit: '1mb' }));
 
+// Public config for browser Supabase uploads (runtime — not baked into Vite build)
+app.get('/api/client-config', (req, res) => {
+  const { supabaseUrl, supabaseAnonKey } = getPublicSupabaseConfig();
+  res.json({
+    supabaseUrl,
+    supabaseAnonKey,
+    configured: Boolean(supabaseUrl && supabaseAnonKey),
+  });
+});
+
+/** Public Supabase keys for browser uploads (anon key is safe to expose). */
+function getPublicSupabaseConfig() {
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+  const supabaseAnonKey = (
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    ''
+  ).trim();
+  return { supabaseUrl, supabaseAnonKey };
+}
+
+function injectRuntimeConfig(html) {
+  const { supabaseUrl, supabaseAnonKey } = getPublicSupabaseConfig();
+  if (!supabaseUrl || !supabaseAnonKey) return html;
+  const script = `<script>window.__VIET_RUNTIME_CONFIG__=${JSON.stringify({
+    supabaseUrl,
+    supabaseAnonKey,
+  })}</script>`;
+  if (html.includes('</head>')) {
+    return html.replace('</head>', `${script}</head>`);
+  }
+  return `${script}${html}`;
+}
+
 // Resolve paths relative to project root (parent of server/) for reliable deployment
 const projectRoot = resolve(__dirname, '..');
 const publicDir = resolve(projectRoot, 'public');
@@ -2317,7 +2351,13 @@ if (existsSync(distDir)) {
   app.use(express.static(distDir, { index: false }));
   app.get('*', (req, res, next) => {
     if (req.path.includes('.')) return res.status(404).send('Not found');
-    res.sendFile(resolve(distDir, 'index.html'));
+    try {
+      const indexPath = resolve(distDir, 'index.html');
+      const html = readFileSync(indexPath, 'utf8');
+      res.type('html').send(injectRuntimeConfig(html));
+    } catch (err) {
+      next(err);
+    }
   });
 }
 
@@ -2329,6 +2369,10 @@ async function startServer() {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Server accessible at http://localhost:${PORT} and http://10.110.70.194:${PORT}`);
     console.log(`Database: ${supabase ? 'Supabase ✓' : 'JSON files (fallback)'}`);
+    const pub = getPublicSupabaseConfig();
+    console.log(
+      `Admin uploads (browser): ${pub.supabaseUrl && pub.supabaseAnonKey ? 'configured ✓' : 'missing SUPABASE_ANON_KEY'}`
+    );
     if (!isProduction()) {
       console.log('Development mode: ensure default admin password is changed before production deploy.');
     }

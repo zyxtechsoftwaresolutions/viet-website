@@ -10,3 +10,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Required for API + database
+      # - SUPABASE_URL
+      # - SUPABASE_SERVICE_ROLE_KEY
+      # - JWT_SECRET
+      # For admin image uploads in browser (runtime — set on Render, redeploy once):
+      # - SUPABASE_ANON_KEY  (same as Supabase Dashboard → Settings → API → anon public)
