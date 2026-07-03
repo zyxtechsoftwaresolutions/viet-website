@@ -118,10 +118,6 @@ const AboutUsAdmin = () => {
   };
 
   const handleSave = async () => {
-    if (!page) {
-      toast.error('About page not found. Ensure the about page exists in the database.');
-      return;
-    }
     setSaving(true);
     try {
       const payload = { ...content } as any;
@@ -146,10 +142,19 @@ const AboutUsAdmin = () => {
 
       setImageFiles({});
 
-      await pagesAPI.update(page.id, {
-        ...page,
+      const pagePayload = {
+        slug: 'about',
+        title: 'About Us',
+        route: '/about',
+        category: 'About',
         content: payload,
-      });
+      };
+
+      if (page?.id) {
+        await pagesAPI.update(page.id, { ...page, ...pagePayload });
+      } else {
+        await pagesAPI.create(pagePayload);
+      }
       toast.success('About Us page saved successfully');
       fetchPage();
     } catch (err: any) {

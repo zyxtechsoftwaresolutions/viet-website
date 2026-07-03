@@ -61,10 +61,11 @@ const AdminLayout = () => {
     { icon: Grid3x3, label: 'Vibe@Viet', path: '/admin/vibe-at-viet', section: 'vibe-at-viet', adminOnly: false },
     { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters', section: 'recruiters', adminOnly: false },
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section', section: 'placement-section', adminOnly: false },
-    { icon: Bus, label: 'Transport Routes', path: '/admin/transport-routes', section: 'transport-routes', adminOnly: false },
+    { icon: Bus, label: 'Transport', path: '/admin/transport', section: 'transport', adminOnly: false },
     { icon: Warehouse, label: 'Facilities', path: '/admin/facilities', section: 'facilities', adminOnly: false },
+    { icon: FileText, label: 'All Site Pages', path: '/admin/site-pages', section: 'pages', adminOnly: false },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
-    { icon: FileText, label: 'Pages', path: '/admin/pages', section: 'pages', adminOnly: false },
+    { icon: FileText, label: 'About Us', path: '/admin/pages', section: 'pages', adminOnly: false },
     { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities', section: 'authorities', adminOnly: false },
     { icon: Shield, label: 'Sub-Admins', path: '/admin/sub-admins', section: 'sub-admins', adminOnly: true },
   ];
@@ -93,17 +94,21 @@ const AdminLayout = () => {
 
   const isAdmin = user?.role === 'admin';
   const allowedSections = user?.allowedSections || [];
+  const sectionAllowed = (section: string) =>
+    allowedSections.includes(section) ||
+    (section === 'transport' && allowedSections.includes('transport-routes'));
+
   const menuItems = allMenuItems.filter((item) => {
     if (item.adminOnly) return isAdmin;
     if (isAdmin) return true;
-    return item.section === 'dashboard' || allowedSections.includes(item.section);
+    return item.section === 'dashboard' || sectionAllowed(item.section);
   });
 
   const currentSection = allMenuItems.find((m) => m.path === location.pathname)?.section;
   const canAccessCurrentPath =
     isAdmin ||
     currentSection === 'dashboard' ||
-    (currentSection && allowedSections.includes(currentSection)) ||
+    (currentSection && sectionAllowed(currentSection)) ||
     (location.pathname === '/admin' || location.pathname === '/admin/');
 
   if (isAuthenticated === null) {

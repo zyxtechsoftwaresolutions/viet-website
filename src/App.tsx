@@ -76,13 +76,14 @@ const Recruiters = lazy(() => import("./pages/admin/Recruiters"));
 const PlacementSection = lazy(() => import("./pages/admin/PlacementSection"));
 const Authorities = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
 const AboutUsAdmin = lazy(() => import("./pages/admin/AboutUsAdmin"));
-const TransportRoutes = lazy(() => import("./pages/admin/TransportRoutes"));
+const TransportAdmin = lazy(() => import("./pages/admin/TransportAdmin"));
 const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
+const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -193,9 +194,11 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="vibe-at-viet" element={<VibeAtVietAdmin />} />
               <Route path="recruiters" element={<Recruiters />} />
               <Route path="placement-section" element={<PlacementSection />} />
-              <Route path="transport-routes" element={<TransportRoutes />} />
+              <Route path="transport" element={<TransportAdmin />} />
+              <Route path="transport-routes" element={<Navigate to="/admin/transport" replace />} />
               <Route path="facilities" element={<FacilitiesAdmin />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
+              <Route path="site-pages" element={<SitePagesAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

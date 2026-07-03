@@ -5,6 +5,7 @@ import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import { pagesAPI, transportRoutesAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
+import { sanitizeRichHtml, sanitizeMapEmbed } from '@/lib/sanitizeHtml';
 import NotFound from './NotFound';
 
 const COLOR_ORDER = [
@@ -14,8 +15,9 @@ const COLOR_ORDER = [
   'from-slate-600 to-indigo-700',
 ];
 
-const FacilityPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+const FacilityPage = ({ slugOverride }: { slugOverride?: string } = {}) => {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = slugOverride || paramSlug;
   const [page, setPage] = useState<any>(null);
   const [transportRoutes, setTransportRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,7 @@ const FacilityPage = () => {
           <div className="container mx-auto px-4 md:px-10 lg:px-12">
             <div
               className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: mainContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(mainContent) }}
             />
           </div>
         </section>
@@ -275,25 +277,30 @@ const FacilityPage = () => {
       )}
 
       {/* Map embed */}
-      {mapEmbed && (
+      {mapEmbed && (() => {
+        const safeMap = sanitizeMapEmbed(mapEmbed);
+        if (!safeMap) return null;
+        return (
         <section className="py-12 md:py-16 bg-slate-50 border-t border-slate-200">
           <div className="container mx-auto px-4 md:px-10 lg:px-12">
             <div className="rounded-xl overflow-hidden border border-slate-200 aspect-video">
-              {mapEmbed.trim().startsWith('<') ? (
-                <div dangerouslySetInnerHTML={{ __html: mapEmbed }} className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full" />
+              {safeMap.mode === 'html' ? (
+                <div dangerouslySetInnerHTML={{ __html: safeMap.html }} className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full" />
               ) : (
                 <iframe
-                  src={mapEmbed}
+                  src={safeMap.src}
                   title="Location map"
                   className="w-full h-full min-h-[300px]"
                   allowFullScreen
                   loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
               )}
             </div>
           </div>
         </section>
-      )}
+        );
+      })()}
 
       <Footer />
     </div>

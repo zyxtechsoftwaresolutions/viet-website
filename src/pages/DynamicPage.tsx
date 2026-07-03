@@ -5,16 +5,32 @@ import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { pagesAPI } from '@/lib/api';
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 import ImageModal from '@/components/ImageModal';
 import { User } from 'lucide-react';
 
-const DynamicPage = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const [pageContent, setPageContent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+type DynamicPageProps = {
+  /** Pre-loaded page from DynamicRouteHandler */
+  pageData?: any;
+  /** Load by slug without URL param (CmsRoutePage) */
+  slugOverride?: string;
+};
+
+const DynamicPage = ({ pageData: initialPageData, slugOverride }: DynamicPageProps = {}) => {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = slugOverride || paramSlug;
+  const [pageContent, setPageContent] = useState<any>(initialPageData ?? null);
+  const [loading, setLoading] = useState(!initialPageData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialPageData) {
+      setPageContent(initialPageData);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     const fetchPageContent = async () => {
       if (!slug) {
         setError('Page not found');
@@ -22,6 +38,8 @@ const DynamicPage = () => {
         return;
       }
 
+      setLoading(true);
+      setError(null);
       try {
         const page = await pagesAPI.getBySlug(slug);
         if (page) {
@@ -38,7 +56,7 @@ const DynamicPage = () => {
     };
 
     fetchPageContent();
-  }, [slug]);
+  }, [slug, initialPageData]);
 
   if (loading) {
     return (
@@ -113,7 +131,7 @@ const DynamicPage = () => {
             <CardContent className="p-8 md:p-12">
               <div 
                 className="prose prose-lg max-w-none text-slate-700 leading-relaxed text-justify [&_p]:text-justify"
-                dangerouslySetInnerHTML={{ __html: content.mainContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(content.mainContent) }}
               />
             </CardContent>
           </Card>
@@ -124,7 +142,7 @@ const DynamicPage = () => {
             <CardContent className="p-8 md:p-12">
               <div 
                 className="prose prose-lg max-w-none text-slate-700 leading-relaxed text-justify [&_p]:text-justify"
-                dangerouslySetInnerHTML={{ __html: content.message }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(content.message) }}
               />
             </CardContent>
           </Card>
@@ -196,7 +214,7 @@ const DynamicPage = () => {
                 <div key={key} className="mb-6">
                   <h3 className="text-xl font-bold mb-2">{key}</h3>
                   {typeof value === 'string' ? (
-                    <div className="text-justify [&_p]:text-justify" dangerouslySetInnerHTML={{ __html: value }} />
+                    <div className="text-justify [&_p]:text-justify" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(value) }} />
                   ) : (
                     <pre className="bg-slate-100 p-4 rounded overflow-x-auto">
                       {JSON.stringify(value, null, 2)}

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
 import { pagesAPI, transportRoutesAPI } from "@/lib/api";
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 
 // Fallback data: bus no, driver, contact, capacity, image for hover
 const DEFAULT_ROUTES = [
@@ -169,7 +170,7 @@ const Transport = () => {
           <div className="container mx-auto px-4 md:px-10 lg:px-12">
             <div
               className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] prose prose-slate max-w-none"
-              dangerouslySetInnerHTML={{ __html: typeof introParagraph === "string" ? introParagraph : "" }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(typeof introParagraph === "string" ? introParagraph : "") }}
             />
           </div>
         </section>

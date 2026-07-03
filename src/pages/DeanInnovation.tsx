@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import { pagesAPI } from '@/lib/api';
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -131,7 +132,7 @@ const DeanInnovation = () => {
             <div className="text-slate-600 font-poppins text-[1.0625rem] md:text-lg leading-[1.85] text-justify">
               {pageContent?.message ? (
                 <div
-                  dangerouslySetInnerHTML={{ __html: pageContent.message }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(pageContent.message) }}
                   className="message-content [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold"
                 />
               ) : (

@@ -1186,6 +1186,14 @@ export async function updatePage(id, item) {
   return data;
 }
 
+export async function upsertPageBySlug(slug, item) {
+  const existing = await getPageBySlug(slug);
+  if (existing) {
+    return updatePage(existing.id, item);
+  }
+  return createPage({ slug, ...item });
+}
+
 export async function deletePage(id) {
   if (useJsonFallback) {
     const d = await readJsonFile('pages');

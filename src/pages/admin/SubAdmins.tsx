@@ -50,7 +50,7 @@ export const ADMIN_SECTIONS = [
   { key: 'vibe-at-viet', label: 'Vibe@Viet' },
   { key: 'recruiters', label: 'Recruiters' },
   { key: 'placement-section', label: 'Placement Section' },
-  { key: 'transport-routes', label: 'Transport Routes' },
+  { key: 'transport', label: 'Transport' },
   { key: 'facilities', label: 'Facilities' },
   { key: 'accreditations', label: 'Accreditations' },
   { key: 'pages', label: 'Pages' },

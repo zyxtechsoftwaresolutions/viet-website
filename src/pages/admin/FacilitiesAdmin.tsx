@@ -73,7 +73,7 @@ const FacilitiesAdmin = () => {
       const data = await pagesAPI.getAll();
       const raw = Array.isArray(data) ? data : (data?.pages ?? data?.data ?? []);
       const list = (Array.isArray(raw) ? raw : []).filter(
-        (p: any) => (p.category || '').toLowerCase() === 'facilities'
+        (p: any) => (p.category || '').toLowerCase() === 'facilities' && p.slug !== 'transport'
       );
       setPages(
         list.map((p: any) => ({
@@ -94,7 +94,7 @@ const FacilitiesAdmin = () => {
   };
 
   useEffect(() => {
-    fetchPages();
+    load();
   }, []);
 
   const openAdd = () => {
@@ -311,7 +311,7 @@ const FacilitiesAdmin = () => {
       <div>
         <h1 className="text-3xl font-bold">Facilities</h1>
         <p className="text-muted-foreground mt-2">
-          Manage facility pages (Library, Transport, Hostel, Sports, etc.) shown in the Facilities menu.
+          Manage facility pages (Library, Hostel, Sports, etc.). Transport is managed under Transport in the sidebar.
         </p>
       </div>
 

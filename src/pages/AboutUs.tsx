@@ -5,6 +5,7 @@ import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import AnimatedStat, { type AnimatedStatConfig } from '@/components/AnimatedStat';
 import { pagesAPI } from '@/lib/api';
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const statIcons = [BookOpen, Users, GraduationCap, Award];
@@ -248,7 +249,7 @@ const AboutUs = () => {
                 {pageContent?.mainContent ? (
                   <>
                     {/* Content flows beside rankings, then continues below after spacer */}
-                    <div dangerouslySetInnerHTML={{ __html: pageContent.mainContent }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(pageContent.mainContent) }} />
                     {/* Spacer positioned to force text below rankings after ~13 lines */}
                     <div className="hidden md:block rankings-spacer"></div>
                     <div className="clear-both"></div>
@@ -416,7 +417,7 @@ const AboutUs = () => {
                     className={idx % 2 === 1 ? 'md:order-1' : ''}
                   >
                     {sec?.title && <h3 className="text-2xl font-semibold text-[#0a192f] mb-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{sec.title}</h3>}
-                    <div className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }} dangerouslySetInnerHTML={{ __html: sec?.body || '' }} />
+                    <div className="text-gray-700 leading-relaxed text-justify" style={{ fontFamily: 'Inter, system-ui, sans-serif' }} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(sec?.body || '') }} />
                   </motion.div>
                 </div>
               ))

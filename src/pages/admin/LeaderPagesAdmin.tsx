@@ -171,10 +171,34 @@ const LeaderPagesAdmin = () => {
         if (k.endsWith('_preview')) delete content[k];
       });
 
-      await pagesAPI.update(selectedPage.id, {
-        ...selectedPage,
-        content,
-      });
+      const leaderRoutes: Record<string, string> = {
+        chairman: '/chairman',
+        principal: '/principal',
+        'diploma-principal': '/diploma-principal',
+        hr: '/hr',
+        'dean-academics': '/dean-academics',
+        'dean-innovation': '/dean-innovation',
+      };
+      const leaderTitles: Record<string, string> = {
+        chairman: 'Chairman',
+        principal: 'Principal',
+        'diploma-principal': 'Diploma Principal',
+        hr: 'Human Resources',
+        'dean-academics': 'Dean Academics',
+        'dean-innovation': 'Dean Innovation',
+      };
+
+      if (selectedPage.id) {
+        await pagesAPI.update(selectedPage.id, { ...selectedPage, content });
+      } else {
+        await pagesAPI.create({
+          slug: selectedPage.slug,
+          title: leaderTitles[selectedPage.slug] || selectedPage.title,
+          route: leaderRoutes[selectedPage.slug] || `/${selectedPage.slug}`,
+          category: 'About',
+          content,
+        });
+      }
       toast.success(`${selectedPage.title} page updated successfully`);
       setDialogOpen(false);
       fetchPages();
@@ -197,12 +221,15 @@ const LeaderPagesAdmin = () => {
     return null;
   };
 
-  const principalPage = pages.find((p) => p.slug === 'principal');
-  const diplomaPrincipalPage = pages.find((p) => p.slug === 'diploma-principal');
-  const chairmanPage = pages.find((p) => p.slug === 'chairman');
-  const hrPage = pages.find((p) => p.slug === 'hr');
-  const deanAcademicsPage = pages.find((p) => p.slug === 'dean-academics');
-  const deanInnovationPage = pages.find((p) => p.slug === 'dean-innovation');
+  const pageOrPlaceholder = (slug: LeaderSlug, title: string): Page =>
+    pages.find((p) => p.slug === slug) || { id: 0, slug, title, content: {} };
+
+  const principalPage = pageOrPlaceholder('principal', 'Principal');
+  const diplomaPrincipalPage = pageOrPlaceholder('diploma-principal', 'Diploma Principal');
+  const chairmanPage = pageOrPlaceholder('chairman', 'Chairman');
+  const hrPage = pageOrPlaceholder('hr', 'Human Resources');
+  const deanAcademicsPage = pageOrPlaceholder('dean-academics', 'Dean Academics');
+  const deanInnovationPage = pageOrPlaceholder('dean-innovation', 'Dean Innovation');
 
   if (loading) {
     return (
@@ -231,16 +258,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit Principal page content and sections</CardDescription>
           </CardHeader>
           <CardContent>
-            {principalPage ? (
-              <Button onClick={() => openEdit(principalPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Principal Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Principal page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(principalPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Principal Page
+            </Button>
           </CardContent>
         </Card>
 
@@ -253,16 +274,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit Diploma Principal page content and sections</CardDescription>
           </CardHeader>
           <CardContent>
-            {diplomaPrincipalPage ? (
-              <Button onClick={() => openEdit(diplomaPrincipalPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Diploma Principal Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Diploma Principal page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(diplomaPrincipalPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Diploma Principal Page
+            </Button>
           </CardContent>
         </Card>
 
@@ -275,16 +290,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit Chairman page content and sections</CardDescription>
           </CardHeader>
           <CardContent>
-            {chairmanPage ? (
-              <Button onClick={() => openEdit(chairmanPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Chairman Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Chairman page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(chairmanPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Chairman Page
+            </Button>
           </CardContent>
         </Card>
 
@@ -297,16 +306,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit HR page content and sections</CardDescription>
           </CardHeader>
           <CardContent>
-            {hrPage ? (
-              <Button onClick={() => openEdit(hrPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit HR Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                HR page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(hrPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit HR Page
+            </Button>
           </CardContent>
         </Card>
 
@@ -319,16 +322,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit Dean Academics page content and sections</CardDescription>
           </CardHeader>
           <CardContent>
-            {deanAcademicsPage ? (
-              <Button onClick={() => openEdit(deanAcademicsPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Dean Academics Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Dean Academics page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(deanAcademicsPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Dean Academics Page
+            </Button>
           </CardContent>
         </Card>
 
@@ -341,16 +338,10 @@ const LeaderPagesAdmin = () => {
             <CardDescription>Edit Dean Innovation & Student Projects page content</CardDescription>
           </CardHeader>
           <CardContent>
-            {deanInnovationPage ? (
-              <Button onClick={() => openEdit(deanInnovationPage)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Dean Innovation Page
-              </Button>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Dean Innovation page not found.
-              </p>
-            )}
+            <Button onClick={() => openEdit(deanInnovationPage)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Dean Innovation Page
+            </Button>
           </CardContent>
         </Card>
       </div>

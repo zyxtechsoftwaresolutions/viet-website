@@ -37,6 +37,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
 const DEFAULT_ADMISSIONS_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form';
 import { imgUrl } from '@/lib/imageUtils';
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 
 const NAV_SECTIONS = [
   { id: 'overview', label: 'Overview' },
@@ -83,7 +84,7 @@ function renderContent(content: string | undefined) {
   if (!content || !content.trim()) return null;
   const trimmed = content.trim();
   if (trimmed.startsWith('<')) {
-    return <div className="prose prose-slate max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: trimmed }} />;
+    return <div className="prose prose-slate max-w-none text-slate-600" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(trimmed) }} />;
   }
   return <div className="text-slate-600 leading-relaxed whitespace-pre-wrap">{trimmed}</div>;
 }
@@ -748,7 +749,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                     <div className="mt-8 md:mt-0">
                       <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
                         <div
-                          dangerouslySetInnerHTML={{ __html: s.hod.message }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(s.hod.message) }}
                           className="message-content indent-8"
                         />
                       </div>
@@ -766,7 +767,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                 <div className="mt-8 text-left max-w-3xl mx-auto">
                   <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85] text-justify [&_p]:indent-8 [&_p]:mb-6 [&_p:last-child]:mb-0 [&_strong]:text-slate-800 [&_strong]:font-semibold">
                     <div
-                      dangerouslySetInnerHTML={{ __html: s.hod.message }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(s.hod.message) }}
                       className="message-content indent-8"
                     />
                   </div>

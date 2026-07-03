@@ -370,6 +370,9 @@ export const transportRoutesAPI = {
 // Pages API
 export const pagesAPI = {
   getAll: () => apiCall('/pages'),
+  seed: () => apiCall('/pages/seed', { method: 'POST' }),
+  restoreBackup: (force = false) =>
+    apiCall('/pages/restore-backup', { method: 'POST', body: JSON.stringify({ force }) }),
   getBySlug: (slug: string) => apiCall(`/pages/slug/${slug}`),
   getById: (id: number) => apiCall(`/pages/${id}`),
   create: (data: any) => apiCall('/pages', {

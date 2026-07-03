@@ -9,6 +9,16 @@ import { existsSync, readFileSync } from 'fs';
 import * as db from './lib/db.js';
 import { deleteFromStorage } from './lib/storage.js';
 import { supabase } from './lib/supabase.js';
+import { applySecurityMiddleware } from './middleware/security.js';
+import {
+  resolveJwtSecret,
+  isProduction,
+  publicErrorMessage,
+  isValidGoogleAppsScriptUrl,
+  validatePasswordStrength,
+} from './lib/security.js';
+import { seedMissingSitePages } from './lib/seedPages.js';
+import { restorePagesFromJsonBackup } from './lib/restorePagesFromJson.js';
 
 /** Validate that a URL is from Supabase Storage (backend only stores these). */
 function isValidStorageUrl(url) {
@@ -42,7 +52,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = resolveJwtSecret();
 
 // Middleware
 // CORS configuration - allows requests from frontend domains
@@ -74,7 +84,8 @@ app.use(cors({
       const normalizedAllowed = (allowed || '').replace(/\/$/, '');
       return normalizedOrigin === normalizedAllowed;
     });
-    const vercelMatch = normalizedOrigin.endsWith('.vercel.app');
+    const allowVercelPreviews = process.env.ALLOW_VERCEL_PREVIEW === 'true';
+    const vercelMatch = allowVercelPreviews && normalizedOrigin.endsWith('.vercel.app');
 
     if (exactMatch || vercelMatch) {
       callback(null, true);
@@ -87,7 +98,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+applySecurityMiddleware(app);
+app.use(express.json({ limit: '1mb' }));
 
 // Resolve paths relative to project root (parent of server/) for reliable deployment
 const projectRoot = resolve(__dirname, '..');
@@ -209,16 +221,21 @@ async function initializeData() {
     }
   }
 
-  // Create default admin user if no users exist
+  // Create default admin user if no users exist (development only)
   const users = await db.getUsers();
   if (users.length === 0) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    await db.createUser({
-      username: 'admin',
-      email: 'admin@viet.edu.in',
-      password: hashedPassword,
-      role: 'admin'
-    });
+    if (isProduction()) {
+      console.warn('No admin users found. Run: cd server && npm run create-admin');
+    } else {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await db.createUser({
+        username: 'admin',
+        email: 'admin@viet.edu.in',
+        password: hashedPassword,
+        role: 'admin'
+      });
+      console.warn('Development: default admin created (username: admin, password: admin123). Change before production.');
+    }
   }
 
   // Initialize home-gallery with 8 placeholder images if empty
@@ -231,38 +248,15 @@ async function initializeData() {
     }
   } catch (e) { /* db may not be ready */ }
 
-  // Initialize default Transport page if not exists
+  // Ensure all public site pages exist in DB (prevents admin/public "not found" errors)
   try {
-    const pages = await db.getPages();
-    const transportPageExists = pages?.some(p => p.slug === 'transport' || p.route === '/facilities/transport');
-    if (!transportPageExists) {
-      await db.createPage({
-        slug: 'transport',
-        title: 'Transport',
-        route: '/facilities/transport',
-        category: 'Facilities',
-        content: {
-          hero: { title: 'Transport', description: 'Safe and comfortable transport facility for students and faculty' },
-          mainContent: `<p>Our College provides safe and comfortable Transport facility with own new Buses from every corner of the city which help the students and faculty to reach the college.</p>
-<p>Transportation is available for conducting industrial visits, placement drives, campus conducted or organized outside the campus.</p>
-<p>Our faculties monitor students to maintain discipline in buses.</p>
-<p>Anti Ragging committee members will monitor students in every bus.</p>
-<p>Comfortable seating as per allotments.</p>`,
-          mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3793.1234567890!2d83.1234567!3d17.1234567!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTfCsDA3JzI0LjUiTiA4M8KwMDcnMjQuNSJF!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin',
-          tables: { 'Contact Numbers for Transport': { headers: ['Name', 'Contact Number'], rows: [['VVV.SATYANARAYANA', '9959617469'], ['D.ANIL KUMAR', '9440491541']] } },
-          additional: { distances: [
-            { location: 'RTC Complex', distance: '14kms', available: true },
-            { location: 'Madhurawada', distance: '30kms', available: true },
-            { location: 'Gajuwaka', distance: '11kms', available: true },
-            { location: 'Pendurthi', distance: '10kms', available: true },
-            { location: 'Chodavaram', distance: '33kms', available: true },
-            { location: 'Anakapalli', distance: '28kms', available: true },
-            { location: 'Sabbavaram', distance: '10kms', available: true },
-          ] }
-        }
-      });
+    const seedResult = await seedMissingSitePages(db);
+    if (seedResult.created > 0) {
+      console.log(`[pages] Seeded ${seedResult.created} new page(s) (${seedResult.skipped} already existed)`);
     }
-  } catch (e) { /* db may not be ready */ }
+  } catch (e) {
+    console.warn('[pages] Seed check failed:', e?.message || e);
+  }
 }
 
 // Authentication middleware
@@ -305,10 +299,10 @@ const API_TO_SECTION = [
   [/^\/api\/recruiters/, 'recruiters'],
   [/^\/api\/placement-section/, 'placement-section'],
   [/^\/api\/placement-carousel/, 'placement-section'],
-  [/^\/api\/transport-routes/, 'transport-routes'],
+  [/^\/api\/transport-routes/, 'transport'],
   [/^\/api\/accreditations/, 'accreditations'],
   [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
-  [/^\/api\/pages/, ['pages', 'facilities', 'authorities']], // facilities & authorities use pages API
+  [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport']],
   [/^\/api\/faculty-settings/, 'faculty'],
 ];
 
@@ -326,9 +320,14 @@ const checkSectionAccess = (req, res, next) => {
   if (req.user.role === 'admin') return next();
   if (req.user.role !== 'sub_admin') return res.status(403).json({ error: 'Forbidden' });
   const sections = getSectionsForPath(req.path);
-  if (sections.length === 0) return next();
+  if (sections.length === 0) {
+    return res.status(403).json({ error: 'Access denied to this section' });
+  }
   const allowed = req.user.allowedSections || req.user.allowed_sections || [];
-  const hasAccess = sections.some(s => Array.isArray(allowed) && allowed.includes(s));
+  const sectionAllowed = (s) =>
+    Array.isArray(allowed) &&
+    (allowed.includes(s) || (s === 'transport' && allowed.includes('transport-routes')));
+  const hasAccess = sections.some(sectionAllowed);
   if (hasAccess) return next();
   return res.status(403).json({ error: 'Access denied to this section' });
 };
@@ -432,6 +431,10 @@ app.post('/api/auth/sub-admins', authenticateToken, requireAdmin, async (req, re
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
+    }
     const existing = await db.findUserByUsernameOrEmail(username);
     if (existing) {
       return res.status(400).json({ error: 'Username or email already exists' });
@@ -470,6 +473,10 @@ app.put('/api/auth/sub-admins/:id', authenticateToken, requireAdmin, async (req,
     if (username !== undefined) updates.username = username.trim();
     if (email !== undefined) updates.email = email.trim();
     if (password !== undefined && password) {
+      const passwordError = validatePasswordStrength(password);
+      if (passwordError) {
+        return res.status(400).json({ error: passwordError });
+      }
       updates.password = await bcrypt.hash(String(password), 10);
     }
     if (allowedSections !== undefined) {
@@ -1446,7 +1453,26 @@ app.get('/api/pages', async (req, res) => {
     const pages = await db.getPages();
     res.json(pages || []);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: publicErrorMessage(error, 'Failed to load pages') });
+  }
+});
+
+app.post('/api/pages/seed', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const result = await seedMissingSitePages(db);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({ error: publicErrorMessage(error, 'Failed to seed pages') });
+  }
+});
+
+app.post('/api/pages/restore-backup', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const force = Boolean(req.body?.force);
+    const result = await restorePagesFromJsonBackup({ force });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({ error: publicErrorMessage(error, 'Failed to restore pages from backup') });
   }
 });
 
@@ -1772,8 +1798,8 @@ async function syncAdmissionLeadToGoogleSheets(lead, webhookUrl) {
     console.warn('[Sheets] Webhook URL not configured — lead saved to database only');
     return { ok: false, reason: 'no_url' };
   }
-  if (!url.includes('script.google.com')) {
-    console.warn('[Sheets] Webhook URL must be a Google Apps Script URL (script.google.com/.../exec)');
+  if (!isValidGoogleAppsScriptUrl(url)) {
+    console.warn('[Sheets] Webhook URL must be a Google Apps Script /exec URL on script.google.com');
     return { ok: false, reason: 'invalid_url' };
   }
 
@@ -1824,17 +1850,23 @@ app.get('/api/admission-popup-settings', async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
     const settings = await db.getAdmissionPopupSettings();
-    const token = req.headers.authorization?.split(' ')[1];
-    let isAdmin = false;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let canViewAdminFields = false;
     if (token) {
       try {
-        jwt.verify(token, JWT_SECRET);
-        isAdmin = true;
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.role === 'admin') {
+          canViewAdminFields = true;
+        } else if (decoded.role === 'sub_admin') {
+          const allowed = decoded.allowedSections || decoded.allowed_sections || [];
+          canViewAdminFields = Array.isArray(allowed) && allowed.includes('admission-popup');
+        }
       } catch {
-        isAdmin = false;
+        canViewAdminFields = false;
       }
     }
-    if (isAdmin) {
+    if (canViewAdminFields) {
       return res.json(settings);
     }
     res.json({
@@ -1859,7 +1891,13 @@ app.put('/api/admission-popup-settings', authenticateToken, checkSectionAccess, 
     if (body.subtitle !== undefined) updateData.subtitle = body.subtitle;
     if (body.delay_seconds !== undefined) updateData.delay_seconds = body.delay_seconds;
     if (body.spreadsheet_url !== undefined) updateData.spreadsheet_url = body.spreadsheet_url;
-    if (body.sheets_webhook_url !== undefined) updateData.sheets_webhook_url = body.sheets_webhook_url;
+    if (body.sheets_webhook_url !== undefined) {
+      const webhook = body.sheets_webhook_url ? String(body.sheets_webhook_url).trim() : null;
+      if (webhook && !isValidGoogleAppsScriptUrl(webhook)) {
+        return res.status(400).json({ error: 'sheets_webhook_url must be a valid Google Apps Script /exec URL' });
+      }
+      updateData.sheets_webhook_url = webhook;
+    }
     if (body.images !== undefined) updateData.images = body.images;
     const updated = await db.updateAdmissionPopupSettings(updateData);
     res.json(updated);
@@ -2291,7 +2329,9 @@ async function startServer() {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Server accessible at http://localhost:${PORT} and http://10.110.70.194:${PORT}`);
     console.log(`Database: ${supabase ? 'Supabase ✓' : 'JSON files (fallback)'}`);
-    console.log(`Default admin credentials: username: admin, password: admin123`);
+    if (!isProduction()) {
+      console.log('Development mode: ensure default admin password is changed before production deploy.');
+    }
     try {
       const exploreSettings = await db.getExplorePathVideoSettings();
       const remoteUrl = resolveExplorePathVideoUrl(exploreSettings);
