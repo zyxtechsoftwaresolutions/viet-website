@@ -1060,6 +1060,26 @@ export async function updateHomeGalleryItem(id, item) {
 }
 
 // ==================== VIBE AT VIET ====================
+
+/** Map stored order (0-based) to grid slot index. Position N is stored as order N-1. */
+function vibeOrderToSlotIndex(order) {
+  if (order >= 0 && order <= 10) return order;
+  if (order === 11) return 9;
+  if (order === 12) return 10;
+  return Math.max(0, Math.min(10, order));
+}
+
+/** Remove other items at the same grid position (exact order match). */
+export async function clearVibeAtVietSlot(targetOrder, exceptId = null) {
+  const items = await getVibeAtViet();
+  for (const item of items) {
+    if (exceptId != null && String(item.id) === String(exceptId)) continue;
+    if ((item.order ?? 0) === targetOrder) {
+      await deleteVibeAtVietItem(item.id);
+    }
+  }
+}
+
 export async function getVibeAtViet() {
   if (useJsonFallback) {
     const d = await readJsonFile('vibe-at-viet');
@@ -1101,7 +1121,10 @@ export async function updateVibeAtVietItem(id, item) {
   const dbItem = {};
   if (item.image !== undefined) dbItem.image = item.image;
   if (item.video !== undefined) dbItem.video = item.video;
-  if (item.videoLink !== undefined) dbItem.video_link = item.videoLink;
+  if (item.videoLink !== undefined) {
+    dbItem.video_link = item.videoLink;
+    if (item.video === undefined) dbItem.video = item.videoLink;
+  }
   if (item.caption !== undefined) dbItem.caption = item.caption;
   if (item.order !== undefined) dbItem.order = item.order;
   if (useJsonFallback) {
@@ -1118,14 +1141,29 @@ export async function updateVibeAtVietItem(id, item) {
 }
 
 export async function deleteVibeAtVietItem(id) {
+  const numericId = parseInt(id, 10);
+  if (Number.isNaN(numericId)) {
+    throw new Error('Invalid item id');
+  }
   if (useJsonFallback) {
     const d = await readJsonFile('vibe-at-viet');
-    d.items = d.items.filter(i => i.id !== parseInt(id));
+    const before = d.items.length;
+    d.items = d.items.filter(i => i.id !== numericId);
+    if (d.items.length === before) {
+      throw new Error('Item not found');
+    }
     await writeJsonFile('vibe-at-viet', d);
     return;
   }
-  const { error } = await supabase.from('vibe_at_viet').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('vibe_at_viet')
+    .delete()
+    .eq('id', numericId)
+    .select('id');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('Item not found or could not be deleted');
+  }
 }
 
 // ==================== PAGES ====================

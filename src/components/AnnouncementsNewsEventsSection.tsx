@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { eventsAPI } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { imgUrl } from '@/lib/imageUtils';
+import CampusAutoScrollViewport from '@/components/CampusAutoScrollViewport';
 
 interface Event {
   id: number;
@@ -34,6 +36,9 @@ const RIGHT_VISIBLE_ROWS = 4;
 const RIGHT_SCROLL_DURATION_BASE = 14;
 const ROW_GAP_PX = 10;
 const EVENT_ROW_HEIGHT = 88;
+const ROW_UNIT_HEIGHT = EVENT_ROW_HEIGHT + ROW_GAP_PX;
+const LIST_VIEWPORT_HEIGHT_MOBILE = RIGHT_VISIBLE_ROWS * ROW_UNIT_HEIGHT;
+const LIST_PANEL_CHROME_HEIGHT = 72;
 const FEATURED_IMAGE_MIN_HEIGHT = 280;
 const FEATURED_SLIDE_INTERVAL_MS = 8000;
 
@@ -122,6 +127,9 @@ const AnnouncementsNewsEventsSection = () => {
   const ref = useRef<HTMLElement>(null);
   const featuredRef = useRef<HTMLDivElement>(null);
   const [featuredHeightPx, setFeaturedHeightPx] = useState<number | null>(null);
+  const [isDesktopLayout, setIsDesktopLayout] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
+  );
   const [isInView, setIsInView] = useState(false);
   const [activeTab, setActiveTab] = useState<EventTab>('recent');
   const [events, setEvents] = useState<Event[]>([]);
@@ -285,7 +293,11 @@ const AnnouncementsNewsEventsSection = () => {
     [tabEvents]
   );
 
-  const needsScroll = listCards.length > RIGHT_VISIBLE_ROWS;
+  const listPanelHeightMobile = LIST_VIEWPORT_HEIGHT_MOBILE + LIST_PANEL_CHROME_HEIGHT;
+  const listContentHeight = listCards.length * ROW_UNIT_HEIGHT;
+  const needsScroll = isDesktopLayout
+    ? listCards.length > RIGHT_VISIBLE_ROWS
+    : listContentHeight > LIST_VIEWPORT_HEIGHT_MOBILE;
   const scrollDuration = Math.max(
     RIGHT_SCROLL_DURATION_BASE,
     (listCards.length / RIGHT_VISIBLE_ROWS) * 5
@@ -297,6 +309,7 @@ const AnnouncementsNewsEventsSection = () => {
     if (!el || loading) return;
     const measure = () => {
       const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      setIsDesktopLayout(isDesktop);
       setFeaturedHeightPx(isDesktop ? el.offsetHeight : null);
     };
     measure();
@@ -348,7 +361,7 @@ const AnnouncementsNewsEventsSection = () => {
         </div>
         <div className="w-[88px] shrink-0 border-r border-[#0a192f]/10 bg-slate-100">
           {card.image ? (
-            <img src={card.image} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+            <img src={imgUrl(card.image)} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-slate-400">
               <Calendar className="h-6 w-6" aria-hidden />
@@ -396,6 +409,59 @@ const AnnouncementsNewsEventsSection = () => {
       >
         {inner}
       </div>
+    );
+  };
+
+  const renderListCopy = (keyPrefix: string) => (
+    <div key={keyPrefix}>
+      {listCards.map((card) => renderEventRow(card, keyPrefix))}
+    </div>
+  );
+
+  const renderRecentEventsList = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center text-slate-500 text-sm h-full">
+          Loading...
+        </div>
+      );
+    }
+
+    if (listCards.length === 0) {
+      return (
+        <div className="flex items-center justify-center text-slate-500 text-sm text-center px-4 h-full">
+          No events in this category.
+        </div>
+      );
+    }
+
+    if (isDesktopLayout) {
+      return (
+        <div
+          className={cn(needsScroll && 'notice-auto-scroll')}
+          style={
+            needsScroll
+              ? ({
+                  '--scroll-duration': `${scrollDuration}s`,
+                  height: listCards.length * 2 * ROW_UNIT_HEIGHT,
+                } as React.CSSProperties)
+              : undefined
+          }
+        >
+          {(needsScroll ? ['a', 'b'] : ['a']).map((copy) => renderListCopy(copy))}
+        </div>
+      );
+    }
+
+    return (
+      <CampusAutoScrollViewport
+        height={LIST_VIEWPORT_HEIGHT_MOBILE}
+        loop={needsScroll}
+        duration={scrollDuration}
+      >
+        {renderListCopy('a')}
+        {needsScroll && renderListCopy('b')}
+      </CampusAutoScrollViewport>
     );
   };
 
@@ -550,7 +616,7 @@ const AnnouncementsNewsEventsSection = () => {
                             >
                               {featuredEvent.image ? (
                                 <img
-                                  src={featuredEvent.image}
+                                  src={imgUrl(featuredEvent.image)}
                                   alt={featuredEvent.title}
                                   className="absolute inset-0 h-full w-full object-cover"
                                   loading="lazy"
@@ -616,9 +682,14 @@ const AnnouncementsNewsEventsSection = () => {
           <div
             className="lg:col-span-5 flex flex-col min-h-0"
             style={
-              featuredHeightPx != null
+              isDesktopLayout && featuredHeightPx != null
                 ? { height: `${featuredHeightPx}px`, maxHeight: `${featuredHeightPx}px` }
-                : undefined
+                : !isDesktopLayout
+                  ? {
+                      height: `${listPanelHeightMobile}px`,
+                      maxHeight: `${listPanelHeightMobile}px`,
+                    }
+                  : undefined
             }
           >
             <div className="happenings-panel flex flex-col flex-1 min-h-0 h-full p-4 md:p-5">
@@ -636,33 +707,13 @@ const AnnouncementsNewsEventsSection = () => {
                 </button>
               </div>
 
-              <div className="campus-panel-scroll-viewport flex-1 min-h-0">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full text-slate-500 text-sm">Loading...</div>
-                ) : listCards.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-slate-500 text-sm text-center px-4">
-                    No events in this category.
-                  </div>
-                ) : (
-                  <div
-                    className={cn(needsScroll && 'notice-auto-scroll')}
-                    style={
-                      needsScroll
-                        ? ({
-                            '--scroll-duration': `${scrollDuration}s`,
-                            height: listCards.length * 2 * (EVENT_ROW_HEIGHT + ROW_GAP_PX),
-                          } as React.CSSProperties)
-                        : undefined
-                    }
-                  >
-                    {(needsScroll ? [1, 2] : [1]).map((copy) => (
-                      <div key={copy}>
-                        {listCards.map((card) => renderEventRow(card, String(copy)))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {isDesktopLayout ? (
+                <div className="campus-panel-scroll-viewport flex-1 min-h-0">
+                  {renderRecentEventsList()}
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0">{renderRecentEventsList()}</div>
+              )}
             </div>
           </div>
         </div>

@@ -30,6 +30,34 @@ export async function uploadToStorage(fileBuffer, folder, filename, contentType)
 }
 
 /**
+ * Parse a Supabase public object URL into bucket + object path.
+ * @param {string} url
+ * @returns {{ bucket: string, objectPath: string } | null}
+ */
+export function parseSupabasePublicUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const m = url.trim().match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+?)(?:\?|#|$)/);
+  if (!m) return null;
+  return { bucket: m[1], objectPath: decodeURIComponent(m[2]) };
+}
+
+/**
+ * Download a file from Supabase Storage using the service role (works even when bucket is private).
+ * @param {string} publicUrl - Full public storage URL stored in the database
+ * @returns {Promise<Blob | null>}
+ */
+export async function downloadFromPublicUrl(publicUrl) {
+  const parsed = parseSupabasePublicUrl(publicUrl);
+  if (!parsed || !supabase) return null;
+  const { data, error } = await supabase.storage.from(parsed.bucket).download(parsed.objectPath);
+  if (error || !data) {
+    console.error('Storage download error:', error?.message || 'no data');
+    return null;
+  }
+  return data;
+}
+
+/**
  * Delete file from Supabase Storage by full public URL (supports any bucket: images, videos, etc.)
  * @param {string} urlOrPath - Full public URL (e.g. https://xxx.supabase.co/storage/v1/object/public/bucket/path)
  */

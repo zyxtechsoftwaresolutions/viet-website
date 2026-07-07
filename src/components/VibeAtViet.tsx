@@ -8,10 +8,12 @@ import {
   detectVideoPlatform,
   getYouTubeThumbnailUrl,
   getYouTubeWatchEmbedUrl,
+  getChromelessYouTubeEmbedUrl,
   type VideoPlatform,
 } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
-import { getVibeAtVietGridClass, VIBE_AT_VIET_SLOT_COUNT, remapLegacyVibeOrder } from '@/lib/vibeAtVietLayout';
+import { getVibeAtVietGridClass, VIBE_AT_VIET_SLOT_COUNT, vibeOrderToSlotIndex } from '@/lib/vibeAtVietLayout';
+import { imgUrl } from '@/lib/imageUtils';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const VIMEO_PLATFORM: VideoPlatform = 'vimeo';
@@ -33,12 +35,18 @@ function isExternalGalleryVideo(video: string): boolean {
   return platform === 'youtube' || platform === 'instagram';
 }
 
+function resolveItemVideo(item: VibeAtVietItem): string | null {
+  const direct = item.video?.trim();
+  if (direct) return direct;
+  const linked = item.video_link?.trim();
+  return linked || null;
+}
+
 const imageSrc = (path: string) => {
   if (!path) return '/placeholder.svg';
   if (isGoogleDriveLink(path)) return convertGoogleDriveLink(path);
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  if (path.startsWith('/')) return path;
-  return path;
+  const resolved = imgUrl(path);
+  return resolved || '/placeholder.svg';
 };
 
 function getTilePoster(item: VibeAtVietItem): string {
@@ -66,8 +74,7 @@ function VibeGalleryVideo({
   const src = (() => {
     if (!videoPath) return '';
     if (isGoogleDriveLink(videoPath)) return convertGoogleDriveToDownload(videoPath);
-    if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) return videoPath;
-    return videoPath;
+    return imgUrl(videoPath) || videoPath;
   })();
 
   useEffect(() => {
@@ -146,6 +153,85 @@ function VibeVimeoBackground({ videoUrl, title }: { videoUrl: string; title: str
   );
 }
 
+function VibeInstagramChromelessVideo({
+  reelUrl,
+  poster,
+  caption,
+  slotIndex,
+  videoRefs,
+}: {
+  reelUrl: string;
+  poster: string;
+  caption: string;
+  slotIndex: number;
+  videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
+}) {
+  const [playUrl, setPlayUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+
+    fetch(`${apiBase}/resolve-video?url=${encodeURIComponent(reelUrl)}`, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data: { proxyUrl?: string; directUrl?: string }) => {
+        if (cancelled) return;
+        const resolved = data.proxyUrl || data.directUrl;
+        if (resolved) {
+          setPlayUrl(resolved.startsWith('http') ? resolved : resolved);
+        } else {
+          setFailed(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reelUrl]);
+
+  if (failed || !playUrl) {
+    return (
+      <img
+        src={poster}
+        alt={caption}
+        className="w-full h-full object-cover"
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <VibeGalleryVideo
+      slotIndex={slotIndex}
+      videoPath={playUrl}
+      poster={poster}
+      caption={caption}
+      videoRefs={videoRefs}
+    />
+  );
+}
+
+function VibeYouTubeBackground({ videoUrl, title }: { videoUrl: string; title: string }) {
+  const embedUrl = getChromelessYouTubeEmbedUrl(videoUrl);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
+      <iframe
+        src={embedUrl}
+        title={title}
+        className="vibe-gallery-iframe border-0 pointer-events-none"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        loading="lazy"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
 function VibeGalleryPoster({ src, alt }: { src: string; alt: string }) {
   return (
     <img
@@ -168,9 +254,10 @@ function VibeGalleryTileMedia({
   videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
   onExternalVideoClick?: (item: VibeAtVietItem) => void;
 }) {
+  const video = resolveItemVideo(item);
   const poster = getTilePoster(item);
 
-  if (!item.video) {
+  if (!video) {
     return (
       <img
         src={poster}
@@ -181,11 +268,29 @@ function VibeGalleryTileMedia({
     );
   }
 
-  if (usesNativeVideo(item.video)) {
+  const platform = detectVideoPlatform(video);
+
+  if (platform === 'instagram') {
+    return (
+      <VibeInstagramChromelessVideo
+        reelUrl={video}
+        poster={poster}
+        caption={item.caption}
+        slotIndex={slotIndex}
+        videoRefs={videoRefs}
+      />
+    );
+  }
+
+  if (platform === 'youtube') {
+    return <VibeYouTubeBackground videoUrl={video} title={item.caption} />;
+  }
+
+  if (usesNativeVideo(video)) {
     return (
       <VibeGalleryVideo
         slotIndex={slotIndex}
-        videoPath={item.video}
+        videoPath={video}
         poster={poster}
         caption={item.caption}
         videoRefs={videoRefs}
@@ -193,11 +298,11 @@ function VibeGalleryTileMedia({
     );
   }
 
-  if (usesVimeoBackground(item.video)) {
-    return <VibeVimeoBackground videoUrl={item.video} title={item.caption} />;
+  if (usesVimeoBackground(video)) {
+    return <VibeVimeoBackground videoUrl={video} title={item.caption} />;
   }
 
-  if (isExternalGalleryVideo(item.video)) {
+  if (isExternalGalleryVideo(video)) {
     return (
       <button
         type="button"
@@ -221,16 +326,17 @@ const VibeAtViet = () => {
   const [watchVideo, setWatchVideo] = useState<{ embedUrl: string; title: string } | null>(null);
 
   const openExternalVideo = (item: VibeAtVietItem) => {
-    if (!item.video) return;
-    const platform = detectVideoPlatform(item.video);
+    const video = resolveItemVideo(item);
+    if (!video) return;
+    const platform = detectVideoPlatform(video);
     if (platform === 'youtube') {
-      const embedUrl = getYouTubeWatchEmbedUrl(item.video);
+      const embedUrl = getYouTubeWatchEmbedUrl(video);
       if (embedUrl) {
         setWatchVideo({ embedUrl, title: item.caption });
         return;
       }
     }
-    const { embedUrl } = getVideoEmbedUrl(item.video);
+    const { embedUrl } = getVideoEmbedUrl(video);
     setWatchVideo({ embedUrl, title: item.caption });
   };
 
@@ -251,10 +357,11 @@ const VibeAtViet = () => {
   }, []);
 
   const orderedSlots: (VibeAtVietItem | null)[] = Array(VIBE_AT_VIET_SLOT_COUNT).fill(null);
-  galleryItems.forEach((item) => {
-    const o = remapLegacyVibeOrder(item.order ?? 999);
-    if (o >= 0 && o < VIBE_AT_VIET_SLOT_COUNT && orderedSlots[o] === null) {
-      orderedSlots[o] = item;
+  const sortedItems = [...galleryItems].sort((a, b) => b.id - a.id);
+  sortedItems.forEach((item) => {
+    const slotIndex = vibeOrderToSlotIndex(item.order ?? 999);
+    if (slotIndex >= 0 && slotIndex < VIBE_AT_VIET_SLOT_COUNT && orderedSlots[slotIndex] === null) {
+      orderedSlots[slotIndex] = item;
     }
   });
   const hasOrdered = orderedSlots.some((s) => s !== null);

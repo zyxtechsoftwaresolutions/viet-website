@@ -147,7 +147,7 @@ function convertInstagramUrl(url: string): string {
   const isReel = url.includes('/reel/');
   const path = isReel ? 'reel' : 'p';
   
-  return `https://www.instagram.com/${path}/${postId}/embed/`;
+  return `https://www.instagram.com/${path}/${postId}/embed/captioned/`;
 }
 
 /**

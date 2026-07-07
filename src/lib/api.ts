@@ -304,6 +304,7 @@ export interface VibeAtVietItem {
   id: number;
   image: string;
   video?: string | null;
+  video_link?: string | null;
   caption: string;
   order?: number;
   createdAt?: string;
@@ -312,7 +313,8 @@ export interface VibeAtVietItem {
 
 // Vibe@Viet: image/video = Supabase Storage URLs or imageLink/videoLink for external URLs
 export const vibeAtVietAPI = {
-  getAll: (): Promise<VibeAtVietItem[]> => apiCall('/vibe-at-viet'),
+  getAll: (): Promise<VibeAtVietItem[]> =>
+    apiCall('/vibe-at-viet', { cache: 'no-store' as RequestCache }),
   create: (data: { image?: string | null; imageLink?: string | null; video?: string | null; videoLink?: string | null; caption: string; position?: number }) =>
     apiCall('/vibe-at-viet', { method: 'POST', body: JSON.stringify({ ...data, position: data.position ?? 1 }) }),
   update: (id: number, data: { image?: string | null; imageLink?: string | null; video?: string | null; videoLink?: string | null; caption?: string; order?: number }) =>

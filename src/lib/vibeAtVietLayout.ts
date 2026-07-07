@@ -68,11 +68,16 @@ export function getVibeSlotImageSpec(slot: number): VibeSlotImageSpec {
   return VIBE_SLOT_IMAGE_SPECS[slot] ?? { dimensions: '800 × 1000 px', aspectRatio: '4:5' };
 }
 
-/** Remap legacy 13-slot orders (0-based) to the current 11-slot layout. */
-export function remapLegacyVibeOrder(order: number): number {
-  if (order <= 8) return order;
-  if (order === 9 || order === 10) return 6;
+/** Map stored order (0-based) to grid slot index. Position N is stored as order N-1. */
+export function vibeOrderToSlotIndex(order: number): number {
+  if (order >= 0 && order <= 10) return order;
+  // Pre-migration 13-slot rows only (very old data)
   if (order === 11) return 9;
   if (order === 12) return 10;
-  return order;
+  return Math.max(0, Math.min(VIBE_AT_VIET_SLOT_COUNT - 1, order));
+}
+
+/** @deprecated Use vibeOrderToSlotIndex */
+export function remapLegacyVibeOrder(order: number): number {
+  return vibeOrderToSlotIndex(order);
 }

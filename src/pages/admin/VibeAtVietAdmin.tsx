@@ -31,10 +31,10 @@ import { vibeAtVietAPI, type VibeAtVietItem } from '@/lib/api';
 import { uploadVibeVideoToSupabase, uploadToSupabase } from '@/lib/storage';
 import { toast } from 'sonner';
 import { ImagePlus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
-import { isVideoUrl, getVideoEmbedUrl } from '@/lib/videoUtils';
+import { isVideoUrl, getVideoEmbedUrl, detectVideoPlatform } from '@/lib/videoUtils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { convertGoogleDriveLink, isGoogleDriveLink } from '@/lib/googleDriveUtils';
-import { VIBE_AT_VIET_SLOT_COUNT, remapLegacyVibeOrder } from '@/lib/vibeAtVietLayout';
+import { VIBE_AT_VIET_SLOT_COUNT } from '@/lib/vibeAtVietLayout';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import VibeAtVietGridGuide from '@/components/VibeAtVietGridGuide';
@@ -61,6 +61,9 @@ const VibeAtVietAdmin = () => {
   const imageUrl = (path: string) =>
     isGoogleDriveLink(path) ? convertGoogleDriveLink(path) : path;
 
+  const resolveItemVideo = (item: VibeAtVietItem) =>
+    item.video?.trim() || item.video_link?.trim() || null;
+
   const fetchItems = async () => {
     try {
       const data = await vibeAtVietAPI.getAll();
@@ -68,7 +71,6 @@ const VibeAtVietAdmin = () => {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Failed to fetch';
       toast.error(msg);
-      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -96,7 +98,7 @@ const VibeAtVietAdmin = () => {
   const openEdit = (item: VibeAtVietItem) => {
     setEditingItem(item);
     setCaption(item.caption || '');
-    setGridPosition(remapLegacyVibeOrder(item.order ?? 0) + 1);
+    setGridPosition((item.order ?? 0) + 1);
     setImageFile(null);
     setVideoFile(null);
     
@@ -112,15 +114,16 @@ const VibeAtVietAdmin = () => {
     }
     
     // Determine if existing video is a link or file
-    if (item.video) {
-      if (isVideoUrl(item.video)) {
+    const itemVideo = resolveItemVideo(item);
+    if (itemVideo) {
+      if (isVideoUrl(itemVideo)) {
         setVideoInputType('link');
-        setVideoLink(item.video ?? '');
-        setVideoPreview(item.video ?? '');
+        setVideoLink(itemVideo);
+        setVideoPreview(itemVideo);
       } else {
         setVideoInputType('file');
         setVideoLink('');
-        setVideoPreview(imageUrl(item.video));
+        setVideoPreview(imageUrl(itemVideo));
       }
     } else {
       setVideoInputType('file');
@@ -206,13 +209,15 @@ const VibeAtVietAdmin = () => {
           toast.info('Uploading video…');
           videoUrl = await uploadVibeVideoToSupabase(videoFile);
         }
+        const resolvedVideoLink =
+          videoInputType === 'link' && videoLink.trim() ? videoLink.trim() : undefined;
         await vibeAtVietAPI.update(editingItem.id, {
           caption: caption.trim(),
           order: gridPosition - 1,
           ...(imageUrl !== null && { image: imageUrl }),
           ...(imageInputType === 'link' && { imageLink: imageLink.trim() || null }),
           ...(videoUrl !== null && { video: videoUrl }),
-          ...(videoInputType === 'link' && { videoLink: videoLink.trim() || null }),
+          ...(resolvedVideoLink && { videoLink: resolvedVideoLink, video: resolvedVideoLink }),
           ...(videoInputType === 'file' && !videoFile && !videoUrl && { video: null, videoLink: null }),
         });
         toast.success('Item updated');
@@ -245,11 +250,13 @@ const VibeAtVietAdmin = () => {
           toast.info('Uploading video…');
           videoUrl = await uploadVibeVideoToSupabase(videoFile);
         }
+        const resolvedVideoLink =
+          videoInputType === 'link' && videoLink.trim() ? videoLink.trim() : undefined;
         await vibeAtVietAPI.create({
           image: imageUrl ?? undefined,
           imageLink: imageInputType === 'link' && imageLink.trim() ? imageLink.trim() : undefined,
-          video: videoUrl ?? undefined,
-          videoLink: videoInputType === 'link' && videoLink.trim() ? videoLink.trim() : undefined,
+          video: videoUrl ?? resolvedVideoLink ?? undefined,
+          videoLink: resolvedVideoLink,
           caption: caption.trim(),
           position: gridPosition,
         });
@@ -272,12 +279,14 @@ const VibeAtVietAdmin = () => {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
+    const deletedId = itemToDelete.id;
     try {
-      await vibeAtVietAPI.delete(itemToDelete.id);
+      await vibeAtVietAPI.delete(deletedId);
+      setItems((prev) => prev.filter((item) => item.id !== deletedId));
       toast.success('Photo deleted');
       setDeleteDialogOpen(false);
       setItemToDelete(null);
-      fetchItems();
+      await fetchItems();
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Delete failed';
       toast.error(msg);
@@ -325,12 +334,22 @@ const VibeAtVietAdmin = () => {
             className="relative group border rounded-lg overflow-hidden bg-muted/50 hover:shadow-md transition-shadow"
           >
             <div className="aspect-[4/3] bg-muted flex items-center justify-center relative">
-              {item.video ? (
-                isVideoUrl(item.video) ? (
-                  <div className="w-full h-full relative">
-                    {(() => {
-                      const videoInfo = getVideoEmbedUrl(item.video!);
-                      return (
+              {(() => {
+                const itemVideo = resolveItemVideo(item);
+                if (itemVideo) {
+                  if (isVideoUrl(itemVideo) && detectVideoPlatform(itemVideo) === 'instagram') {
+                    return (
+                      <img
+                        src={imageUrl(item.image)}
+                        alt={item.caption}
+                        className="w-full h-full object-cover"
+                      />
+                    );
+                  }
+                  if (isVideoUrl(itemVideo)) {
+                    const videoInfo = getVideoEmbedUrl(itemVideo);
+                    return (
+                      <div className="w-full h-full relative">
                         <iframe
                           src={videoInfo.embedUrl}
                           className="w-full h-full object-cover"
@@ -339,31 +358,33 @@ const VibeAtVietAdmin = () => {
                           style={{ border: 'none' }}
                           title={item.caption}
                         />
-                      );
-                    })()}
-                  </div>
-                ) : (
-                  <video
-                    src={imageUrl(item.video)}
-                    poster={imageUrl(item.image)}
+                      </div>
+                    );
+                  }
+                  return (
+                    <video
+                      src={imageUrl(itemVideo)}
+                      poster={imageUrl(item.image)}
+                      className="w-full h-full object-cover"
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                    />
+                  );
+                }
+                return (
+                  <img
+                    src={imageUrl(item.image)}
+                    alt={item.caption}
                     className="w-full h-full object-cover"
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
+                    onError={(e) => {
+                      const t = e.target as HTMLImageElement;
+                      t.src = '/placeholder.svg';
+                    }}
                   />
-                )
-              ) : (
-                <img
-                  src={imageUrl(item.image)}
-                  alt={item.caption}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const t = e.target as HTMLImageElement;
-                    t.src = '/placeholder.svg';
-                  }}
-                />
-              )}
+                );
+              })()}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <Button size="icon" variant="secondary" onClick={() => openEdit(item)}>
                   <Pencil className="w-4 h-4" />
@@ -376,7 +397,7 @@ const VibeAtVietAdmin = () => {
             <div className="p-3">
               <p className="text-sm font-medium line-clamp-2">{item.caption || 'No caption'}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Grid position: {remapLegacyVibeOrder(item.order ?? index) + 1}
+                Grid position: {(item.order ?? 0) + 1}
               </p>
             </div>
           </div>
@@ -404,7 +425,7 @@ const VibeAtVietAdmin = () => {
             <div className="space-y-2">
               <Label>Grid position in layout</Label>
               <p className="text-xs text-muted-foreground">
-                The Vibe@Viet section has {VIBE_AT_VIET_SLOT_COUNT} grid slots (positions 1–{VIBE_AT_VIET_SLOT_COUNT}). Old positions 7, 10, and 11 are now combined into slot 7.
+                Pick positions 1–{VIBE_AT_VIET_SLOT_COUNT} on the layout guide. The photo will appear in exactly that slot on the home page.
               </p>
               <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Layout guide — highlighted slot is your selection</p>

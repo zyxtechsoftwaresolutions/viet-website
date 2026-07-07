@@ -1,20 +1,41 @@
 /**
- * Utility function to construct image URLs consistently across the application
- * Handles various URL formats and edge cases
+ * Utility function to construct image URLs consistently across the application.
+ * Supabase public storage URLs are proxied through the API so the website can
+ * load uploads even when the bucket is not publicly readable (403).
  */
+
+const SUPABASE_PUBLIC_STORAGE =
+  /^https?:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
+
+function storageProxyUrl(publicUrl: string): string {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  return `${apiBase}/media?url=${encodeURIComponent(publicUrl)}`;
+}
+
 export const imgUrl = (path: string | undefined | null): string => {
   if (!path) return '';
-  
-  // If it's already a full URL (http/https), return as-is
+
+  // Full URL — proxy Supabase storage so public site avoids 403 on private buckets
   if (path.startsWith('http://') || path.startsWith('https://')) {
+    if (SUPABASE_PUBLIC_STORAGE.test(path)) {
+      return storageProxyUrl(path);
+    }
     return path;
   }
-  
-  // Get API base URL from environment
+
+  // Legacy relative /uploads paths served by the API host
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   const base = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3001';
-  
-  // If path starts with '/', append to base directly
-  // Otherwise, add '/' between base and path
+
+  return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
+};
+
+/** Same as imgUrl but keeps direct Supabase URLs (e.g. admin preview after upload). */
+export const imgUrlDirect = (path: string | undefined | null): string => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const base = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3001';
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
 };

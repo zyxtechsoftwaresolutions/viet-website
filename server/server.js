@@ -7,7 +7,12 @@ import { dirname, join, resolve } from 'path';
 import fs from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import * as db from './lib/db.js';
-import { deleteFromStorage } from './lib/storage.js';
+import { deleteFromStorage, downloadFromPublicUrl } from './lib/storage.js';
+import {
+  resolveInstagramReelDirectUrl,
+  isAllowedVideoProxyUrl,
+  extractInstagramReelId,
+} from './lib/videoResolver.js';
 import { supabase } from './lib/supabase.js';
 import { applySecurityMiddleware } from './middleware/security.js';
 import {
@@ -109,6 +114,105 @@ app.get('/api/client-config', (req, res) => {
     supabaseAnonKey,
     configured: Boolean(supabaseUrl && supabaseAnonKey),
   });
+});
+
+/** Proxy Supabase Storage files for the public site (service role bypasses private bucket 403s). */
+app.get('/api/media', async (req, res) => {
+  try {
+    const rawUrl = req.query.url;
+    if (!rawUrl || typeof rawUrl !== 'string') {
+      return res.status(400).json({ error: 'Missing url query parameter' });
+    }
+    const url = decodeURIComponent(rawUrl.trim());
+    if (!isValidStorageUrl(url)) {
+      return res.status(400).json({ error: 'Invalid storage URL' });
+    }
+    if (!supabase) {
+      return res.status(503).json({ error: 'Storage not configured' });
+    }
+
+    const blob = await downloadFromPublicUrl(url);
+    if (!blob) {
+      return res.status(404).send('File not found');
+    }
+
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    res.setHeader('Content-Type', blob.type || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Media proxy error:', error);
+    res.status(500).send('Failed to load media');
+  }
+});
+
+/** Resolve Instagram reel/post to a direct MP4 for chromeless gallery playback. */
+app.get('/api/resolve-video', async (req, res) => {
+  try {
+    const rawUrl = req.query.url;
+    if (!rawUrl || typeof rawUrl !== 'string') {
+      return res.status(400).json({ error: 'Missing url query parameter' });
+    }
+    const url = decodeURIComponent(rawUrl.trim());
+    if (!extractInstagramReelId(url)) {
+      return res.status(400).json({ error: 'Only Instagram reel/post URLs are supported' });
+    }
+
+    const directUrl = await resolveInstagramReelDirectUrl(url);
+    if (!directUrl) {
+      return res.status(404).json({ error: 'Could not resolve video from Instagram URL' });
+    }
+
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json({
+      directUrl,
+      proxyUrl: `/api/video-proxy?url=${encodeURIComponent(directUrl)}`,
+    });
+  } catch (error) {
+    console.error('Resolve video error:', error);
+    res.status(500).json({ error: 'Failed to resolve video' });
+  }
+});
+
+/** Stream external MP4 (Instagram CDN, etc.) without exposing platform embed UI. */
+app.get('/api/video-proxy', async (req, res) => {
+  try {
+    const rawUrl = req.query.url;
+    if (!rawUrl || typeof rawUrl !== 'string') {
+      return res.status(400).send('Missing url');
+    }
+    const url = decodeURIComponent(rawUrl.trim());
+    if (!isAllowedVideoProxyUrl(url)) {
+      return res.status(400).send('URL not allowed');
+    }
+
+    const upstream = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Referer: 'https://www.instagram.com/',
+        Accept: 'video/mp4,video/*,*/*',
+      },
+      redirect: 'follow',
+    });
+
+    if (!upstream.ok) {
+      return res.status(502).send('Upstream video unavailable');
+    }
+
+    const contentType = upstream.headers.get('content-type') || 'video/mp4';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.send(buffer);
+  } catch (error) {
+    console.error('Video proxy error:', error);
+    res.status(500).send('Failed to proxy video');
+  }
 });
 
 /** Public Supabase keys for browser uploads (anon key is safe to expose). */
@@ -1417,12 +1521,11 @@ app.put('/api/home-gallery/:id', authenticateToken, checkSectionAccess, async (r
 app.get('/api/vibe-at-viet', async (req, res) => {
   try {
     const items = await db.getVibeAtViet();
-    // Cache for 5 minutes
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'no-store');
     res.json((items || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
   } catch (error) {
-    res.set('Cache-Control', 'public, max-age=300');
-    res.json([]);
+    res.set('Cache-Control', 'no-store');
+    res.status(500).json({ error: error.message || 'Failed to load vibe-at-viet items' });
   }
 });
 
@@ -1433,8 +1536,8 @@ app.post('/api/vibe-at-viet', authenticateToken, checkSectionAccess, async (req,
     const caption = body.caption ?? '';
     const position = body.position !== undefined ? Math.max(1, Math.min(11, parseInt(body.position, 10) || 1)) : 1;
     const image = (typeof body.image === 'string' ? body.image.trim() : null) || (body.imageLink?.trim() || null) || null;
-    const videoUrl = body.video?.trim() || null;
-    const videoLink = body.videoLink?.trim() || null;
+    const videoUrl = body.video?.trim() || body.videoLink?.trim() || null;
+    const videoLink = body.videoLink?.trim() || videoUrl || null;
 
     if (!image) {
       return res.status(400).json({ error: 'image or imageLink is required (Supabase Storage URL or external link)' });
@@ -1444,6 +1547,7 @@ app.post('/api/vibe-at-viet', authenticateToken, checkSectionAccess, async (req,
     }
 
     const targetOrder = position - 1;
+    await db.clearVibeAtVietSlot(targetOrder);
     const item = await db.createVibeAtVietItem({ image, video: videoUrl, videoLink: videoLink || null, caption, order: targetOrder });
     res.status(201).json(item);
   } catch (error) {
@@ -1459,9 +1563,17 @@ app.put('/api/vibe-at-viet/:id', authenticateToken, checkSectionAccess, async (r
     if (body.image !== undefined) updateData.image = typeof body.image === 'string' ? body.image.trim() || null : null;
     if (body.imageLink !== undefined) updateData.image = body.imageLink?.trim() || null;
     if (body.video !== undefined) updateData.video = body.video?.trim() || null;
-    if (body.videoLink !== undefined) updateData.videoLink = body.videoLink?.trim() || null;
+    if (body.videoLink !== undefined) {
+      const link = body.videoLink?.trim() || null;
+      updateData.videoLink = link;
+      if (body.video === undefined && link) updateData.video = link;
+      if (body.video === undefined && !link) updateData.video = null;
+    }
     if (body.caption !== undefined) updateData.caption = body.caption;
-    if (body.order !== undefined) updateData.order = Math.max(0, Math.min(10, parseInt(body.order, 10) || 0));
+    if (body.order !== undefined) {
+      updateData.order = Math.max(0, Math.min(10, parseInt(body.order, 10) || 0));
+      await db.clearVibeAtVietSlot(updateData.order, req.params.id);
+    }
 
     const updated = await db.updateVibeAtVietItem(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Item not found' });
