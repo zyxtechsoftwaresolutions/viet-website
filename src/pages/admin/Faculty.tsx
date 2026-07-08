@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/select';
 import { facultyAPI, facultySettingsAPI, departmentsAPI } from '@/lib/api';
 import { uploadToSupabase } from '@/lib/storage';
+import { toast } from 'sonner';
 import { imgUrl } from '@/lib/imageUtils';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
@@ -478,13 +479,12 @@ const Faculty = () => {
       };
       if (selectedItem) {
         await facultyAPI.update(selectedItem.id, payload);
-        toast.success('Faculty updated successfully');
       } else {
         await facultyAPI.create(payload);
-        toast.success('Faculty added successfully');
       }
       setDialogOpen(false);
-      fetchFaculty();
+      await fetchFaculty();
+      toast.success(selectedItem ? 'Faculty updated successfully' : 'Faculty added successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to save faculty');
     }
@@ -494,9 +494,9 @@ const Faculty = () => {
     if (!selectedItem) return;
     try {
       await facultyAPI.delete(selectedItem.id);
-      toast.success('Faculty deleted successfully');
       setDeleteDialogOpen(false);
-      fetchFaculty();
+      await fetchFaculty();
+      toast.success('Faculty deleted successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete faculty');
     }
