@@ -528,10 +528,8 @@ const DepartmentPages = () => {
     }
   };
 
-  const courses = sections.courses?.categories ?? [];
   const feeItems = sections.fee?.items ?? [];
   const posBadges = sections.programOverview?.posBadges ?? [];
-  const facilitiesCards = sections.facilities?.cards ?? [];
   const whyVietCards = sections.whyViet?.cards ?? [];
   const projectStats = sections.projects?.stats ?? [];
   const projectCards = sections.projects?.cards ?? [];
@@ -612,56 +610,6 @@ const DepartmentPages = () => {
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [allFaculty, slug]);
 
-  const addCategory = () => {
-    const id = 'cat-' + Date.now();
-    updateSection('courses', 'categories', [...courses, { id, name: '', programs: [] }]);
-  };
-
-  const updateCategory = (id: string, field: 'name', value: string) => {
-    updateSection(
-      'courses',
-      'categories',
-      courses.map((c) => (c.id === id ? { ...c, [field]: value } : c))
-    );
-  };
-
-  const deleteCategory = (id: string) => {
-    updateSection('courses', 'categories', courses.filter((c) => c.id !== id));
-  };
-
-  const addProgram = (categoryId: string) => {
-    updateSection(
-      'courses',
-      'categories',
-      courses.map((c) =>
-        c.id === categoryId ? { ...c, programs: [...c.programs, { name: '', seats: '', fee: '' }] } : c
-      )
-    );
-  };
-
-  const updateProgram = (categoryId: string, idx: number, field: keyof ProgramCard, value: string) => {
-    updateSection(
-      'courses',
-      'categories',
-      courses.map((c) => {
-        if (c.id !== categoryId) return c;
-        const p = [...c.programs];
-        p[idx] = { ...p[idx], [field]: value };
-        return { ...c, programs: p };
-      })
-    );
-  };
-
-  const deleteProgram = (categoryId: string, idx: number) => {
-    updateSection(
-      'courses',
-      'categories',
-      courses.map((c) =>
-        c.id === categoryId ? { ...c, programs: c.programs.filter((_, i) => i !== idx) } : c
-      )
-    );
-  };
-
   const addFeeCard = () => {
     updateSection('fee', 'items', [...feeItems, { programName: '', fee: '' }]);
   };
@@ -688,26 +636,6 @@ const DepartmentPages = () => {
 
   const deletePosBadge = (idx: number) => {
     updateSection('programOverview', 'posBadges', posBadges.filter((_, i) => i !== idx));
-  };
-
-  // Facilities CRUD
-  const addFacilityCard = () => {
-    updateSection('facilities', 'cards', [...facilitiesCards, { id: 'fac-' + Date.now(), icon: '', name: '', href: '' }]);
-  };
-  const updateFacilityCard = (id: string, field: keyof FacilityCard, value: string) => {
-    updateSection('facilities', 'cards', facilitiesCards.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
-  };
-  const deleteFacilityCard = (id: string) => {
-    updateSection('facilities', 'cards', facilitiesCards.filter((c) => c.id !== id));
-  };
-  const handleFacilityIconUpload = async (id: string, file: File) => {
-    try {
-      const res = await departmentPagesAPI.uploadAsset(slug, file);
-      updateFacilityCard(id, 'icon', (res as { url: string }).url);
-      toast.success('Icon uploaded');
-    } catch (e: any) {
-      toast.error(e.message || 'Upload failed');
-    }
   };
 
   // Why VIET CRUD
@@ -973,18 +901,16 @@ const DepartmentPages = () => {
           <TabsTrigger value="overview">2. Overview</TabsTrigger>
           <TabsTrigger value="vision">3. Vision & Mission</TabsTrigger>
           <TabsTrigger value="hod">4. Message</TabsTrigger>
-          <TabsTrigger value="courses">5. Programs Offered</TabsTrigger>
-          <TabsTrigger value="curriculum">6. Curriculum</TabsTrigger>
-          <TabsTrigger value="fee">7. Fee At Glance</TabsTrigger>
-          <TabsTrigger value="programOverview">8. Program Overview</TabsTrigger>
-          <TabsTrigger value="facilities">9. Facilities</TabsTrigger>
-          <TabsTrigger value="whyViet">10. Why VIET</TabsTrigger>
-          <TabsTrigger value="projects">11. Projects</TabsTrigger>
-          <TabsTrigger value="placements">12. Placements</TabsTrigger>
-          <TabsTrigger value="rd">13. R&D</TabsTrigger>
-          <TabsTrigger value="ideaCell">14. Idea Cell</TabsTrigger>
-          <TabsTrigger value="clubActivities">15. Club Activities</TabsTrigger>
-          <TabsTrigger value="faculty">16. Faculty</TabsTrigger>
+          <TabsTrigger value="curriculum">5. Curriculum</TabsTrigger>
+          <TabsTrigger value="fee">6. Fee At Glance</TabsTrigger>
+          <TabsTrigger value="programOverview">7. Program Overview</TabsTrigger>
+          <TabsTrigger value="whyViet">8. Why VIET</TabsTrigger>
+          <TabsTrigger value="projects">9. Projects</TabsTrigger>
+          <TabsTrigger value="placements">10. Placements</TabsTrigger>
+          <TabsTrigger value="rd">11. R&D</TabsTrigger>
+          <TabsTrigger value="ideaCell">12. Idea Cell</TabsTrigger>
+          <TabsTrigger value="clubActivities">13. Club Activities</TabsTrigger>
+          <TabsTrigger value="faculty">14. Faculty</TabsTrigger>
           <TabsTrigger value="more">More Sections</TabsTrigger>
         </TabsList>
 
@@ -1273,67 +1199,6 @@ const DepartmentPages = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="courses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Programs Offered</CardTitle>
-              <CardDescription>
-                Create categories (e.g. B.Tech AP EAPCET, M.Tech & MCA), then add program cards under each with name, seats, and fee.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {courses.map((cat) => (
-                <div key={cat.id} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={cat.name}
-                      onChange={(e) => updateCategory(cat.id, 'name', e.target.value)}
-                      placeholder="Category name (e.g. B.Tech AP EAPCET)"
-                      className="flex-1"
-                    />
-                    <Button variant="destructive" size="icon" onClick={() => deleteCategory(cat.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="ml-4 space-y-2">
-                    {cat.programs.map((prog, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-2">
-                        <Input
-                          value={prog.name}
-                          onChange={(e) => updateProgram(cat.id, i, 'name', e.target.value)}
-                          placeholder="Program name"
-                          className="w-48"
-                        />
-                        <Input
-                          value={prog.seats}
-                          onChange={(e) => updateProgram(cat.id, i, 'seats', e.target.value)}
-                          placeholder="Seats"
-                          className="w-24"
-                        />
-                        <Input
-                          value={prog.fee}
-                          onChange={(e) => updateProgram(cat.id, i, 'fee', e.target.value)}
-                          placeholder="Fee"
-                          className="w-28"
-                        />
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProgram(cat.id, i)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={() => addProgram(cat.id)}>
-                      <Plus className="h-4 w-4 mr-1" /> Add program
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addCategory}>
-                <Plus className="h-4 w-4 mr-2" /> Add category
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="curriculum" className="space-y-4">
           <Card>
             <CardHeader>
@@ -1508,42 +1373,6 @@ const DepartmentPages = () => {
                   <Plus className="h-4 w-4 mr-1" /> Add badge
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="facilities" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Facilities</CardTitle>
-              <CardDescription>Upload SVG icon and enter name for each facility card. Optional link URL.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {facilitiesCards.map((card) => (
-                <div key={card.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    {card.icon && (
-                      <div className="w-12 h-12 flex items-center justify-center border rounded bg-muted">
-                        <img src={card.icon.startsWith('http') ? card.icon : `${API_BASE}${card.icon}`} alt={card.name} className="w-8 h-8 object-contain" />
-                      </div>
-                    )}
-                    <div className="flex-1 grid gap-2 md:grid-cols-2">
-                      <Input value={card.name} onChange={(e) => updateFacilityCard(card.id, 'name', e.target.value)} placeholder="Facility name" />
-                      <Input value={card.href || ''} onChange={(e) => updateFacilityCard(card.id, 'href', e.target.value)} placeholder="Link URL (optional)" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Input type="file" accept="image/svg+xml,image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFacilityIconUpload(card.id, f); }} className="w-32" />
-                      <ImageUploadGuide {...IMAGE_SPECS.departmentFacilityIcon} inline />
-                      <Button variant="destructive" size="icon" onClick={() => deleteFacilityCard(card.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addFacilityCard}>
-                <Plus className="h-4 w-4 mr-2" /> Add facility card
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>

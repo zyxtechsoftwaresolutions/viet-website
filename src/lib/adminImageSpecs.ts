@@ -142,6 +142,11 @@ export const IMAGE_SPECS = {
     aspectRatio: '3:2',
     hint: 'Admission popup slide image',
   },
+  campusLifeHighlight: {
+    dimensions: '1600 × 1200 px',
+    aspectRatio: '4:3',
+    hint: 'Campus Life magazine grid photo — large originals are auto-compressed on upload',
+  },
   vibeAtViet: (slot: number): ImageUploadSpec => {
     const spec = getVibeSlotImageSpec(slot);
     return {

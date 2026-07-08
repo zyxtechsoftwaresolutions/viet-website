@@ -52,6 +52,7 @@ export const ADMIN_SECTIONS = [
   { key: 'placement-section', label: 'Placement Section' },
   { key: 'transport', label: 'Transport' },
   { key: 'facilities', label: 'Facilities' },
+  { key: 'campus-life', label: 'Campus Life' },
   { key: 'accreditations', label: 'Accreditations' },
   { key: 'pages', label: 'Pages' },
   { key: 'authorities', label: 'Authorities' },

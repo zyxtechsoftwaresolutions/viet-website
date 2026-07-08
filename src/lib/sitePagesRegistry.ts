@@ -44,9 +44,13 @@ export const EXPECTED_SITE_PAGES: SitePageMeta[] = [
   { slug: 'cafeteria', title: 'Cafeteria', route: '/facilities/cafeteria', category: 'Facilities' },
 ];
 
-export function getPageEditorKind(slug: string, category: string): 'about' | 'authorities' | 'facilities' | 'transport' | 'generic' {
+export function getPageEditorKind(
+  slug: string,
+  category: string
+): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'generic' {
   if (slug === 'about') return 'about';
   if (slug === 'transport') return 'transport';
+  if (slug === 'campus-life') return 'campus-life';
   if ((LEADER_SLUGS as readonly string[]).includes(slug)) return 'authorities';
   if (category.toLowerCase() === 'facilities') return 'facilities';
   return 'generic';
@@ -58,5 +62,6 @@ export function getAdminEditorPath(slug: string, category: string): string {
   if (kind === 'authorities') return '/admin/authorities';
   if (kind === 'transport') return '/admin/transport';
   if (kind === 'facilities') return '/admin/facilities';
+  if (kind === 'campus-life') return '/admin/campus-life';
   return '/admin/site-pages';
 }

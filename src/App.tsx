@@ -84,6 +84,7 @@ const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
+const CampusLifeAdmin = lazy(() => import("./pages/admin/CampusLifeAdmin"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -199,6 +200,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="facilities" element={<FacilitiesAdmin />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="site-pages" element={<SitePagesAdmin />} />
+              <Route path="campus-life" element={<CampusLifeAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

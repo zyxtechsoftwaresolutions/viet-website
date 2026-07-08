@@ -9,6 +9,9 @@ import {
   getYouTubeThumbnailUrl,
   getYouTubeWatchEmbedUrl,
   getChromelessYouTubeEmbedUrl,
+  extractInstagramReelId,
+  buildProxiedPlaybackUrl,
+  resolveApiMediaPath,
   type VideoPlatform,
 } from '@/lib/videoUtils';
 import { convertGoogleDriveLink, isGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
@@ -63,18 +66,22 @@ function VibeGalleryVideo({
   poster,
   caption,
   videoRefs,
+  onPlaybackFailed,
 }: {
   slotIndex: number;
   videoPath: string;
   poster: string;
   caption: string;
   videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
+  onPlaybackFailed?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const src = (() => {
     if (!videoPath) return '';
+    if (videoPath.startsWith('/api/')) return videoPath;
     if (isGoogleDriveLink(videoPath)) return convertGoogleDriveToDownload(videoPath);
-    return imgUrl(videoPath) || videoPath;
+    if (isVideoUrl(videoPath)) return videoPath;
+    return resolveApiMediaPath(imgUrl(videoPath) || videoPath);
   })();
 
   useEffect(() => {
@@ -109,7 +116,7 @@ function VibeGalleryVideo({
         muted
         loop
         playsInline
-        preload="metadata"
+        preload={videoPath.startsWith('/api/') ? 'auto' : 'metadata'}
         controls={false}
         controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
         disablePictureInPicture
@@ -120,6 +127,10 @@ function VibeGalleryVideo({
           if (video) video.play().catch(() => {});
         }}
         onError={(e) => {
+          if (onPlaybackFailed) {
+            onPlaybackFailed();
+            return;
+          }
           const target = e.target as HTMLVideoElement;
           target.style.display = 'none';
           const img = document.createElement('img');
@@ -153,6 +164,24 @@ function VibeVimeoBackground({ videoUrl, title }: { videoUrl: string; title: str
   );
 }
 
+function VibeInstagramEmbed({ reelUrl, title }: { reelUrl: string; title: string }) {
+  const reelId = extractInstagramReelId(reelUrl);
+  if (!reelId) return null;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-black">
+      <iframe
+        src={`https://www.instagram.com/reel/${reelId}/embed/`}
+        title={title}
+        className="vibe-gallery-iframe vibe-gallery-iframe--instagram border-0 pointer-events-none"
+        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+        loading="lazy"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
 function VibeInstagramChromelessVideo({
   reelUrl,
   poster,
@@ -167,7 +196,7 @@ function VibeInstagramChromelessVideo({
   videoRefs: MutableRefObject<(HTMLVideoElement | null)[]>;
 }) {
   const [playUrl, setPlayUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [useEmbedFallback, setUseEmbedFallback] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,15 +206,15 @@ function VibeInstagramChromelessVideo({
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data: { proxyUrl?: string; directUrl?: string }) => {
         if (cancelled) return;
-        const resolved = data.proxyUrl || data.directUrl;
+        const resolved = buildProxiedPlaybackUrl(data);
         if (resolved) {
-          setPlayUrl(resolved.startsWith('http') ? resolved : resolved);
+          setPlayUrl(resolved);
         } else {
-          setFailed(true);
+          setUseEmbedFallback(true);
         }
       })
       .catch(() => {
-        if (!cancelled) setFailed(true);
+        if (!cancelled) setUseEmbedFallback(true);
       });
 
     return () => {
@@ -193,7 +222,11 @@ function VibeInstagramChromelessVideo({
     };
   }, [reelUrl]);
 
-  if (failed || !playUrl) {
+  if (useEmbedFallback) {
+    return <VibeInstagramEmbed reelUrl={reelUrl} title={caption} />;
+  }
+
+  if (!playUrl) {
     return (
       <img
         src={poster}
@@ -211,6 +244,7 @@ function VibeInstagramChromelessVideo({
       poster={poster}
       caption={caption}
       videoRefs={videoRefs}
+      onPlaybackFailed={() => setUseEmbedFallback(true)}
     />
   );
 }

@@ -25,6 +25,7 @@ import {
   Warehouse,
   Shield,
   GraduationCap,
+  Trees,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -63,6 +64,7 @@ const AdminLayout = () => {
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section', section: 'placement-section', adminOnly: false },
     { icon: Bus, label: 'Transport', path: '/admin/transport', section: 'transport', adminOnly: false },
     { icon: Warehouse, label: 'Facilities', path: '/admin/facilities', section: 'facilities', adminOnly: false },
+    { icon: Trees, label: 'Campus Life', path: '/admin/campus-life', section: 'campus-life', adminOnly: false },
     { icon: FileText, label: 'All Site Pages', path: '/admin/site-pages', section: 'pages', adminOnly: false },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
     { icon: FileText, label: 'About Us', path: '/admin/pages', section: 'pages', adminOnly: false },
@@ -96,7 +98,8 @@ const AdminLayout = () => {
   const allowedSections = user?.allowedSections || [];
   const sectionAllowed = (section: string) =>
     allowedSections.includes(section) ||
-    (section === 'transport' && allowedSections.includes('transport-routes'));
+    (section === 'transport' && allowedSections.includes('transport-routes')) ||
+    (section === 'campus-life' && (allowedSections.includes('pages') || allowedSections.includes('campus-life')));
 
   const menuItems = allMenuItems.filter((item) => {
     if (item.adminOnly) return isAdmin;

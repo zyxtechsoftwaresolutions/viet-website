@@ -12,6 +12,36 @@ export interface VideoInfo {
   originalUrl: string;
 }
 
+/** Extract Instagram reel/post id from a URL. */
+export function extractInstagramReelId(url: string): string | null {
+  const match = url.match(/instagram\.com\/(?:reel|p|tv)\/([A-Za-z0-9_-]+)/i);
+  return match?.[1] ?? null;
+}
+
+/** Same-origin API path for gallery video playback (dev proxy + production). */
+export function resolveApiMediaPath(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/api/')) return path;
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  return path.startsWith('/') ? `${apiBase}${path}` : `${apiBase}/${path}`;
+}
+
+/** Build a proxied playback URL from resolve-video API response. */
+export function buildProxiedPlaybackUrl(data: {
+  proxyUrl?: string;
+  directUrl?: string;
+}): string | null {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  if (data.proxyUrl) {
+    return resolveApiMediaPath(data.proxyUrl);
+  }
+  if (data.directUrl) {
+    return `${apiBase}/video-proxy?url=${encodeURIComponent(data.directUrl)}`;
+  }
+  return null;
+}
+
 /** Detects if a video string is a full URL (not a relative path). */
 export function isVideoUrl(video: string | null | undefined): boolean {
   if (!video) return false;

@@ -168,8 +168,14 @@ export const SITE_PAGE_SEEDS = [
     route: '/campus-life',
     category: 'Campus',
     content: {
-      hero: { title: 'Campus Life', description: 'Life at VIET campus.' },
-      mainContent: '<p>Edit campus life content here.</p>',
+      hero: {
+        badge: 'VIET Campus',
+        title: 'Campus Life',
+        description: 'Where innovation meets inspiration at Visakha Institute of Engineering and Technology',
+      },
+      mainContent: '<p>Edit campus life photos and content in Admin → Campus Life.</p>',
+      // Full highlight photos are hydrated from admin defaults on first edit/save.
+      // Seed keeps light payload; public page falls back to built-in defaults until saved.
     },
   },
   {

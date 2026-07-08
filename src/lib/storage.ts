@@ -4,6 +4,7 @@
  * Large videos (>6MB) use resumable (TUS) uploads for reliability and to respect higher size limits.
  */
 import { getSupabase, readSupabasePublicConfig, VIDEOS_BUCKET, IMAGES_BUCKET, getVideosPublicUrl, getImagesPublicUrl } from './supabase';
+import { compressImageForUpload, imageTooLargeMessage, isImageTooLargeForUpload } from './compressImage';
 
 export type StorageBucket = 'videos' | 'images';
 
@@ -16,8 +17,11 @@ function isSizeLimitError(message: string): boolean {
     lower.includes('entity too large') ||
     lower.includes('max limit') ||
     lower.includes('maximum size exceeded') ||
+    lower.includes('maximum allowed size') ||
+    lower.includes('exceeded the maximum') ||
     lower.includes('size exceeded') ||
-    lower.includes('file size')
+    lower.includes('file size') ||
+    lower.includes('too large')
   );
 }
 
@@ -115,12 +119,21 @@ export async function uploadToSupabase(
   const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
   const path = `${folder}/${fileName}`;
 
-  const contentType = file.type || 'application/octet-stream';
+  let uploadFile = file;
+  if (resolvedBucket === 'images' && file.type.startsWith('image/')) {
+    uploadFile = await compressImageForUpload(file);
+    if (isImageTooLargeForUpload(uploadFile)) {
+      throw new Error(imageTooLargeMessage(uploadFile));
+    }
+  }
 
-  if (resolvedBucket === 'videos' && file.size > RESUMABLE_THRESHOLD) {
+  const contentType =
+    uploadFile.type || (resolvedBucket === 'images' ? 'image/jpeg' : 'application/octet-stream');
+
+  if (resolvedBucket === 'videos' && uploadFile.size > RESUMABLE_THRESHOLD) {
     try {
       await getSupabase();
-      await uploadVideoResumable(file, path, bucketName, contentType);
+      await uploadVideoResumable(uploadFile, path, bucketName, contentType);
       return getVideosPublicUrl(path);
     } catch (err) {
       console.error('Supabase resumable upload error:', err);
@@ -130,7 +143,7 @@ export async function uploadToSupabase(
 
   const { data, error } = await supabase.storage
     .from(bucketName)
-    .upload(path, file, {
+    .upload(path, uploadFile, {
       contentType,
       upsert: true,
     });

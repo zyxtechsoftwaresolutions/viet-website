@@ -187,31 +187,53 @@ app.get('/api/video-proxy', async (req, res) => {
       return res.status(400).send('URL not allowed');
     }
 
+    const upstreamHeaders = {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Referer: 'https://www.instagram.com/',
+      Accept: 'video/mp4,video/*,*/*',
+    };
+    if (req.headers.range) {
+      upstreamHeaders.Range = req.headers.range;
+    }
+
     const upstream = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Referer: 'https://www.instagram.com/',
-        Accept: 'video/mp4,video/*,*/*',
-      },
+      headers: upstreamHeaders,
       redirect: 'follow',
     });
 
-    if (!upstream.ok) {
+    if (!upstream.ok && upstream.status !== 206) {
       return res.status(502).send('Upstream video unavailable');
     }
 
-    const contentType = upstream.headers.get('content-type') || 'video/mp4';
-    res.setHeader('Content-Type', contentType);
+    res.status(upstream.status);
+    const passHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
+    for (const header of passHeaders) {
+      const value = upstream.headers.get(header);
+      if (value) res.setHeader(header, value);
+    }
+    if (!upstream.headers.get('content-type')) {
+      res.setHeader('Content-Type', 'video/mp4');
+    }
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Accept-Ranges', 'bytes');
+    if (!upstream.headers.get('accept-ranges')) {
+      res.setHeader('Accept-Ranges', 'bytes');
+    }
 
-    const buffer = Buffer.from(await upstream.arrayBuffer());
-    res.send(buffer);
+    if (!upstream.body) {
+      res.end();
+      return;
+    }
+
+    const { Readable } = await import('stream');
+    const { pipeline } = await import('stream/promises');
+    await pipeline(Readable.fromWeb(upstream.body), res);
   } catch (error) {
     console.error('Video proxy error:', error);
-    res.status(500).send('Failed to proxy video');
+    if (!res.headersSent) {
+      res.status(500).send('Failed to proxy video');
+    }
   }
 });
 
@@ -440,7 +462,7 @@ const API_TO_SECTION = [
   [/^\/api\/transport-routes/, 'transport'],
   [/^\/api\/accreditations/, 'accreditations'],
   [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
-  [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport']],
+  [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport', 'campus-life']],
   [/^\/api\/faculty-settings/, 'faculty'],
 ];
 

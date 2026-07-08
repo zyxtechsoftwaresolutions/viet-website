@@ -19,10 +19,6 @@ import {
   Users,
   GraduationCap,
   Award,
-  Building2,
-  Cpu,
-  Wifi,
-  Library,
   FlaskConical,
   Lightbulb,
   Briefcase,
@@ -43,10 +39,8 @@ const NAV_SECTIONS = [
   { id: 'overview', label: 'Overview' },
   { id: 'vision-mission', label: 'Vision & Mission' },
   { id: 'hod', label: 'Head of Department' },
-  { id: 'courses', label: 'Programs Offered' },
   { id: 'curriculum', label: 'Curriculum' },
   { id: 'program-overview', label: 'Program Overview' },
-  { id: 'facilities', label: 'Facilities' },
   { id: 'faculty', label: 'Faculty' },
   { id: 'projects', label: 'Projects', optionalKey: 'projects' as const },
   { id: 'placements', label: 'Placements', optionalKey: 'placements' as const },
@@ -409,7 +403,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   const selectedApiProgram = curriculumPrograms.find((p) => p.name === syllabusProgram);
   const apiRegulations = selectedApiProgram?.regulations ?? [];
 
-  const coursesCategories = Array.isArray(s.courses?.categories) ? s.courses.categories : [];
   const feeItems = Array.isArray(s.fee?.items) ? s.fee.items : [];
   const peosList = commaList(s.programOverview?.peos);
   const psosList = commaList(s.programOverview?.psos);
@@ -778,35 +771,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         </div>
       </section>
 
-      {/* Programs Offered */}
-      <section id="courses" ref={(el) => { sectionRefs.current['courses'] = el; }} className="scroll-mt-24 py-12 md:py-16 bg-slate-50 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Programs Offered" title="Programs Offered" accent="violet" />
-          {coursesCategories.length > 0 ? (
-            <div className="space-y-5">
-              {coursesCategories.map((cat: any) => (
-                <div key={cat.id || cat.name}>
-                  {cat.name && (
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{cat.name}</h3>
-                  )}
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {(cat.programs || []).map((p: any, i: number) => (
-                      <div key={i} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-sm">
-                        <p className="font-semibold text-slate-900 text-sm">{p.name || '—'}</p>
-                        {p.seats && <p className="text-xs text-slate-500 mt-0.5">{p.seats} seats</p>}
-                        {p.fee && <p className="text-xs font-medium text-slate-700 mt-1.5">{p.fee}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm">Programs can be added in the Admin → Department Pages → Programs Offered.</p>
-          )}
-        </div>
-      </section>
-
       {/* Curriculum */}
       <section id="curriculum" ref={(el) => { sectionRefs.current['curriculum'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-amber-50/30 border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
@@ -836,7 +800,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
                     apiRegulations.map((reg) => (
                       <a
                         key={reg.name}
-                        href={`${API_BASE}${reg.fileUrl.startsWith('/') ? reg.fileUrl : `/${reg.fileUrl}`}`}
+                        href={imgUrl(reg.fileUrl) || reg.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         download={reg.fileName || undefined}
@@ -921,64 +885,6 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
           </div>
         </div>
       </section>
-
-      {/* Facilities */}
-      <section id="facilities" ref={(el) => { sectionRefs.current['facilities'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-sky-50/60 border-t border-slate-200">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <SectionHead label="Facilities" title="Facilities" accent="amber" />
-          {Array.isArray(s.facilities?.cards) && s.facilities.cards.length > 0 ? (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {s.facilities.cards.map((card: any, i: number) => {
-                const iconUrl = card.icon ? (card.icon.startsWith('http') ? card.icon : `${API_BASE}${card.icon}`) : null;
-                const accentColors = ['blue', 'emerald', 'violet', 'amber'];
-                const accent = accentColors[i % accentColors.length];
-                return (
-                  <li key={card.id || i} className={`flex items-center gap-3 p-4 rounded-xl border bg-white shadow-sm ${accent === 'blue' ? 'border-blue-200' : accent === 'emerald' ? 'border-emerald-200' : accent === 'violet' ? 'border-violet-200' : 'border-amber-200'}`}>
-                    {iconUrl && (
-                      <div className={`w-5 h-5 shrink-0 flex items-center justify-center ${accent === 'blue' ? 'text-blue-600' : accent === 'emerald' ? 'text-emerald-600' : accent === 'violet' ? 'text-violet-600' : 'text-amber-600'}`}>
-                        <img src={iconUrl} alt={card.name} className="w-full h-full object-contain" />
-                      </div>
-                    )}
-                    {card.href ? (
-                      <Link to={card.href} className="font-medium text-slate-800 text-sm hover:text-blue-600 transition-colors">{card.name || '—'}</Link>
-                    ) : (
-                      <span className="font-medium text-slate-800 text-sm">{card.name || '—'}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : s.facilities?.content ? (
-            renderContent(s.facilities.content)
-          ) : slug === 'cse' ? (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { name: 'Central Library', icon: Library, accent: 'blue', href: '/facilities/library' },
-                { name: 'Computer & Networking Labs', icon: Cpu, accent: 'emerald', href: undefined },
-                { name: 'AI & ML Lab', icon: Cpu, accent: 'violet', href: undefined },
-                { name: 'Hostel', icon: Building2, accent: 'amber', href: '/facilities/hostel' },
-                { name: 'Sports', icon: Building2, accent: 'blue', href: '/facilities/sports' },
-                { name: 'Transport', icon: Building2, accent: 'emerald', href: '/facilities/transport' },
-                { name: 'Medical', icon: Building2, accent: 'violet', href: undefined },
-                { name: 'Canteen', icon: Building2, accent: 'amber', href: undefined },
-                { name: 'Wi-Fi Campus', icon: Wifi, accent: 'blue', href: undefined },
-              ].map(({ name, icon: Icon, accent, href }, i) => (
-                <li key={i} className={`flex items-center gap-3 p-4 rounded-xl border bg-white shadow-sm ${accent === 'blue' ? 'border-blue-200' : accent === 'emerald' ? 'border-emerald-200' : accent === 'violet' ? 'border-violet-200' : 'border-amber-200'}`}>
-                  <Icon className={`w-5 h-5 shrink-0 ${accent === 'blue' ? 'text-blue-600' : accent === 'emerald' ? 'text-emerald-600' : accent === 'violet' ? 'text-violet-600' : 'text-amber-600'}`} />
-                  {href ? (
-                    <Link to={href} className="font-medium text-slate-800 text-sm hover:text-blue-600 transition-colors">{name}</Link>
-                  ) : (
-                    <span className="font-medium text-slate-800 text-sm">{name}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-slate-500 text-sm">Add facility cards in Admin → Department Pages → Facilities.</p>
-          )}
-        </div>
-      </section>
-
 
       {/* Faculty */}
       <section id="faculty" ref={(el) => { sectionRefs.current['faculty'] = el; }} className="scroll-mt-24 py-20 md:py-28 bg-slate-50 border-t border-slate-200">
