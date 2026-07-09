@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, ExternalLink, Plus, Save, Trash2 } from 'lucide-react';
 import { imgUrl } from '@/lib/imageUtils';
 import { getFacilityBySlug } from '@/lib/facilityPagesRegistry';
+import { getFacilityHeroDefaults } from '@/lib/facilityPageDefaults';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 
 type FacilityPageEditorProps = {
@@ -23,12 +24,14 @@ type FacilityPageEditorProps = {
 const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
   const navigate = useNavigate();
   const facilityDef = getFacilityBySlug(slug);
+  const heroDefaults = getFacilityHeroDefaults(slug);
   const [pageId, setPageId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     heroTitle: '',
+    heroBadge: '',
     heroDescription: '',
     heroImage: '' as string,
     heroImageFile: null as File | null,
@@ -52,8 +55,9 @@ const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
         const hero = (c.hero || {}) as Record<string, string>;
         setFormData({
           title: page.title || facilityDef?.title || '',
-          heroTitle: hero.title || '',
-          heroDescription: hero.description || '',
+          heroTitle: hero.title || heroDefaults.title,
+          heroBadge: hero.badge || heroDefaults.badge,
+          heroDescription: hero.description || heroDefaults.description,
           heroImage: hero.heroImage || (c.heroImage as string) || '',
           heroImageFile: null,
           heroVideo: hero.video || '',
@@ -72,8 +76,9 @@ const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
         setFormData((prev) => ({
           ...prev,
           title: facilityDef?.title || slug,
-          heroTitle: facilityDef?.title || slug,
-          heroDescription: facilityDef?.description || '',
+          heroTitle: heroDefaults.title,
+          heroBadge: heroDefaults.badge,
+          heroDescription: heroDefaults.description || facilityDef?.description || '',
         }));
         toast.info('Page not in database yet — saving will create it.');
       }
@@ -82,8 +87,9 @@ const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
       setFormData((prev) => ({
         ...prev,
         title: facilityDef?.title || slug,
-        heroTitle: facilityDef?.title || slug,
-        heroDescription: facilityDef?.description || '',
+        heroTitle: heroDefaults.title,
+        heroBadge: heroDefaults.badge,
+        heroDescription: heroDefaults.description || facilityDef?.description || '',
       }));
       toast.error('Could not load page content.');
     } finally {
@@ -123,6 +129,7 @@ const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
 
       const content: Record<string, unknown> = {
         hero: {
+          badge: formData.heroBadge || undefined,
           title: formData.heroTitle || formData.title,
           description: formData.heroDescription,
           heroImage: heroImageUrl || undefined,
@@ -278,6 +285,14 @@ const FacilityPageEditor = ({ slug }: FacilityPageEditorProps) => {
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g. Library"
+                />
+              </div>
+              <div>
+                <Label>Hero Badge</Label>
+                <Input
+                  value={formData.heroBadge}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, heroBadge: e.target.value }))}
+                  placeholder="e.g. Empowering through service"
                 />
               </div>
               <div>

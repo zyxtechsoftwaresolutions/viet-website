@@ -3,6 +3,8 @@
  * Keeps admin editors and public routes in sync (no "row does not exist" errors).
  */
 
+import { FACILITY_SEED_CONTENT, mergeDedicatedFacilityContent } from './facilitySeedContent.js';
+
 export const SITE_PAGE_SEEDS = [
   // —— About & governance ——
   {
@@ -206,8 +208,10 @@ export const SITE_PAGE_SEEDS = [
     category: 'Facilities',
     content: {
       hero: {
-        title: 'Transport',
-        description: 'Safe and comfortable transport facility for students and faculty',
+        badge: 'Facilities',
+        title: 'Campus Transport',
+        description:
+          'VIET provides safe and reliable bus transport for students and staff from various points in and around Visakhapatnam to our campus at Narava.',
       },
       mainContent: `<p>Our College provides safe and comfortable Transport facility with own new Buses from every corner of the city.</p>
 <p>Transportation is available for conducting industrial visits, placement drives, and campus activities.</p>`,
@@ -237,7 +241,11 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/library',
     category: 'Facilities',
     content: {
-      hero: { title: 'Our Library', description: 'A place of knowledge, inspiration, and academic excellence.' },
+      hero: {
+        badge: 'Facilities',
+        title: 'Our Library',
+        description: 'A place of knowledge, inspiration, and academic excellence.',
+      },
       mainContent: '<p>The VIET library offers books, journals, digital resources, and a quiet study environment for students and faculty.</p>',
       features: [
         { title: 'Vast Collection', description: 'Books, journals, and reference materials.', icon: 'star', accent: 'indigo' },
@@ -252,7 +260,11 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/laboratory',
     category: 'Facilities',
     content: {
-      hero: { title: 'Laboratories', description: 'Hands-on learning with modern lab facilities.' },
+      hero: {
+        badge: 'Facilities',
+        title: 'Our Laboratories',
+        description: 'Where theory meets practice — advanced engineering labs.',
+      },
       mainContent: '<p>Department-wise laboratories equipped for practical learning and research.</p>',
     },
   },
@@ -262,7 +274,11 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/hostel',
     category: 'Facilities',
     content: {
-      hero: { title: 'Hostel', description: 'Comfortable accommodation for students.' },
+      hero: {
+        badge: 'Facilities',
+        title: 'Our Hostel',
+        description: 'A safe, comfortable, and vibrant living environment for students. Home away from home.',
+      },
       mainContent: '<p>Separate hostels for men and women with mess, security, and study facilities.</p>',
     },
   },
@@ -272,7 +288,12 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/nss',
     category: 'Facilities',
     content: {
-      hero: { title: 'National Service Scheme (NSS)', description: 'Community service and social responsibility.' },
+      hero: {
+        badge: 'Empowering through service',
+        title: 'National Service Scheme',
+        description:
+          "Not Me, But You — Building tomorrow's leaders through community service and social responsibility.",
+      },
       mainContent: '<p>NSS unit activities, camps, and community outreach at VIET.</p>',
     },
   },
@@ -282,7 +303,12 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/sports',
     category: 'Facilities',
     content: {
-      hero: { title: 'Sports', description: 'Sports and fitness facilities at VIET.' },
+      hero: {
+        badge: 'Facilities',
+        title: 'Sports & Games',
+        description:
+          'A dedicated indoor sports room, expert PT staff, and a wide range of indoor and outdoor games for fitness and fun.',
+      },
       mainContent: '<p>Indoor and outdoor sports facilities for students.</p>',
     },
   },
@@ -292,7 +318,12 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/cafeteria',
     category: 'Facilities',
     content: {
-      hero: { title: 'Cafeteria', description: 'Hygienic food and refreshments on campus.' },
+      hero: {
+        badge: 'Facilities',
+        title: 'Cafeteria & Canteen',
+        description:
+          'A hygienic, spacious cafeteria offering a variety of meals, snacks, and beverages at affordable prices for students and staff.',
+      },
       mainContent: '<p>Campus cafeteria serving meals and snacks for students and staff.</p>',
     },
   },
@@ -302,7 +333,7 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/center-of-excellence',
     category: 'Facilities',
     content: {
-      hero: { title: 'Center of Excellence', description: 'EISC, COE and innovation labs.' },
+      hero: { badge: 'Facilities', title: 'Center of Excellence', description: 'EISC, COE and innovation labs.' },
       mainContent: '<p>Centers of excellence driving innovation, research, and industry collaboration at VIET.</p>',
     },
   },
@@ -312,7 +343,7 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/wifi',
     category: 'Facilities',
     content: {
-      hero: { title: 'WIFI', description: 'High-speed internet connectivity across campus.' },
+      hero: { badge: 'Facilities', title: 'WIFI', description: 'High-speed internet connectivity across campus.' },
       mainContent: '<p>High-speed Wi-Fi connectivity available for students and faculty throughout the campus.</p>',
     },
   },
@@ -322,7 +353,7 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/medical-facility',
     category: 'Facilities',
     content: {
-      hero: { title: 'Medical Facility', description: 'Healthcare services on campus.' },
+      hero: { badge: 'Facilities', title: 'Medical Facility', description: 'Healthcare services on campus.' },
       mainContent: '<p>On-campus medical facility providing healthcare support for students and staff.</p>',
     },
   },
@@ -332,7 +363,7 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/ro-water-plant',
     category: 'Facilities',
     content: {
-      hero: { title: 'RO Water Plant', description: 'Safe drinking water facility.' },
+      hero: { badge: 'Facilities', title: 'RO Water Plant', description: 'Safe drinking water facility.' },
       mainContent: '<p>RO water plant ensuring safe and clean drinking water across the campus.</p>',
     },
   },
@@ -342,7 +373,7 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/green-initiatives',
     category: 'Facilities',
     content: {
-      hero: { title: 'Green Initiatives', description: 'Eco-friendly campus initiatives.' },
+      hero: { badge: 'Facilities', title: 'Green Initiatives', description: 'Eco-friendly campus initiatives.' },
       mainContent: '<p>VIET promotes sustainability through green campus initiatives and environmental awareness.</p>',
     },
   },
@@ -352,13 +383,32 @@ export const SITE_PAGE_SEEDS = [
     route: '/facilities/solar-power-plant',
     category: 'Facilities',
     content: {
-      hero: { title: 'Solar Power Plant', description: 'Renewable energy on campus.' },
+      hero: { badge: 'Facilities', title: 'Solar Power Plant', description: 'Renewable energy on campus.' },
       mainContent: '<p>Solar power plant contributing to renewable energy and sustainable campus operations.</p>',
     },
   },
 ];
 
 const DEPRECATED_PAGE_SLUGS = ['digital-library'];
+
+function mergeSeedContent(existing = {}, seed = {}) {
+  const out = { ...seed, ...existing };
+  out.hero = { ...(seed.hero || {}), ...(existing.hero || {}) };
+  for (const key of ['stats', 'features', 'gallery']) {
+    const ex = existing[key];
+    const sd = seed[key];
+    if ((!Array.isArray(ex) || ex.length === 0) && Array.isArray(sd) && sd.length > 0) {
+      out[key] = sd;
+    }
+  }
+  if (!existing.mainContent && seed.mainContent) {
+    out.mainContent = seed.mainContent;
+  }
+  if (!existing.mapEmbed && seed.mapEmbed) {
+    out.mapEmbed = seed.mapEmbed;
+  }
+  return out;
+}
 
 export async function seedMissingSitePages(db) {
   for (const slug of DEPRECATED_PAGE_SLUGS) {
@@ -378,7 +428,18 @@ export async function seedMissingSitePages(db) {
   for (const seed of SITE_PAGE_SEEDS) {
     try {
       const existing = await db.getPageBySlug(seed.slug);
+      const dedicatedSeed = FACILITY_SEED_CONTENT[seed.slug];
+      const seedContent = dedicatedSeed || seed.content || {};
+
       if (existing) {
+        const merged = dedicatedSeed
+          ? mergeDedicatedFacilityContent(existing.content || {}, dedicatedSeed)
+          : mergeSeedContent(existing.content || {}, seed.content || {});
+        const changed = JSON.stringify(merged) !== JSON.stringify(existing.content || {});
+        if (changed) {
+          await db.updatePage(existing.id, { content: merged });
+          console.log(`[pages] Merged seed content into: ${seed.slug}`);
+        }
         skipped += 1;
         continue;
       }
@@ -387,7 +448,7 @@ export async function seedMissingSitePages(db) {
         title: seed.title,
         route: seed.route,
         category: seed.category,
-        content: seed.content || {},
+        content: seedContent,
       });
       created += 1;
       console.log(`[pages] Seeded: ${seed.slug}`);

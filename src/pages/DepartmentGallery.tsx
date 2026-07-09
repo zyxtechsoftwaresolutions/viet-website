@@ -136,9 +136,7 @@ const DepartmentGallery: React.FC = () => {
 
   // Get gallery filter from shared department config (aliases map URL slugs to config keys)
   const getGalleryFilter = (s: string) => {
-    const slugAliases: Record<string, string> = { ame: 'automobile' };
-    const resolved = slugAliases[s] ?? s;
-    const config = getDepartmentPageConfig(resolved);
+    const config = getDepartmentPageConfig(s);
     return config?.galleryFilter ?? (() => false);
   };
 
@@ -146,7 +144,7 @@ const DepartmentGallery: React.FC = () => {
   const getGalleryBackHref = (s: string) => {
     const config = getDepartmentPageConfig(s);
     if (config) return `/programs/department/${s}`;
-    const ugSlugs = ['cse', 'ece', 'eee', 'mechanical', 'civil', 'ame', 'bsh', 'cyber-security', 'data-science', 'aiml'];
+    const ugSlugs = ['cse', 'ece', 'eee', 'mechanical', 'civil', 'bsh', 'cyber-security', 'data-science', 'aiml'];
     if (ugSlugs.includes(s || '')) return `/programs/engineering/ug/${s}`;
     return `/programs/department/${s || ''}`;
   };
@@ -161,7 +159,6 @@ const DepartmentGallery: React.FC = () => {
       'eee': 'Electrical and Electronics Engineering',
       'mechanical': 'Mechanical Engineering',
       'civil': 'Civil Engineering',
-      'ame': 'Automobile Engineering',
       'bsh': 'Basic Sciences and Humanities',
       'cyber-security': 'Cyber Security',
       'data-science': 'Data Science',

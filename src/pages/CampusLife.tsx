@@ -10,7 +10,7 @@ import {
   highlightGridClass,
   type CampusLifeContent,
 } from '@/lib/campusLifeContent';
-import { resolveHeroMedia } from '@/lib/heroMedia';
+import { resolveHeroMedia, heroHasVideo } from '@/lib/heroMedia';
 import HeroMediaBackground from '@/components/HeroMediaBackground';
 
 export default function CampusLife() {
@@ -44,6 +44,7 @@ export default function CampusLife() {
   };
 
   const heroMedia = resolveHeroMedia(content.hero);
+  const hasBackgroundMedia = heroHasVideo(heroMedia) || Boolean(heroMedia.imageUrl);
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -55,10 +56,12 @@ export default function CampusLife() {
           fallbackGradient="linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)"
           imageOpacityClass="opacity-100"
         />
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-black/60 from-40% via-black/40 to-transparent z-[1]"
-          aria-hidden
-        />
+        {hasBackgroundMedia && (
+          <div
+            className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-r from-black/50 from-0% via-black/20 via-[30%] to-transparent to-[55%]"
+            aria-hidden
+          />
+        )}
         <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
           <motion.div
             className="max-w-2xl"

@@ -500,18 +500,21 @@ function ExplorePathStreamColumn({
   groups,
   columnIndex,
   onSelect,
+  sectionId,
 }: {
   title: string;
   groups: ExploreProgramGroup[];
   columnIndex: number;
   onSelect: (href: string) => void;
+  sectionId?: string;
 }) {
   const totalCount = groups.reduce((sum, group) => sum + group.items.length, 0);
   const density = getExploreDensity(totalCount);
 
   return (
     <div
-      className={`flex flex-1 flex-col min-h-0 min-w-0 px-3 sm:px-4 lg:px-5 py-4 lg:py-3 ${EXPLORE_COLUMN_BORDERS[columnIndex] ?? ''}`}
+      id={sectionId}
+      className={`flex flex-1 flex-col min-h-0 min-w-0 px-3 sm:px-4 lg:px-5 py-4 lg:py-3 scroll-mt-24 ${EXPLORE_COLUMN_BORDERS[columnIndex] ?? ''}`}
     >
       <div className="text-center mb-3 shrink-0">
         <h3
@@ -1101,6 +1104,7 @@ const HeroSection = () => {
                 return streams.map((stream, index) => (
                   <ExplorePathStreamColumn
                     key={stream.id}
+                    sectionId={`programs-${stream.id}`}
                     title={stream.title}
                     groups={stream.groups}
                     columnIndex={index}

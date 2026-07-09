@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Mail,
   Phone,
@@ -9,6 +9,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { visitorCountAPI } from '@/lib/api';
+import { scrollToHashSection, scrollToPageTop } from '@/lib/scrollToHashSection';
 
 const SESSION_KEY = 'viet_visit_counted';
 
@@ -30,17 +31,59 @@ const InstagramIcon = () => (
   </svg>
 );
 
-const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-  <li>
-    <a
-      href={href}
-      className="group inline-flex items-center gap-1.5 text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200"
-    >
-      <span className="w-0 group-hover:w-2 h-px bg-primary transition-all duration-200 shrink-0" aria-hidden />
-      {children}
-    </a>
-  </li>
-);
+const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const className =
+    'group inline-flex items-center gap-1.5 text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200';
+  const indicator = (
+    <span className="w-0 group-hover:w-2 h-px bg-primary transition-all duration-200 shrink-0" aria-hidden />
+  );
+
+  const isExternal =
+    href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('https://wa.me');
+
+  const handleInternalClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const hashIndex = href.indexOf('#');
+
+    if (hashIndex !== -1) {
+      const path = href.slice(0, hashIndex) || '/';
+      const sectionId = href.slice(hashIndex + 1);
+      const targetPath = path === '' ? '/' : path;
+
+      if (location.pathname === targetPath && sectionId) {
+        e.preventDefault();
+        if (location.hash !== `#${sectionId}`) {
+          navigate({ pathname: targetPath, hash: sectionId });
+        }
+        scrollToHashSection(`#${sectionId}`, 50);
+        return;
+      }
+      return;
+    }
+
+    if (href === location.pathname) {
+      e.preventDefault();
+      scrollToPageTop();
+    }
+  };
+
+  return (
+    <li>
+      {isExternal ? (
+        <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+          {indicator}
+          {children}
+        </a>
+      ) : (
+        <Link to={href} className={className} onClick={handleInternalClick}>
+          {indicator}
+          {children}
+        </Link>
+      )}
+    </li>
+  );
+};
 
 const FooterSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="min-w-0">
@@ -103,11 +146,11 @@ const Footer = () => {
   ];
 
   const academicsLinks = [
-    { name: 'Diploma Programs', href: '/btech' },
-    { name: 'B.Tech Programs', href: '/btech' },
-    { name: 'M.Tech Programs', href: '/btech' },
-    { name: 'BBA / MBA', href: '/btech' },
-    { name: 'BCA / MCA', href: '/btech' },
+    { name: 'Diploma Programs', href: '/#programs-diploma' },
+    { name: 'B.Tech Programs', href: '/#programs-btech' },
+    { name: 'M.Tech Programs', href: '/#programs-mtech' },
+    { name: 'BBA / MBA', href: '/#programs-management' },
+    { name: 'BCA / MCA', href: '/#programs-management' },
     { name: 'Faculty', href: '/faculty' },
     { name: 'Examinations (UG/PG)', href: '/examinations/ug-pg' },
     { name: 'Examinations (Diploma)', href: '/examinations/diploma' },

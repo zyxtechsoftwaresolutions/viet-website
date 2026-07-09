@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Chatbot from "./components/Chatbot";
+import ScrollToTop from "./components/ScrollToTop";
 import SocialFloatingIcons from "./components/SocialFloatingIcons";
 import AdmissionPopup from "./components/AdmissionPopup";
 // Critical components - loaded immediately (above the fold)
@@ -29,7 +30,6 @@ const ComputerScience = lazy(() => import("./pages/ComputerScience"));
 const CyberSecurity = lazy(() => import("./pages/CyberSecurity"));
 const DataScience = lazy(() => import("./pages/DataScience"));
 const AIML = lazy(() => import("./pages/AIML"));
-const AutomobileEngineering = lazy(() => import("./pages/AutomobileEngineering"));
 const BSH = lazy(() => import("./pages/BSH"));
 const CivilEngineering = lazy(() => import("./pages/CivilEngineering"));
 const ECE = lazy(() => import("./pages/ECE"));
@@ -43,6 +43,13 @@ const DiplomaSBTET = lazy(() => import("./pages/DiplomaSBTET"));
 const AQAR2023_2024 = lazy(() => import("./pages/AQAR2023-2024"));
 const AQAR2022_2023 = lazy(() => import("./pages/AQAR2022-2023"));
 const AQAR2021_2022 = lazy(() => import("./pages/AQAR2021-2022"));
+const Transport = lazy(() => import("./pages/Transport"));
+const Library = lazy(() => import("./pages/Library"));
+const Laboratory = lazy(() => import("./pages/Laboratory"));
+const Hostel = lazy(() => import("./pages/Hostel"));
+const NSSPage = lazy(() => import("./pages/NSS"));
+const Sports = lazy(() => import("./pages/Sports"));
+const Cafeteria = lazy(() => import("./pages/Cafeteria"));
 const FacilityPage = lazy(() => import("./pages/FacilityPage"));
 const CampusLife = lazy(() => import("./pages/CampusLife"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -51,6 +58,7 @@ const DynamicRouteHandler = lazy(() => import("./components/DynamicRouteHandler"
 const FacultyPage = lazy(() => import("./pages/FacultyPage"));
 const DepartmentGallery = lazy(() => import("./pages/DepartmentGallery"));
 const GenericDepartmentPage = lazy(() => import("./pages/GenericDepartmentPage"));
+const HomeSectionRedirect = lazy(() => import("./components/HomeSectionRedirect"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -104,9 +112,11 @@ const App = () => (  <QueryClientProvider client={queryClient}>
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ScrollToTop />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/btech" element={<HomeSectionRedirect sectionId="programs-btech" />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/vision-mission" element={<VisionMission />} />
             <Route path="/chairman" element={<Chairman />} />
@@ -133,8 +143,6 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/data-science" element={<DataScience />} />
             <Route path="/programs/engineering/ug/aiml" element={<AIML />} />
             <Route path="/aiml" element={<AIML />} />
-            <Route path="/automobile-engineering" element={<AutomobileEngineering />} />
-            <Route path="/programs/engineering/ug/ame" element={<AutomobileEngineering />} />
             <Route path="/bs-h" element={<BSH />} />
             <Route path="/programs/engineering/ug/bsh" element={<BSH />} />
             <Route path="/civil-engineering-ug" element={<CivilEngineering />} />
@@ -150,13 +158,13 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/aqar-2023-2024" element={<AQAR2023_2024 />} />
             <Route path="/aqar-2022-2023" element={<AQAR2022_2023 />} />
             <Route path="/aqar-2021-2022" element={<AQAR2021_2022 />} />
-            <Route path="/facilities/transport" element={<FacilityPage slugOverride="transport" />} />
-            <Route path="/facilities/library" element={<FacilityPage slugOverride="library" />} />
-            <Route path="/facilities/laboratory" element={<FacilityPage slugOverride="laboratory" />} />
-            <Route path="/facilities/hostel" element={<FacilityPage slugOverride="hostel" />} />
-            <Route path="/facilities/nss" element={<FacilityPage slugOverride="nss" />} />
-            <Route path="/facilities/sports" element={<FacilityPage slugOverride="sports" />} />
-            <Route path="/facilities/cafeteria" element={<FacilityPage slugOverride="cafeteria" />} />
+            <Route path="/facilities/transport" element={<Transport />} />
+            <Route path="/facilities/library" element={<Library />} />
+            <Route path="/facilities/laboratory" element={<Laboratory />} />
+            <Route path="/facilities/hostel" element={<Hostel />} />
+            <Route path="/facilities/nss" element={<NSSPage />} />
+            <Route path="/facilities/sports" element={<Sports />} />
+            <Route path="/facilities/cafeteria" element={<Cafeteria />} />
             <Route path="/facilities/:slug" element={<FacilityPage />} />
             <Route path="/campus-life" element={<CampusLife />} />
             <Route path="/faculty" element={<FacultyPage />} />

@@ -46,7 +46,6 @@ const DEPARTMENT_SLUGS = [
   { value: 'eee', label: 'ENGINEERING UG - Electrical & Electronics (EEE)' },
   { value: 'civil', label: 'ENGINEERING UG - Civil Engineering' },
   { value: 'mechanical', label: 'ENGINEERING UG - Mechanical Engineering' },
-  { value: 'automobile', label: 'ENGINEERING UG - Automobile Engineering (AME)' },
   { value: 'bsh', label: 'ENGINEERING UG - Basic Science & Humanities (BS&H)' },
   // Diploma
   { value: 'diploma-civil', label: 'DIPLOMA - Civil Engineering' },
@@ -396,8 +395,8 @@ const DepartmentPages = () => {
         return (sections.faculty?.hodIds ?? []).includes(item.id);
       }
       const deptConfig = getDepartmentPageConfig(slug);
-      const deptFilter = deptConfig?.facultyFilter;
-      return deptFilter ? deptFilter(item.department || '') : false;
+      const strictFilter = deptConfig?.strictDeptFilter ?? deptConfig?.facultyFilter;
+      return strictFilter ? strictFilter(item.department || '') : false;
     }
     return (sections.faculty?.facultyIds ?? []).includes(item.id);
   };

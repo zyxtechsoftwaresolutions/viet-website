@@ -1,4 +1,13 @@
-export type FacilityEditorKind = 'standard' | 'campus-life' | 'transport';
+export type FacilityEditorKind =
+  | 'standard'
+  | 'campus-life'
+  | 'transport'
+  | 'nss'
+  | 'hostel'
+  | 'library'
+  | 'laboratory'
+  | 'sports'
+  | 'cafeteria';
 
 export type FacilityPageDef = {
   slug: string;
@@ -29,35 +38,35 @@ export const FACILITY_PAGES: FacilityPageDef[] = [
     title: 'Library',
     route: '/facilities/library',
     description: 'Digital and physical library resources.',
-    editor: 'standard',
+    editor: 'library',
   },
   {
     slug: 'laboratory',
     title: 'Laboratories',
     route: '/facilities/laboratory',
     description: 'State-of-the-art labs and equipment.',
-    editor: 'standard',
+    editor: 'laboratory',
   },
   {
     slug: 'nss',
     title: 'NSS',
     route: '/facilities/nss',
     description: 'National Service Scheme activities.',
-    editor: 'standard',
+    editor: 'nss',
   },
   {
     slug: 'hostel',
     title: 'Hostel',
     route: '/facilities/hostel',
     description: 'Comfortable accommodation facilities.',
-    editor: 'standard',
+    editor: 'hostel',
   },
   {
     slug: 'sports',
     title: 'Sports',
     route: '/facilities/sports',
     description: 'Sports facilities and activities.',
-    editor: 'standard',
+    editor: 'sports',
   },
   {
     slug: 'wifi',
@@ -85,7 +94,7 @@ export const FACILITY_PAGES: FacilityPageDef[] = [
     title: 'Cafeteria',
     route: '/facilities/cafeteria',
     description: 'Food and dining facilities.',
-    editor: 'standard',
+    editor: 'cafeteria',
   },
   {
     slug: 'ro-water-plant',

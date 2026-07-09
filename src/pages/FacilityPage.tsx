@@ -6,8 +6,8 @@ import Footer from '@/components/Footer';
 import { pagesAPI, transportRoutesAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import { sanitizeRichHtml, sanitizeMapEmbed } from '@/lib/sanitizeHtml';
-import { resolveHeroMedia } from '@/lib/heroMedia';
-import HeroMediaBackground from '@/components/HeroMediaBackground';
+import FacilityWaveHero from '@/components/FacilityWaveHero';
+import { getFacilityHeroDefaults } from '@/lib/facilityPageDefaults';
 import NotFound from './NotFound';
 
 const COLOR_ORDER = [
@@ -83,11 +83,13 @@ const FacilityPage = ({ slugOverride }: { slugOverride?: string } = {}) => {
   }
 
   const content = page.content || {};
-  const hero = content.hero || {};
-  const heroTitle = hero.title || page.title;
-  const heroDescription = hero.description || '';
-  const heroImage = hero.heroImage || content.heroImage;
-  const heroMedia = resolveHeroMedia({ ...hero, heroImage });
+  const heroDefaults = getFacilityHeroDefaults(slug || '');
+  const cmsHero = content.hero || {};
+  const heroTitle = cmsHero.title || page.title || heroDefaults.title;
+  const heroDescription = cmsHero.description || heroDefaults.description;
+  const heroBadge = cmsHero.badge || heroDefaults.badge;
+  const heroImage = cmsHero.heroImage || content.heroImage;
+  const heroVideo = cmsHero.video || '';
   const mainContent = content.mainContent || '';
   const stats = Array.isArray(content.stats) && content.stats.length > 0
     ? content.stats
@@ -115,33 +117,17 @@ const FacilityPage = ({ slugOverride }: { slugOverride?: string } = {}) => {
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
 
-      {/* Hero */}
-      <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-end text-white overflow-hidden"
-      >
-        <HeroMediaBackground media={heroMedia} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-[1]" aria-hidden />
-        <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
-          <motion.div
-            className="max-w-2xl text-left"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
-              Facilities
-            </p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
-              {heroTitle}
-            </h1>
-            {heroDescription && (
-              <p className="text-base md:text-lg text-white/90 leading-relaxed">
-                {heroDescription}
-              </p>
-            )}
-          </motion.div>
-        </div>
-      </section>
+      <FacilityWaveHero
+        badge={heroBadge}
+        title={heroTitle}
+        description={heroDescription}
+        heroImage={heroImage}
+        video={heroVideo}
+        gradient={heroDefaults.gradient}
+        waveFill={heroDefaults.waveFill}
+        showDotPattern={heroDefaults.showDotPattern}
+        align={heroDefaults.align}
+      />
 
       {/* Stats */}
       {stats.length > 0 && (

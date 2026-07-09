@@ -1,47 +1,36 @@
 import { motion } from "framer-motion";
-import { BookOpen, Clock, Users, Wifi, MapPin, Coffee } from "lucide-react";
+import { BookOpen, Clock, Users, Wifi, MapPin, Coffee, type LucideIcon } from "lucide-react";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
+import FacilityWaveHero from "@/components/FacilityWaveHero";
+import { useFacilityCms } from "@/hooks/useFacilityCms";
+
+const FEATURE_ICONS: Record<string, LucideIcon> = {
+  "book-open": BookOpen,
+  users: Users,
+  wifi: Wifi,
+  clock: Clock,
+  coffee: Coffee,
+  "map-pin": MapPin,
+};
 
 const Library = () => {
-  const features = [
-    { icon: BookOpen, title: "Vast Collection", description: "50,000+ books, journals, magazines, and reference materials" },
-    { icon: Users, title: "Spacious Reading Hall", description: "Seating capacity for 500+ students with comfortable furniture" },
-    { icon: Wifi, title: "Free Wi-Fi", description: "High-speed internet access for research and online resources" },
-    { icon: Clock, title: "Extended Hours", description: "Open from 8 AM to 8 PM on weekdays, 9 AM to 5 PM on weekends" },
-    { icon: Coffee, title: "Refreshment Zone", description: "Cafeteria nearby for snacks and beverages" },
-    { icon: MapPin, title: "Central Location", description: "Located in the main academic building, easily accessible" },
-  ];
+  const { hero, content } = useFacilityCms("library");
 
   return (
     <div className="min-h-screen bg-slate-100">
       <LeaderPageNavbar backHref="/" />
 
-      {/* Hero — Chairman-style spacing */}
-      <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-center text-white"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden />
-        <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
-          <motion.div
-            className="max-w-2xl"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
-              Facilities
-            </p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
-              Our Library
-            </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed">
-              A place of knowledge, inspiration, and academic excellence.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <FacilityWaveHero
+        badge={hero.badge}
+        title={hero.title}
+        description={hero.description}
+        heroImage={hero.heroImage}
+        video={hero.video}
+        gradient={hero.gradient}
+        waveFill={hero.waveFill}
+        align={hero.align}
+      />
 
       {/* About — Chairman-style section */}
       <section className="py-20 md:py-28 bg-[#fafafa] border-t border-slate-200">
@@ -54,23 +43,18 @@ const Library = () => {
             className="relative"
           >
             <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-4">
-              About our library
+              {content.about.label}
             </p>
             <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-slate-900 tracking-tight mb-8 leading-tight">
-              About Our Library
+              {content.about.title}
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
             <div className="text-slate-600 text-[1.0625rem] md:text-lg leading-[1.85]">
-              <p className="mb-6">
-                The college library is the heart of our academic community. Established in 1985, our library
-                has grown to house over <strong className="text-slate-800 font-semibold">50,000 books</strong>,
-                covering all major disciplines including Science, Arts, Commerce, Engineering, and Humanities.
-              </p>
-              <p>
-                Our library provides a peaceful and conducive environment for learning, research, and
-                intellectual growth. With modern facilities and dedicated staff, we are committed to
-                supporting the academic success of every student.
-              </p>
+              {content.about.paragraphs.map((paragraph, i) => (
+                <p key={i} className={i < content.about.paragraphs.length - 1 ? "mb-6" : ""}>
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </motion.div>
         </div>
@@ -93,8 +77,8 @@ const Library = () => {
             </h2>
             <div className="h-px w-16 bg-slate-300 mb-10" aria-hidden />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
+              {content.features.map((feature, index) => {
+                const Icon = FEATURE_ICONS[feature.icon] ?? BookOpen;
                 return (
                   <motion.div
                     key={index}
@@ -130,19 +114,14 @@ const Library = () => {
             transition={{ duration: 0.6 }}
           >
             <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-white/70 uppercase mb-4">
-              At a glance
+              {content.collection.label}
             </p>
             <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-white tracking-tight mb-8 leading-tight">
-              Our Collection
+              {content.collection.title}
             </h2>
             <div className="h-px w-16 bg-white/40 mb-10" aria-hidden />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-left">
-              {[
-                { value: "50,000+", label: "Books" },
-                { value: "200+", label: "Journals" },
-                { value: "500+", label: "Magazines" },
-                { value: "1,000+", label: "E-Books" },
-              ].map((stat, index) => (
+              {content.collection.stats.map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -177,11 +156,7 @@ const Library = () => {
               </h3>
               <div className="h-px w-16 bg-slate-300 mb-6" aria-hidden />
               <div className="space-y-0">
-                {[
-                  { day: "Monday - Friday", time: "8:00 AM - 8:00 PM" },
-                  { day: "Saturday", time: "9:00 AM - 5:00 PM" },
-                  { day: "Sunday", time: "10:00 AM - 4:00 PM" },
-                ].map((item, index) => (
+                {content.timings.map((item, index) => (
                   <div key={index} className="flex justify-between py-3 border-b border-slate-200">
                     <span className="text-slate-800">{item.day}</span>
                     <span className="text-amber-600 font-medium">{item.time}</span>
@@ -204,11 +179,9 @@ const Library = () => {
               </h3>
               <div className="h-px w-16 bg-slate-300 mb-6" aria-hidden />
               <ul className="space-y-3 text-slate-600 text-[1.0625rem] leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Maintain silence in the reading area</li>
-                <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Valid ID card required for entry</li>
-                <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Books can be borrowed for 14 days</li>
-                <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> No food or drinks inside the library</li>
-                <li className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> Handle books with care</li>
+                {content.rules.map((rule, index) => (
+                  <li key={index} className="flex items-start gap-2"><span className="text-amber-600 shrink-0">•</span> {rule}</li>
+                ))}
               </ul>
             </motion.div>
           </div>

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
-import { pagesAPI, transportRoutesAPI } from "@/lib/api";
+import FacilityWaveHero from "@/components/FacilityWaveHero";
+import { useFacilityPageContent } from "@/hooks/useFacilityPageContent";
+import { transportRoutesAPI } from "@/lib/api";
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 
 // Fallback data: bus no, driver, contact, capacity, image for hover
@@ -31,18 +33,14 @@ const DEFAULT_WHY_FEATURES = [
 const COLOR_ORDER = ["from-indigo-500 to-blue-600", "from-indigo-600 to-slate-700", "from-blue-500 to-indigo-600", "from-slate-600 to-indigo-700"];
 
 const Transport = () => {
-  const [pageContent, setPageContent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { hero, cmsContent } = useFacilityPageContent("transport");
   const [routesList, setRoutesList] = useState<typeof DEFAULT_ROUTES>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchRoutes = async () => {
       try {
-        const [page, apiRoutes] = await Promise.all([
-          pagesAPI.getBySlug("transport").catch(() => null),
-          transportRoutesAPI.getAll().catch(() => []),
-        ]);
-        setPageContent(page?.content || null);
+        const apiRoutes = await transportRoutesAPI.getAll().catch(() => []);
         if (Array.isArray(apiRoutes) && apiRoutes.length > 0) {
           setRoutesList(
             apiRoutes.map((r: any, i: number) => ({
@@ -65,17 +63,17 @@ const Transport = () => {
           setRoutesList(DEFAULT_ROUTES);
         }
       } catch {
-        setPageContent(null);
         setRoutesList(DEFAULT_ROUTES);
       } finally {
         setLoading(false);
       }
     };
-    fetchContent();
+    fetchRoutes();
   }, []);
 
-  const heroTitle = pageContent?.hero?.title ?? "Campus Transport";
-  const heroDescription = pageContent?.hero?.description ?? "VIET provides safe and reliable bus transport for students and staff from various points in and around Visakhapatnam to our campus at Narava.";
+  const pageContent = cmsContent;
+  const heroTitle = hero.title;
+  const heroDescription = hero.description;
   const introParagraph = pageContent?.mainContent ?? null;
   const routes = routesList;
   const stats = (pageContent?.stats && Array.isArray(pageContent.stats) && pageContent.stats.length > 0)
@@ -115,31 +113,16 @@ const Transport = () => {
     <div className="min-h-screen bg-slate-50">
       <LeaderPageNavbar backHref="/" />
 
-      {/* Hero — data from API or fallback */}
-      <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-end text-white"
-        style={{ background: "linear-gradient(155deg, #0f172a 0%, #312e81 35%, #1e3a8a 70%, #0f172a 100%)" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden />
-        <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
-          <motion.div
-            className="max-w-2xl text-left"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
-              Facilities
-            </p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
-              {loading ? "Campus Transport" : heroTitle}
-            </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed">
-              {heroDescription}
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <FacilityWaveHero
+        badge={hero.badge}
+        title={loading ? "Campus Transport" : heroTitle}
+        description={heroDescription}
+        heroImage={hero.heroImage}
+        video={hero.video}
+        gradient={hero.gradient}
+        waveFill={hero.waveFill}
+        align={hero.align}
+      />
 
       {/* Stats — Chairman spacing, left-aligned */}
       <section className="py-20 md:py-28 bg-white border-t border-slate-200">

@@ -35,12 +35,47 @@ function isCSEFamilyDepartment(d) {
   );
 }
 
+function matchDiplomaDept(d) {
+  return (d || '').toLowerCase().startsWith('diploma');
+}
+
+function isDiplomaEceDept(d) {
+  if (!matchDiplomaDept(d)) return false;
+  const x = (d || '').toLowerCase().trim();
+  const hasEce = x.includes('electronics') && x.includes('communication');
+  const hasEee = x.includes('electrical') && x.includes('electronics');
+  return (hasEce && !hasEee) || x.includes(' - ece') || x.endsWith(' ece') || x === 'ece' || x.includes('dece');
+}
+
+function isDiplomaEeeDept(d) {
+  if (!matchDiplomaDept(d)) return false;
+  const x = (d || '').toLowerCase().trim();
+  const hasEee = x.includes('electrical') && x.includes('electronics');
+  const hasEce = x.includes('electronics') && x.includes('communication');
+  return (hasEee && !hasEce) || x.includes(' - eee') || x.endsWith(' eee') || x === 'eee' || x.includes('deee');
+}
+
+function isDiplomaCivilDept(d) {
+  if (!matchDiplomaDept(d)) return false;
+  return matchDept(d, 'civil', 'dce');
+}
+
+function isDiplomaCseDept(d) {
+  if (!matchDiplomaDept(d)) return false;
+  return matchDept(d, 'computer', 'dcme', 'cse', 'computer science engineering', 'computer engineering');
+}
+
+function isDiplomaMechanicalDept(d) {
+  if (!matchDiplomaDept(d)) return false;
+  return matchDept(d, 'mechanical', 'dme');
+}
+
 const SLUG_TO_FILTER = {
-  'diploma-civil': (d) => matchDept(d, 'civil') && (matchDept(d, 'diploma') || !matchDept(d, 'engineering ug', 'b.tech')),
-  'diploma-cse': (d) => matchDept(d, 'computer') && (matchDept(d, 'diploma') || matchDept(d, 'computer science engineering')),
-  'diploma-ece': (d) => matchDept(d, 'ece', 'electronics') && (matchDept(d, 'diploma') || matchDept(d, 'communications')),
-  'diploma-eee': (d) => matchDept(d, 'eee', 'electrical') && (matchDept(d, 'diploma') || matchDept(d, 'electrical & electronics')),
-  'diploma-mechanical': (d) => matchDept(d, 'mechanical') && (matchDept(d, 'diploma') || !matchDept(d, 'engineering ug', 'm.tech', 'b.tech')),
+  'diploma-civil': isDiplomaCivilDept,
+  'diploma-cse': isDiplomaCseDept,
+  'diploma-ece': isDiplomaEceDept,
+  'diploma-eee': isDiplomaEeeDept,
+  'diploma-mechanical': isDiplomaMechanicalDept,
   'pg-cadcam': (d) => matchDept(d, 'cad', 'cam', 'cadcam'),
   'pg-cse': (d) => matchDept(d, 'cse', 'computer science') && matchDept(d, 'pg', 'm.tech', 'postgraduate'),
   'pg-power-systems': (d) => matchDept(d, 'power system'),
@@ -69,7 +104,6 @@ const SLUG_TO_FILTER = {
   },
   'civil': (d) => matchDept(d, 'civil'),
   'mechanical': (d) => matchDept(d, 'mechanical'),
-  'automobile': (d) => matchDept(d, 'automobile', 'ame'),
   'bsh': (d) => matchDept(d, 'bsh', 'basic science', 'humanities'),
 };
 

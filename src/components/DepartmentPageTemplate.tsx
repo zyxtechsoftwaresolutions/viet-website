@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import { facultyAPI, hodsAPI, galleryAPI, departmentPagesAPI } from '@/lib/api';
+import { getDepartmentPageConfig } from '@/lib/departmentPageConfig';
 import { convertGoogleDriveLink, convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 import { getVideoEmbedUrl, isVideoUrl } from '@/lib/videoUtils';
 import {
@@ -276,6 +277,10 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     loadGallery();
   }, [slug, galleryFilter]);
 
+  const deptConfig = useMemo(() => getDepartmentPageConfig(slug), [slug]);
+  const pageFacultyFilter = deptConfig?.facultyFilter ?? facultyFilter ?? (() => false);
+  const strictDeptFilter = deptConfig?.strictDeptFilter ?? pageFacultyFilter;
+
   useEffect(() => {
     const loadFacultyAndHods = async () => {
       try {
@@ -284,21 +289,20 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         const facultyIds = Array.isArray(data?.sections?.faculty?.facultyIds) ? data.sections.faculty.facultyIds : [];
         const facultyHodIds = Array.isArray(data?.sections?.faculty?.hodIds) ? data.sections.faculty.hodIds : [];
         const hasExplicitFacultyHodIds = Object.prototype.hasOwnProperty.call(data?.sections?.faculty ?? {}, 'hodIds');
-        const deptFilter = facultyFilter ?? (() => false);
         const hodIds = Array.isArray(data?.sections?.hod?.hodIds) ? data.sections.hod.hodIds : [];
         if (hodIds.length > 0) {
           const idSet = new Set(hodIds);
-          setHods(h.filter((x: any) => idSet.has(x.id)));
+          setHods(h.filter((x: any) => idSet.has(x.id) && strictDeptFilter(x.department || '')));
         } else {
-          setHods(h.filter((x: any) => deptFilter(x.department || '')));
+          setHods(h.filter((x: any) => strictDeptFilter(x.department || '')));
         }
         const teachingHods = hasExplicitFacultyHodIds
-          ? h.filter((x: any) => facultyHodIds.includes(x.id))
-          : h.filter((x: any) => deptFilter(x.department || ''));
+          ? h.filter((x: any) => facultyHodIds.includes(x.id) && strictDeptFilter(x.department || ''))
+          : h.filter((x: any) => strictDeptFilter(x.department || ''));
         setTeachingFacultyHods(teachingHods);
         if (facultyIds.length > 0) {
           const idSet = new Set(facultyIds);
-          setFaculty(f.filter((x: any) => idSet.has(x.id)));
+          setFaculty(f.filter((x: any) => idSet.has(x.id) && pageFacultyFilter(x.department || '')));
         } else {
           setFaculty([]);
         }
@@ -309,7 +313,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       }
     };
     loadFacultyAndHods();
-  }, [slug, facultyFilter]);
+  }, [slug, pageFacultyFilter, strictDeptFilter]);
 
 
   const scrollTo = (id: string) => {
@@ -436,9 +440,30 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     return 1;
   };
 
-  // Faculty list: keep HOD(s) of this department first, then sort remaining faculty
-  // by selected order from Admin -> Department Pages -> Faculty.
+  // Faculty list: this department's HOD(s) first, then this department's faculty,
+  // then shared/other faculty — each group sorted by Admin order settings.
   const sortedFacultyWithHods = useMemo(() => {
+    const sortFacultyGroup = (items: any[]) =>
+      [...items].sort((a: any, b: any) => {
+        if (facultyOrderFilter === 'designation') {
+          const drA = getDesignationRank(a.designation);
+          const drB = getDesignationRank(b.designation);
+          if (drB !== drA) return drB - drA;
+        } else if (facultyOrderFilter === 'experience') {
+          const exA = parseExperienceYears(a.experience);
+          const exB = parseExperienceYears(b.experience);
+          if (exB !== exA) return exB - exA;
+        } else {
+          const drA = getDesignationRank(a.designation);
+          const drB = getDesignationRank(b.designation);
+          if (drB !== drA) return drB - drA;
+          const exA = parseExperienceYears(a.experience);
+          const exB = parseExperienceYears(b.experience);
+          if (exB !== exA) return exB - exA;
+        }
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+
     const sortedHods = [...teachingFacultyHods].sort((a: any, b: any) => {
       const hpA = getHodPriority(a.designation);
       const hpB = getHodPriority(b.designation);
@@ -452,25 +477,12 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       return String(a.name || '').localeCompare(String(b.name || ''));
     });
 
-    const sortedFaculty = [...faculty].sort((a: any, b: any) => {
-      if (facultyOrderFilter === 'designation') {
-        const drA = getDesignationRank(a.designation);
-        const drB = getDesignationRank(b.designation);
-        if (drB !== drA) return drB - drA;
-      } else if (facultyOrderFilter === 'experience') {
-        const exA = parseExperienceYears(a.experience);
-        const exB = parseExperienceYears(b.experience);
-        if (exB !== exA) return exB - exA;
-      } else {
-        const drA = getDesignationRank(a.designation);
-        const drB = getDesignationRank(b.designation);
-        if (drB !== drA) return drB - drA;
-        const exA = parseExperienceYears(a.experience);
-        const exB = parseExperienceYears(b.experience);
-        if (exB !== exA) return exB - exA;
-      }
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
+    const primaryFaculty = sortFacultyGroup(
+      faculty.filter((member: any) => strictDeptFilter(member.department || ''))
+    );
+    const otherFaculty = sortFacultyGroup(
+      faculty.filter((member: any) => !strictDeptFilter(member.department || ''))
+    );
 
     const seen = new Set<string>();
     const result: any[] = [];
@@ -482,7 +494,14 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       result.push({ ...h, _listKey: `hod-${h.id}` });
     }
 
-    for (const f of sortedFaculty) {
+    for (const f of primaryFaculty) {
+      const key = (f.name || '').trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push({ ...f, _listKey: `faculty-${f.id}` });
+    }
+
+    for (const f of otherFaculty) {
       const key = (f.name || '').trim().toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
@@ -490,7 +509,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     }
 
     return result;
-  }, [teachingFacultyHods, faculty, facultyOrderFilter]);
+  }, [teachingFacultyHods, faculty, facultyOrderFilter, strictDeptFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50">
