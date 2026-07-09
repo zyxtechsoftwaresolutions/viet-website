@@ -296,9 +296,83 @@ export const SITE_PAGE_SEEDS = [
       mainContent: '<p>Campus cafeteria serving meals and snacks for students and staff.</p>',
     },
   },
+  {
+    slug: 'center-of-excellence',
+    title: 'Center of Excellence',
+    route: '/facilities/center-of-excellence',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'Center of Excellence', description: 'EISC, COE and innovation labs.' },
+      mainContent: '<p>Centers of excellence driving innovation, research, and industry collaboration at VIET.</p>',
+    },
+  },
+  {
+    slug: 'wifi',
+    title: 'WIFI',
+    route: '/facilities/wifi',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'WIFI', description: 'High-speed internet connectivity across campus.' },
+      mainContent: '<p>High-speed Wi-Fi connectivity available for students and faculty throughout the campus.</p>',
+    },
+  },
+  {
+    slug: 'medical-facility',
+    title: 'Medical Facility',
+    route: '/facilities/medical-facility',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'Medical Facility', description: 'Healthcare services on campus.' },
+      mainContent: '<p>On-campus medical facility providing healthcare support for students and staff.</p>',
+    },
+  },
+  {
+    slug: 'ro-water-plant',
+    title: 'RO Water Plant',
+    route: '/facilities/ro-water-plant',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'RO Water Plant', description: 'Safe drinking water facility.' },
+      mainContent: '<p>RO water plant ensuring safe and clean drinking water across the campus.</p>',
+    },
+  },
+  {
+    slug: 'green-initiatives',
+    title: 'Green Initiatives',
+    route: '/facilities/green-initiatives',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'Green Initiatives', description: 'Eco-friendly campus initiatives.' },
+      mainContent: '<p>VIET promotes sustainability through green campus initiatives and environmental awareness.</p>',
+    },
+  },
+  {
+    slug: 'solar-power-plant',
+    title: 'Solar Power Plant',
+    route: '/facilities/solar-power-plant',
+    category: 'Facilities',
+    content: {
+      hero: { title: 'Solar Power Plant', description: 'Renewable energy on campus.' },
+      mainContent: '<p>Solar power plant contributing to renewable energy and sustainable campus operations.</p>',
+    },
+  },
 ];
 
+const DEPRECATED_PAGE_SLUGS = ['digital-library'];
+
 export async function seedMissingSitePages(db) {
+  for (const slug of DEPRECATED_PAGE_SLUGS) {
+    try {
+      const existing = await db.getPageBySlug(slug);
+      if (existing?.id) {
+        await db.deletePage(existing.id);
+        console.log(`[pages] Removed deprecated page: ${slug}`);
+      }
+    } catch (err) {
+      console.warn(`[pages] Could not remove deprecated ${slug}:`, err?.message || err);
+    }
+  }
+
   let created = 0;
   let skipped = 0;
   for (const seed of SITE_PAGE_SEEDS) {

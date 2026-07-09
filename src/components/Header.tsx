@@ -71,8 +71,6 @@ const Header = () => {
   const [isManagementSubmenuToggled, setIsManagementSubmenuToggled] = useState(false);
   const [isExaminationsDropdownOpen, setIsExaminationsDropdownOpen] = useState(false);
   const [isFacilitiesDropdownOpen, setIsFacilitiesDropdownOpen] = useState(false);
-  const [showLibrarySubmenu, setShowLibrarySubmenu] = useState(false);
-  const [isLibrarySubmenuToggled, setIsLibrarySubmenuToggled] = useState(false);
 
   // Custom smooth scroll function that accounts for header height
   const scrollToSection = (sectionId: string) => {
@@ -139,8 +137,6 @@ const Header = () => {
         setIsManagementSubmenuToggled(false);
         setIsExaminationsDropdownOpen(false);
         setIsFacilitiesDropdownOpen(false);
-        setShowLibrarySubmenu(false);
-        setIsLibrarySubmenuToggled(false);
       }
     };
 
@@ -328,25 +324,20 @@ const Header = () => {
   // Facilities dropdown menu data
   const facilitiesMenuItems = [
     { name: 'Campus Life', href: '/campus-life' },
-    { name: 'Center of Excellence', href: '#center-of-excellence' },
-    { name: 'Library', href: '/facilities/library', hasSubmenu: true },
+    { name: 'Center of Excellence', href: '/facilities/center-of-excellence' },
+    { name: 'Library', href: '/facilities/library' },
+    { name: 'Laboratories', href: '/facilities/laboratory' },
     { name: 'NSS', href: '/facilities/nss' },
-    { name: 'Hostel', href: '#hostel' },
+    { name: 'Hostel', href: '/facilities/hostel' },
     { name: 'Sports', href: '/facilities/sports' },
-    { name: 'WIFI', href: '#wifi' },
+    { name: 'WIFI', href: '/facilities/wifi' },
     { name: 'Transport', href: '/facilities/transport' },
-    { name: 'Medical Facility', href: '#medical-facility' },
+    { name: 'Medical Facility', href: '/facilities/medical-facility' },
     { name: 'Cafeteria', href: '/facilities/cafeteria' },
-    { name: 'RO Water Plant', href: '#ro-water-plant' },
-    { name: 'Green Initiatives', href: '#green-initiatives' },
-    { name: 'Solar Power Plant', href: '#solar-power-plant' },
+    { name: 'RO Water Plant', href: '/facilities/ro-water-plant' },
+    { name: 'Green Initiatives', href: '/facilities/green-initiatives' },
+    { name: 'Solar Power Plant', href: '/facilities/solar-power-plant' },
   ];
-
-  // Library submenu items
-  const librarySubmenuItems = [
-    { name: 'Digital Library', href: '#digital-library' },
-  ];
-
   // IQAC dropdown menu data
   const iqacMenuItems = [
     { name: 'Student Satisfactory Survey', href: '/student-satisfactory-survey' },
@@ -752,8 +743,6 @@ const Header = () => {
                           setIsPGSubmenuToggled(false);
                           setShowManagementSubmenu(false);
                           setIsManagementSubmenuToggled(false);
-                          setShowLibrarySubmenu(false);
-                          setIsLibrarySubmenuToggled(false);
                         } else if (item.name === 'IQAC') {
                           setIsIQACDropdownOpen(!isIQACDropdownOpen);
                           if (!isIQACDropdownOpen) {
@@ -1638,12 +1627,7 @@ const Header = () => {
                     {item.name === 'Facilities' && isFacilitiesDropdownOpen && (
                       <div 
                         className="absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 z-50 overflow-hidden"
-                        onMouseLeave={() => {
-                          if (!isLibrarySubmenuToggled) {
-                            setIsFacilitiesDropdownOpen(false);
-                            setShowLibrarySubmenu(false);
-                          }
-                        }}
+                        onMouseLeave={() => setIsFacilitiesDropdownOpen(false)}
                       >
                         <div className="p-1">
                           {facilitiesMenuItems.map((facilityItem) => (
@@ -1651,79 +1635,19 @@ const Header = () => {
                               <a
                                 href={facilityItem.href}
                                 className="flex items-center justify-between w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200 group"
-                                onMouseEnter={() => {
-                                  if (facilityItem.name === 'Library' && !isLibrarySubmenuToggled) {
-                                    setShowLibrarySubmenu(true);
-                                  }
-                                }}
-                                onMouseLeave={() => {
-                                  if (facilityItem.name === 'Library' && !isLibrarySubmenuToggled) {
-                                    setTimeout(() => setShowLibrarySubmenu(false), 100);
-                                  }
-                                }}
                                 onClick={(e) => {
-                                  if (facilityItem.name === 'Library') {
-                                    e.preventDefault();
-                                    setIsLibrarySubmenuToggled(!isLibrarySubmenuToggled);
-                                    setShowLibrarySubmenu(!isLibrarySubmenuToggled);
-                                  } else if (facilityItem.href.startsWith('/')) {
+                                  if (facilityItem.href.startsWith('/')) {
                                     e.preventDefault();
                                     navigate(facilityItem.href);
                                     setIsFacilitiesDropdownOpen(false);
-                                    setShowLibrarySubmenu(false);
-                                    setIsLibrarySubmenuToggled(false);
                                   } else {
                                     setIsFacilitiesDropdownOpen(false);
-                                    setShowLibrarySubmenu(false);
-                                    setIsLibrarySubmenuToggled(false);
                                   }
                                 }}
                               >
                                 <span className="font-medium">{facilityItem.name}</span>
-                                {facilityItem.hasSubmenu && (
-                                  <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-white transition-colors" />
-                                )}
                               </a>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Library Submenu */}
-                    {item.name === 'Facilities' && showLibrarySubmenu && (
-                      <div 
-                        className="absolute w-48 bg-white/95 backdrop-blur-xl rounded-lg shadow-2xl border border-white/20 overflow-hidden z-[99999]"
-                        onMouseEnter={() => {
-                          if (!isLibrarySubmenuToggled) {
-                            setShowLibrarySubmenu(true);
-                          }
-                        }}
-                        onMouseLeave={() => {
-                          if (!isLibrarySubmenuToggled) {
-                            setShowLibrarySubmenu(false);
-                          }
-                        }}
-                        style={{
-                          top: '70px', // Increased by another 15px (55px + 15px)
-                          left: '100%',
-                          marginLeft: '-272px' // Moved right by another 10px (-282px + 10px = -272px)
-                        }}
-                      >
-                        <div className="p-1">
-                          {librarySubmenuItems.map((libraryItem) => (
-                            <a
-                              key={libraryItem.name}
-                              href={libraryItem.href}
-                              onClick={() => {
-                                setIsFacilitiesDropdownOpen(false);
-                                setShowLibrarySubmenu(false);
-                                setIsLibrarySubmenuToggled(false);
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-xs text-gray-700 hover:bg-gradient-primary hover:text-white rounded-md transition-all duration-200"
-                            >
-                              {libraryItem.name}
-                            </a>
                           ))}
                         </div>
                       </div>
@@ -2016,27 +1940,13 @@ const Header = () => {
                             </div>
                           ))}
                           {navEntry.name === 'Facilities' && facilitiesMenuItems.map((mi) => (
-                            <div key={mi.name}>
-                              {mi.name === 'Library' ? (
-                                <>
-                                  <button onClick={() => toggleMobileAccordion('mob-library')} className="flex items-center justify-between w-full px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                                    {mi.name}
-                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${mobileAccordion['mob-library'] ? 'rotate-180' : ''}`} />
-                                  </button>
-                                  <AnimatePresence initial={false}>
-                                    {mobileAccordion['mob-library'] && (
-                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden bg-gray-100/60">
-                                        {librarySubmenuItems.map((li) => (
-                                          <button key={li.name} onClick={() => { li.href.startsWith('/') ? navigate(li.href) : (() => { navigate('/'); setTimeout(() => { const el = document.querySelector(li.href); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); })(); closeMobileMenu(); }} className="block w-full text-left pl-12 pr-5 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">{li.name}</button>
-                                        ))}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </>
-                              ) : (
-                                <button onClick={() => { if (mi.href.startsWith('/')) navigate(mi.href); closeMobileMenu(); }} className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">{mi.name}</button>
-                              )}
-                            </div>
+                            <button
+                              key={mi.name}
+                              onClick={() => { if (mi.href.startsWith('/')) navigate(mi.href); closeMobileMenu(); }}
+                              className="block w-full text-left px-8 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                            >
+                              {mi.name}
+                            </button>
                           ))}
                           {navEntry.name === 'IQAC' && iqacMenuItems.map((mi) => (
                             <div key={mi.name}>

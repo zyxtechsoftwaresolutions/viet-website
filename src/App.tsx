@@ -43,13 +43,6 @@ const DiplomaSBTET = lazy(() => import("./pages/DiplomaSBTET"));
 const AQAR2023_2024 = lazy(() => import("./pages/AQAR2023-2024"));
 const AQAR2022_2023 = lazy(() => import("./pages/AQAR2022-2023"));
 const AQAR2021_2022 = lazy(() => import("./pages/AQAR2021-2022"));
-const Transport = lazy(() => import("./pages/Transport"));
-const Library = lazy(() => import("./pages/Library"));
-const Laboratory = lazy(() => import("./pages/Laboratory"));
-const Hostel = lazy(() => import("./pages/Hostel"));
-const NSSPage = lazy(() => import("./pages/NSS"));
-const Sports = lazy(() => import("./pages/Sports"));
-const Cafeteria = lazy(() => import("./pages/Cafeteria"));
 const FacilityPage = lazy(() => import("./pages/FacilityPage"));
 const CampusLife = lazy(() => import("./pages/CampusLife"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -76,16 +69,14 @@ const Recruiters = lazy(() => import("./pages/admin/Recruiters"));
 const PlacementSection = lazy(() => import("./pages/admin/PlacementSection"));
 const Authorities = lazy(() => import("./pages/admin/LeaderPagesAdmin"));
 const AboutUsAdmin = lazy(() => import("./pages/admin/AboutUsAdmin"));
-const TransportAdmin = lazy(() => import("./pages/admin/TransportAdmin"));
 const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
+const FacilityEditorRouter = lazy(() => import("./pages/admin/FacilityEditorRouter"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
-const CampusLifeAdmin = lazy(() => import("./pages/admin/CampusLifeAdmin"));
-
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -159,13 +150,13 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/aqar-2023-2024" element={<AQAR2023_2024 />} />
             <Route path="/aqar-2022-2023" element={<AQAR2022_2023 />} />
             <Route path="/aqar-2021-2022" element={<AQAR2021_2022 />} />
-            <Route path="/facilities/transport" element={<Transport />} />
-            <Route path="/facilities/library" element={<Library />} />
-            <Route path="/facilities/laboratory" element={<Laboratory />} />
-            <Route path="/facilities/hostel" element={<Hostel />} />
-            <Route path="/facilities/nss" element={<NSSPage />} />
-            <Route path="/facilities/sports" element={<Sports />} />
-            <Route path="/facilities/cafeteria" element={<Cafeteria />} />
+            <Route path="/facilities/transport" element={<FacilityPage slugOverride="transport" />} />
+            <Route path="/facilities/library" element={<FacilityPage slugOverride="library" />} />
+            <Route path="/facilities/laboratory" element={<FacilityPage slugOverride="laboratory" />} />
+            <Route path="/facilities/hostel" element={<FacilityPage slugOverride="hostel" />} />
+            <Route path="/facilities/nss" element={<FacilityPage slugOverride="nss" />} />
+            <Route path="/facilities/sports" element={<FacilityPage slugOverride="sports" />} />
+            <Route path="/facilities/cafeteria" element={<FacilityPage slugOverride="cafeteria" />} />
             <Route path="/facilities/:slug" element={<FacilityPage />} />
             <Route path="/campus-life" element={<CampusLife />} />
             <Route path="/faculty" element={<FacultyPage />} />
@@ -195,12 +186,13 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="vibe-at-viet" element={<VibeAtVietAdmin />} />
               <Route path="recruiters" element={<Recruiters />} />
               <Route path="placement-section" element={<PlacementSection />} />
-              <Route path="transport" element={<TransportAdmin />} />
-              <Route path="transport-routes" element={<Navigate to="/admin/transport" replace />} />
               <Route path="facilities" element={<FacilitiesAdmin />} />
+              <Route path="facilities/:slug" element={<FacilityEditorRouter />} />
+              <Route path="transport" element={<Navigate to="/admin/facilities/transport" replace />} />
+              <Route path="transport-routes" element={<Navigate to="/admin/facilities/transport" replace />} />
+              <Route path="campus-life" element={<Navigate to="/admin/facilities/campus-life" replace />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="site-pages" element={<SitePagesAdmin />} />
-              <Route path="campus-life" element={<CampusLifeAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

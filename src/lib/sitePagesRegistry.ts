@@ -42,6 +42,12 @@ export const EXPECTED_SITE_PAGES: SitePageMeta[] = [
   { slug: 'nss', title: 'NSS', route: '/facilities/nss', category: 'Facilities' },
   { slug: 'sports', title: 'Sports', route: '/facilities/sports', category: 'Facilities' },
   { slug: 'cafeteria', title: 'Cafeteria', route: '/facilities/cafeteria', category: 'Facilities' },
+  { slug: 'center-of-excellence', title: 'Center of Excellence', route: '/facilities/center-of-excellence', category: 'Facilities' },
+  { slug: 'wifi', title: 'WIFI', route: '/facilities/wifi', category: 'Facilities' },
+  { slug: 'medical-facility', title: 'Medical Facility', route: '/facilities/medical-facility', category: 'Facilities' },
+  { slug: 'ro-water-plant', title: 'RO Water Plant', route: '/facilities/ro-water-plant', category: 'Facilities' },
+  { slug: 'green-initiatives', title: 'Green Initiatives', route: '/facilities/green-initiatives', category: 'Facilities' },
+  { slug: 'solar-power-plant', title: 'Solar Power Plant', route: '/facilities/solar-power-plant', category: 'Facilities' },
 ];
 
 export function getPageEditorKind(
@@ -60,8 +66,8 @@ export function getAdminEditorPath(slug: string, category: string): string {
   const kind = getPageEditorKind(slug, category);
   if (kind === 'about') return '/admin/pages';
   if (kind === 'authorities') return '/admin/authorities';
-  if (kind === 'transport') return '/admin/transport';
-  if (kind === 'facilities') return '/admin/facilities';
-  if (kind === 'campus-life') return '/admin/campus-life';
+  if (kind === 'transport') return '/admin/facilities/transport';
+  if (kind === 'facilities') return `/admin/facilities/${slug}`;
+  if (kind === 'campus-life') return '/admin/facilities/campus-life';
   return '/admin/site-pages';
 }

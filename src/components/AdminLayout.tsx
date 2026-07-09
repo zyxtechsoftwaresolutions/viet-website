@@ -13,7 +13,6 @@ import {
   Grid3x3,
   FileText,
   BookOpen,
-  Bus,
   LogOut,
   Menu,
   X,
@@ -25,7 +24,6 @@ import {
   Warehouse,
   Shield,
   GraduationCap,
-  Trees,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api';
@@ -62,9 +60,7 @@ const AdminLayout = () => {
     { icon: Grid3x3, label: 'Vibe@Viet', path: '/admin/vibe-at-viet', section: 'vibe-at-viet', adminOnly: false },
     { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters', section: 'recruiters', adminOnly: false },
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section', section: 'placement-section', adminOnly: false },
-    { icon: Bus, label: 'Transport', path: '/admin/transport', section: 'transport', adminOnly: false },
     { icon: Warehouse, label: 'Facilities', path: '/admin/facilities', section: 'facilities', adminOnly: false },
-    { icon: Trees, label: 'Campus Life', path: '/admin/campus-life', section: 'campus-life', adminOnly: false },
     { icon: FileText, label: 'All Site Pages', path: '/admin/site-pages', section: 'pages', adminOnly: false },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
     { icon: FileText, label: 'About Us', path: '/admin/pages', section: 'pages', adminOnly: false },
@@ -99,7 +95,13 @@ const AdminLayout = () => {
   const sectionAllowed = (section: string) =>
     allowedSections.includes(section) ||
     (section === 'transport' && allowedSections.includes('transport-routes')) ||
-    (section === 'campus-life' && (allowedSections.includes('pages') || allowedSections.includes('campus-life')));
+    (section === 'campus-life' && (allowedSections.includes('pages') || allowedSections.includes('campus-life'))) ||
+    (section === 'facilities' &&
+      (allowedSections.includes('facilities') ||
+        allowedSections.includes('transport') ||
+        allowedSections.includes('transport-routes') ||
+        allowedSections.includes('campus-life') ||
+        allowedSections.includes('pages')));
 
   const menuItems = allMenuItems.filter((item) => {
     if (item.adminOnly) return isAdmin;
@@ -107,11 +109,14 @@ const AdminLayout = () => {
     return item.section === 'dashboard' || sectionAllowed(item.section);
   });
 
-  const currentSection = allMenuItems.find((m) => m.path === location.pathname)?.section;
+  const currentSection = allMenuItems.find((m) =>
+    m.path === location.pathname || (m.path === '/admin/facilities' && location.pathname.startsWith('/admin/facilities/'))
+  )?.section;
   const canAccessCurrentPath =
     isAdmin ||
     currentSection === 'dashboard' ||
     (currentSection && sectionAllowed(currentSection)) ||
+    (location.pathname.startsWith('/admin/facilities/') && sectionAllowed('facilities')) ||
     (location.pathname === '/admin' || location.pathname === '/admin/');
 
   if (isAuthenticated === null) {
@@ -189,7 +194,9 @@ const AdminLayout = () => {
           <nav className="flex-1 overflow-y-auto p-4 space-y-2 pb-24">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive =
+                location.pathname === item.path ||
+                (item.path === '/admin/facilities' && location.pathname.startsWith('/admin/facilities/'));
               return (
                 <button
                   key={item.path}

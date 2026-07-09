@@ -75,7 +75,12 @@ export const IMAGE_SPECS = {
   facilityHero: {
     dimensions: '1920 × 1080 px',
     aspectRatio: '16:9',
-    hint: 'Facility page hero banner',
+    hint: 'Hero banner image — used when no video is set',
+  },
+  facilityHeroVideo: {
+    dimensions: '1920 × 1080 px',
+    aspectRatio: '16:9',
+    hint: 'Hero background video (MP4/WebM) — takes priority over image',
   },
   facilityGallery: {
     dimensions: '1200 × 900 px',
@@ -146,6 +151,11 @@ export const IMAGE_SPECS = {
     dimensions: '1600 × 1200 px',
     aspectRatio: '4:3',
     hint: 'Campus Life magazine grid photo — large originals are auto-compressed on upload',
+  },
+  campusLifeHero: {
+    dimensions: '1920 × 1080 px',
+    aspectRatio: '16:9',
+    hint: 'Campus Life hero banner — shown behind the top title section',
   },
   vibeAtViet: (slot: number): ImageUploadSpec => {
     const spec = getVibeSlotImageSpec(slot);

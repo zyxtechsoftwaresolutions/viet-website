@@ -28,7 +28,8 @@ import {
   imageTooLargeMessage,
   isImageTooLargeForUpload,
 } from '@/lib/compressImage';
-import { uploadToSupabase } from '@/lib/storage';
+import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
+import HeroMediaFields, { type HeroMediaFormState } from '@/components/admin/HeroMediaFields';
 import { imgUrl } from '@/lib/imageUtils';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
@@ -51,6 +52,12 @@ const CampusLifeAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [highlightFiles, setHighlightFiles] = useState<Record<string, File | null>>({});
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [heroMedia, setHeroMedia] = useState<HeroMediaFormState>({
+    image: '',
+    video: '',
+    imageFile: null,
+    videoFile: null,
+  });
   const [deleteHighlightId, setDeleteHighlightId] = useState<string | null>(null);
 
   const load = async () => {
@@ -59,10 +66,18 @@ const CampusLifeAdmin = () => {
       const page = await pagesAPI.getBySlug(SLUG);
       if (page?.id) {
         setPageId(page.id);
-        setContent(normalizeCampusLifeContent(page.content));
+        const normalized = normalizeCampusLifeContent(page.content);
+        setContent(normalized);
+        setHeroMedia({
+          image: normalized.hero.image || '',
+          video: normalized.hero.video || '',
+          imageFile: null,
+          videoFile: null,
+        });
       } else {
         setPageId(null);
         setContent(DEFAULT_CAMPUS_LIFE_CONTENT);
+        setHeroMedia({ image: '', video: '', imageFile: null, videoFile: null });
         toast.info('Campus Life page not in database yet — saving will create it.');
       }
       setHighlightFiles({});
@@ -164,6 +179,31 @@ const CampusLifeAdmin = () => {
     setSaving(true);
     try {
       const highlights = [...content.highlights];
+      let heroImage = heroMedia.image;
+      let heroVideo = heroMedia.video.trim();
+
+      if (heroMedia.imageFile) {
+        toast.info('Uploading hero image…');
+        try {
+          heroImage = await uploadToSupabase(heroMedia.imageFile, 'campus-life', 'images');
+        } catch (uploadErr: unknown) {
+          const msg = uploadErr instanceof Error ? uploadErr.message : 'Upload failed';
+          toast.error(`Failed to upload hero image: ${msg}`);
+          throw uploadErr;
+        }
+      }
+
+      if (heroMedia.videoFile) {
+        toast.info('Uploading hero video…');
+        try {
+          heroVideo = await uploadVideoToSupabase(heroMedia.videoFile, 'campus-life');
+        } catch (uploadErr: unknown) {
+          const msg = uploadErr instanceof Error ? uploadErr.message : 'Upload failed';
+          toast.error(`Failed to upload hero video: ${msg}`);
+          throw uploadErr;
+        }
+      }
+
       for (let i = 0; i < highlights.length; i++) {
         const file = highlightFiles[highlights[i].id];
         if (file) {
@@ -190,6 +230,11 @@ const CampusLifeAdmin = () => {
 
       const payloadContent: CampusLifeContent = {
         ...content,
+        hero: {
+          ...content.hero,
+          image: heroImage || undefined,
+          video: heroVideo || undefined,
+        },
         highlights,
       };
 
@@ -201,15 +246,12 @@ const CampusLifeAdmin = () => {
         content: payloadContent,
       };
 
-      if (pageId) {
-        await pagesAPI.update(pageId, pagePayload);
-      } else {
-        const created = await pagesAPI.create(pagePayload);
-        if (created?.id) setPageId(created.id);
-      }
+      const saved = await pagesAPI.saveBySlug(SLUG, pagePayload);
+      if (saved?.id) setPageId(saved.id);
 
       setContent(payloadContent);
       setHighlightFiles({});
+      setHeroMedia((prev) => ({ ...prev, imageFile: null, videoFile: null }));
       setPreviewUrls((prev) => {
         Object.values(prev).forEach((url) => URL.revokeObjectURL(url));
         return {};
@@ -237,7 +279,7 @@ const CampusLifeAdmin = () => {
         <div>
           <h1 className="text-3xl font-bold">Campus Life</h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Update hero text and campus highlight photos. Changes appear on{' '}
+            Update hero text, hero background (image or video), and campus highlight photos. Changes appear on{' '}
             <code className="text-xs bg-muted px-1 rounded">/campus-life</code> after you save.
           </p>
         </div>
@@ -262,38 +304,46 @@ const CampusLifeAdmin = () => {
           <CardTitle>Hero</CardTitle>
           <CardDescription>Top banner text on the Campus Life page</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Badge</Label>
-            <Input
-              value={content.hero.badge}
-              onChange={(e) =>
-                setContent((prev) => ({ ...prev, hero: { ...prev.hero, badge: e.target.value } }))
-              }
-            />
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Badge</Label>
+              <Input
+                value={content.hero.badge}
+                onChange={(e) =>
+                  setContent((prev) => ({ ...prev, hero: { ...prev.hero, badge: e.target.value } }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                value={content.hero.title}
+                onChange={(e) =>
+                  setContent((prev) => ({ ...prev, hero: { ...prev.hero, title: e.target.value } }))
+                }
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Description</Label>
+              <Textarea
+                rows={2}
+                value={content.hero.description}
+                onChange={(e) =>
+                  setContent((prev) => ({
+                    ...prev,
+                    hero: { ...prev.hero, description: e.target.value },
+                  }))
+                }
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Title</Label>
-            <Input
-              value={content.hero.title}
-              onChange={(e) =>
-                setContent((prev) => ({ ...prev, hero: { ...prev.hero, title: e.target.value } }))
-              }
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Description</Label>
-            <Textarea
-              rows={2}
-              value={content.hero.description}
-              onChange={(e) =>
-                setContent((prev) => ({
-                  ...prev,
-                  hero: { ...prev.hero, description: e.target.value },
-                }))
-              }
-            />
-          </div>
+
+          <HeroMediaFields
+            value={heroMedia}
+            onChange={(patch) => setHeroMedia((prev) => ({ ...prev, ...patch }))}
+            imageSpec={IMAGE_SPECS.campusLifeHero}
+          />
         </CardContent>
       </Card>
 

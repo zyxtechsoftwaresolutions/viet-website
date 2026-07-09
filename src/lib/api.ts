@@ -383,6 +383,21 @@ export const pagesAPI = {
   }),
   update: (id: number, data: { slug?: string; title?: string; route?: string; category?: string; content?: Record<string, unknown> }) =>
     apiCall(`/pages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  saveBySlug: (slug: string, data: { title?: string; route?: string; category?: string; content?: Record<string, unknown> }) =>
+    apiCall(`/pages/slug/${slug}`, { method: 'PUT', body: JSON.stringify(data) }),
+  resolveBySlug: async (slug: string) => {
+    try {
+      const page = await apiCall(`/pages/slug/${slug}`);
+      if (page?.id) return page;
+    } catch {
+      /* fall through */
+    }
+    const data = await apiCall('/pages');
+    const list = Array.isArray(data) ? data : (data?.pages ?? data?.data ?? []);
+    return (Array.isArray(list) ? list : []).find(
+      (p: { slug?: string; id?: number }) => (p.slug || '').toLowerCase() === slug.toLowerCase()
+    ) ?? null;
+  },
   delete: (id: number) => apiCall(`/pages/${id}`, {
     method: 'DELETE',
   }),

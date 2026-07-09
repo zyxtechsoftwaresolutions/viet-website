@@ -6,6 +6,8 @@ import Footer from '@/components/Footer';
 import { pagesAPI, transportRoutesAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import { sanitizeRichHtml, sanitizeMapEmbed } from '@/lib/sanitizeHtml';
+import { resolveHeroMedia } from '@/lib/heroMedia';
+import HeroMediaBackground from '@/components/HeroMediaBackground';
 import NotFound from './NotFound';
 
 const COLOR_ORDER = [
@@ -85,6 +87,7 @@ const FacilityPage = ({ slugOverride }: { slugOverride?: string } = {}) => {
   const heroTitle = hero.title || page.title;
   const heroDescription = hero.description || '';
   const heroImage = hero.heroImage || content.heroImage;
+  const heroMedia = resolveHeroMedia({ ...hero, heroImage });
   const mainContent = content.mainContent || '';
   const stats = Array.isArray(content.stats) && content.stats.length > 0
     ? content.stats
@@ -114,20 +117,10 @@ const FacilityPage = ({ slugOverride }: { slugOverride?: string } = {}) => {
 
       {/* Hero */}
       <section
-        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-end text-white"
-        style={{
-          background: heroImage
-            ? `linear-gradient(155deg, rgba(15,23,42,0.9) 0%, rgba(49,46,129,0.85) 35%, rgba(30,58,138,0.9) 70%, rgba(15,23,42,0.95) 100%)`
-            : 'linear-gradient(155deg, #0f172a 0%, #312e81 35%, #1e3a8a 70%, #0f172a 100%)',
-        }}
+        className="relative min-h-[65vh] md:min-h-[72vh] pt-24 md:pt-28 pb-12 md:pb-16 flex items-end text-white overflow-hidden"
       >
-        {heroImage && (
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={{ backgroundImage: `url(${imgUrl(heroImage)})` }}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden />
+        <HeroMediaBackground media={heroMedia} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-[1]" aria-hidden />
         <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
           <motion.div
             className="max-w-2xl text-left"

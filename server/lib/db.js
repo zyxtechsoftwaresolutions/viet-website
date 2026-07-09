@@ -1211,15 +1211,16 @@ export async function createPage(item) {
 }
 
 export async function updatePage(id, item) {
+  const { id: _omitId, ...rest } = item || {};
   if (useJsonFallback) {
     const d = await readJsonFile('pages');
     const idx = d.pages.findIndex(p => p.id === parseInt(id));
     if (idx === -1) return null;
-    d.pages[idx] = { ...d.pages[idx], ...item };
+    d.pages[idx] = { ...d.pages[idx], ...rest };
     await writeJsonFile('pages', d);
     return d.pages[idx];
   }
-  const { data, error } = await supabase.from('pages').update(toSnake(item)).eq('id', id).select().single();
+  const { data, error } = await supabase.from('pages').update(toSnake(rest)).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }

@@ -10,6 +10,8 @@ import {
   highlightGridClass,
   type CampusLifeContent,
 } from '@/lib/campusLifeContent';
+import { resolveHeroMedia } from '@/lib/heroMedia';
+import HeroMediaBackground from '@/components/HeroMediaBackground';
 
 export default function CampusLife() {
   const [content, setContent] = useState<CampusLifeContent>(DEFAULT_CAMPUS_LIFE_CONTENT);
@@ -41,18 +43,20 @@ export default function CampusLife() {
     return imgUrl(path) || path;
   };
 
+  const heroMedia = resolveHeroMedia(content.hero);
+
   return (
     <div className="min-h-screen bg-slate-100">
       <LeaderPageNavbar backHref="/about" />
 
-      <section
-        className="relative min-h-[55vh] md:min-h-[90vh] pt-20 md:pt-28 pb-10 md:pb-16 flex items-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)',
-        }}
-      >
+      <section className="relative min-h-[55vh] md:min-h-[90vh] pt-20 md:pt-28 pb-10 md:pb-16 flex items-center overflow-hidden">
+        <HeroMediaBackground
+          media={heroMedia}
+          fallbackGradient="linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)"
+          imageOpacityClass="opacity-100"
+        />
         <div
-          className="absolute inset-0 bg-gradient-to-r from-black/60 from-40% via-black/40 to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-black/60 from-40% via-black/40 to-transparent z-[1]"
           aria-hidden
         />
         <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">

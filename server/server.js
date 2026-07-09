@@ -1614,6 +1614,34 @@ app.delete('/api/vibe-at-viet/:id', authenticateToken, checkSectionAccess, async
   }
 });
 
+function mergePageContent(existingContent, newContent) {
+  const currentContent = existingContent || {};
+  const incoming = newContent || {};
+
+  const cleanedContent = { ...currentContent };
+  Object.keys(cleanedContent).forEach((key) => {
+    if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
+      if (!Object.prototype.hasOwnProperty.call(incoming, key) || incoming[key] === '' || incoming[key] == null) {
+        delete cleanedContent[key];
+      }
+    }
+  });
+
+  const cleanedNewContent = {};
+  Object.keys(incoming).forEach((key) => {
+    if (key.endsWith('_preview')) return;
+    if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
+      if (incoming[key] != null && incoming[key] !== '') {
+        cleanedNewContent[key] = incoming[key];
+      }
+    } else {
+      cleanedNewContent[key] = incoming[key];
+    }
+  });
+
+  return { ...cleanedContent, ...cleanedNewContent };
+}
+
 // ==================== PAGES ROUTES ====================
 
 app.get('/api/pages', async (req, res) => {
@@ -1679,6 +1707,34 @@ app.post('/api/pages', authenticateToken, checkSectionAccess, async (req, res) =
   }
 });
 
+app.put('/api/pages/slug/:slug', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const existing = await db.getPageBySlug(slug);
+    const finalContent = mergePageContent(existing?.content, req.body.content);
+    const payload = {
+      slug,
+      title: req.body.title,
+      route: req.body.route,
+      category: req.body.category,
+      content: finalContent,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existing?.id) {
+      const updated = await db.updatePage(existing.id, payload);
+      if (!updated) return res.status(500).json({ error: 'Failed to update page' });
+      return res.json(updated);
+    }
+
+    const created = await db.createPage(payload);
+    res.json(created);
+  } catch (error) {
+    console.error('Error upserting page by slug:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const pageId = parseInt(req.params.id);
@@ -1686,34 +1742,14 @@ app.put('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, res
     if (!existingPage) return res.status(404).json({ error: 'Page not found' });
 
     const currentContent = existingPage.content || {};
-    const newContent = req.body.content || {};
-
-    const cleanedContent = { ...currentContent };
-    Object.keys(cleanedContent).forEach(key => {
-      if (key.startsWith('image') || key === 'heroImage' || key === 'profileImage') {
-        if (!Object.prototype.hasOwnProperty.call(newContent, key) || newContent[key] === '' || newContent[key] == null) {
-          delete cleanedContent[key];
-        }
-      }
-    });
-
-    const cleanedNewContent = {};
-    Object.keys(newContent).forEach(key => {
-      if (key.endsWith('_preview')) return;
-      if ((key.startsWith('image') || key === 'heroImage' || key === 'profileImage')) {
-        if (newContent[key] != null && newContent[key] !== '') {
-          cleanedNewContent[key] = newContent[key];
-        }
-      } else {
-        cleanedNewContent[key] = newContent[key];
-      }
-    });
-
-    const finalContent = { ...cleanedContent, ...cleanedNewContent };
+    const finalContent = mergePageContent(currentContent, req.body.content || {});
     const updatePayload = {
-      ...req.body,
+      slug: req.body.slug ?? existingPage.slug,
+      title: req.body.title ?? existingPage.title,
+      route: req.body.route ?? existingPage.route,
+      category: req.body.category ?? existingPage.category,
       content: finalContent,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const updated = await db.updatePage(pageId, updatePayload);

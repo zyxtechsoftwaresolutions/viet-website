@@ -25,7 +25,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { pagesAPI, transportRoutesAPI } from '@/lib/api';
-import { uploadToSupabase } from '@/lib/storage';
+import { uploadToSupabase, uploadVideoToSupabase } from '@/lib/storage';
+import HeroMediaFields, { type HeroMediaFormState } from '@/components/admin/HeroMediaFields';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
@@ -78,6 +79,12 @@ const TransportAdmin = () => {
     seatingCapacity: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [heroMedia, setHeroMedia] = useState<HeroMediaFormState>({
+    image: '',
+    video: '',
+    imageFile: null,
+    videoFile: null,
+  });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,6 +107,12 @@ const TransportAdmin = () => {
           stats: Array.isArray(c.stats) ? c.stats : [],
           features: Array.isArray(c.features) ? c.features : [],
         });
+        setHeroMedia({
+          image: hero.heroImage || '',
+          video: hero.video || '',
+          imageFile: null,
+          videoFile: null,
+        });
       }
       setRoutes(Array.isArray(routeData) ? routeData : []);
     } catch (err: any) {
@@ -118,12 +131,31 @@ const TransportAdmin = () => {
     try {
       const existing = pageId ? await pagesAPI.getBySlug('transport').catch(() => null) : null;
       const prevContent = (existing?.content || {}) as Record<string, unknown>;
+      const prevHero =
+        typeof prevContent.hero === 'object' && prevContent.hero
+          ? (prevContent.hero as Record<string, string>)
+          : {};
+
+      let heroImageUrl = heroMedia.image;
+      if (heroMedia.imageFile) {
+        toast.info('Uploading hero image…');
+        heroImageUrl = await uploadToSupabase(heroMedia.imageFile, 'facilities', 'images');
+      }
+
+      let heroVideoUrl = heroMedia.video.trim();
+      if (heroMedia.videoFile) {
+        toast.info('Uploading hero video…');
+        heroVideoUrl = await uploadVideoToSupabase(heroMedia.videoFile, 'facilities');
+      }
+
       const content = {
         ...prevContent,
         hero: {
-          ...(typeof prevContent.hero === 'object' && prevContent.hero ? prevContent.hero : {}),
+          ...prevHero,
           title: pageForm.heroTitle,
           description: pageForm.heroDescription,
+          heroImage: heroImageUrl || undefined,
+          video: heroVideoUrl || undefined,
         },
         mainContent: pageForm.mainContent,
         mapEmbed: pageForm.mapEmbed || undefined,
@@ -137,12 +169,9 @@ const TransportAdmin = () => {
         category: 'Facilities',
         content,
       };
-      if (pageId) {
-        await pagesAPI.update(pageId, payload);
-      } else {
-        const created = await pagesAPI.create(payload);
-        setPageId(created.id);
-      }
+      const saved = await pagesAPI.saveBySlug('transport', payload);
+      if (saved?.id) setPageId(saved.id);
+      setHeroMedia((prev) => ({ ...prev, imageFile: null, videoFile: null }));
       toast.success('Transport page content saved');
     } catch (err: any) {
       toast.error(err.message || 'Failed to save page');
@@ -331,6 +360,7 @@ const TransportAdmin = () => {
                   />
                 </div>
               </div>
+              <HeroMediaFields value={heroMedia} onChange={(patch) => setHeroMedia((prev) => ({ ...prev, ...patch }))} />
               <div>
                 <Label>Intro / main content (HTML)</Label>
                 <Textarea

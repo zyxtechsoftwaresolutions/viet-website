@@ -135,19 +135,20 @@ const SearchBar = () => {
 
     // Facilities items
     const facilitiesItems = [
-      { name: 'Center of Excellence', href: '#center-of-excellence', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Campus Life', href: '/campus-life', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Center of Excellence', href: '/facilities/center-of-excellence', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Library', href: '/facilities/library', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'Digital Library', href: '#digital-library', category: 'Facilities', type: 'submenu' as const },
+      { name: 'Laboratories', href: '/facilities/laboratory', category: 'Facilities', type: 'dropdown' as const },
       { name: 'NSS', href: '/facilities/nss', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Hostel', href: '/facilities/hostel', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Sports', href: '/facilities/sports', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'WIFI', href: '#wifi', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'WIFI', href: '/facilities/wifi', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Transport', href: '/facilities/transport', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'Medical Facility', href: '#medical-facility', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Medical Facility', href: '/facilities/medical-facility', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Cafeteria', href: '/facilities/cafeteria', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'RO Water Plant', href: '#ro-water-plant', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'Green Initiatives', href: '#green-initiatives', category: 'Facilities', type: 'dropdown' as const },
-      { name: 'Solar Power Plant', href: '#solar-power-plant', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'RO Water Plant', href: '/facilities/ro-water-plant', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Green Initiatives', href: '/facilities/green-initiatives', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Solar Power Plant', href: '/facilities/solar-power-plant', category: 'Facilities', type: 'dropdown' as const },
     ];
 
     // IQAC items

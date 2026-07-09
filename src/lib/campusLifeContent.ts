@@ -21,6 +21,8 @@ export type CampusLifeContent = {
     badge: string;
     title: string;
     description: string;
+    image?: string;
+    video?: string;
   };
   intro: {
     label: string;
@@ -66,6 +68,8 @@ export const DEFAULT_CAMPUS_LIFE_CONTENT: CampusLifeContent = {
     badge: 'VIET Campus',
     title: 'Campus Life',
     description: 'Where innovation meets inspiration at Visakha Institute of Engineering and Technology',
+    image: '',
+    video: '',
   },
   intro: {
     label: 'About campus life',
@@ -268,6 +272,8 @@ export function normalizeCampusLifeContent(raw: unknown): CampusLifeContent {
       badge: asString(hero.badge, d.hero.badge),
       title: asString(hero.title, d.hero.title),
       description: asString(hero.description, d.hero.description),
+      image: asString(hero.image || hero.heroImage, d.hero.image || ''),
+      video: asString(hero.video, d.hero.video || ''),
     },
     intro: {
       label: asString(intro.label, d.intro.label),
