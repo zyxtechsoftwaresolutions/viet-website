@@ -20,6 +20,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { StickySectionNavBar } from "@/components/AdaptiveSectionNav";
 
 type Member = {
   sno: number;
@@ -162,35 +163,30 @@ const GrievanceRedressal = () => {
         </div>
       </section>
 
-      {/* Tab navigation */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-        <div className="container mx-auto px-4 md:px-10 lg:px-12">
-          <div className="flex gap-1 overflow-x-auto" role="tablist">
-            {(
-              [
-                { id: "anti-ragging" as const, label: "Anti-Ragging Committee", icon: Shield },
-                { id: "women-cell" as const, label: "Women Grievance Cell", icon: Scale },
-              ] as const
-            ).map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                role="tab"
-                aria-selected={activeTab === id}
-                onClick={() => setActiveTab(id)}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                  activeTab === id
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                )}
-              >
-                <Icon className="w-4 h-4 shrink-0" aria-hidden />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <StickySectionNavBar itemCount={2}>
+        {(
+          [
+            { id: "anti-ragging" as const, label: "Anti-Ragging Committee", icon: Shield },
+            { id: "women-cell" as const, label: "Women Grievance Cell", icon: Scale },
+          ] as const
+        ).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={activeTab === id}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "flex items-center gap-2 px-5 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
+              activeTab === id
+                ? "border-blue-600 text-blue-700"
+                : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+            )}
+          >
+            <Icon className="w-4 h-4 shrink-0" aria-hidden />
+            {label}
+          </button>
+        ))}
+      </StickySectionNavBar>
 
       {/* Anti-Ragging */}
       {activeTab === "anti-ragging" && (

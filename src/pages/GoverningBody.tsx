@@ -35,7 +35,7 @@ const members: Member[] = [
   {
     sno: 5,
     name: "Dr. G. J. Nagaraju",
-    designation: "Asst. Prof of Physics & HOD, CEV-JNTUGV",
+    designation: "Asst. Prof of Physics & HOD, CEV-JNTU-GV",
     role: "Member (University Nominee)",
     category: "nominee",
   },

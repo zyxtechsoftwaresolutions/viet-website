@@ -406,7 +406,7 @@ const Header = () => {
       description: 'University Grants Commission Recognition'
     },
     {
-      name: 'JNTUGV',
+      name: 'JNTU-GV',
       logo: '/jntugv-logo.png',
       url: 'https://jntugv.edu.in/',
       description: 'Jawaharlal Nehru Technological University Gurajada Vizianagaram'

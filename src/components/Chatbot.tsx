@@ -25,7 +25,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   {
     keywords: ["about", "viet", "college", "institute", "institution", "history", "founded", "established", "started", "when", "year"],
     phrases: ["tell me about", "what is viet", "about the college", "about viet", "about this college", "college details", "what is this", "know about", "information about"],
-    answer: "Visakha Institute of Engineering & Technology (VIET) was founded by 'Varaha Lakshmi Narasimha Swamy Educational Trust' (VLNS Educational Trust) at Narava in 2008. It is located on a sprawling 15-acre campus on the west side of Visakhapatnam city, nearby several industries and Visakhapatnam Export Processing Zone (VEPZ). VIET is affiliated to JNTU Kakinada, Andhra Pradesh and holds UGC Autonomous status."
+    answer: "Visakha Institute of Engineering & Technology (VIET) was founded by 'Varaha Lakshmi Narasimha Swamy Educational Trust' (VLNS Educational Trust) at Narava in 2008. It is located on a sprawling 15-acre campus on the west side of Visakhapatnam city, nearby several industries and Visakhapatnam Export Processing Zone (VEPZ). VIET is affiliated to JNTU-GV, Andhra Pradesh and holds UGC Autonomous status."
   },
   {
     keywords: ["admission", "admissions", "apply", "application", "enroll", "enrollment", "join", "form", "seat", "intake"],
@@ -60,7 +60,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   {
     keywords: ["data science", "csd", "big data", "analytics"],
     phrases: ["about data science", "data science course", "data science branch"],
-    answer: "CSE - Data Science (CSD) is a B.Tech specialization at VIET, covering Big Data, Machine Learning, Data Analytics, and Statistical Modeling. The department has excellent lab facilities and industry-aligned curriculum as prescribed by JNTU Kakinada."
+    answer: "CSE - Data Science (CSD) is a B.Tech specialization at VIET, covering Big Data, Machine Learning, Data Analytics, and Statistical Modeling. The department has excellent lab facilities and industry-aligned curriculum as prescribed by JNTU-GV."
   },
   {
     keywords: ["cyber", "security", "cybersecurity", "csc", "hacking", "ethical"],
@@ -185,7 +185,7 @@ const knowledgeBase: KnowledgeEntry[] = [
   {
     keywords: ["ugc", "autonomous", "autonomy"],
     phrases: ["is it autonomous", "autonomous status", "ugc status", "is viet autonomous"],
-    answer: "VIET has been conferred Autonomous status and Category I status by UGC for academic excellence and self-governance. This gives VIET the freedom to design curriculum and conduct examinations independently while being affiliated to JNTU Kakinada."
+    answer: "VIET has been conferred Autonomous status and Category I status by UGC for academic excellence and self-governance. This gives VIET the freedom to design curriculum and conduct examinations independently while being affiliated to JNTU-GV."
   },
   {
     keywords: ["aicte", "approved", "approval"],
@@ -198,9 +198,9 @@ const knowledgeBase: KnowledgeEntry[] = [
     answer: "VIET is ISO 9001:2015 certified for quality management systems and institutional processes."
   },
   {
-    keywords: ["affiliation", "affiliated", "university", "jntu", "jntuk"],
+    keywords: ["affiliation", "affiliated", "university", "jntu", "jntu-gv", "jntugv"],
     phrases: ["which university", "affiliated to", "university affiliation", "under which university"],
-    answer: "VIET is affiliated to Jawaharlal Nehru Technological University (JNTU), Kakinada, Andhra Pradesh. The Institute follows the curriculum as prescribed by JNTU Kakinada. VIET also holds UGC Autonomous status allowing it to design its own curriculum."
+    answer: "VIET is affiliated to Jawaharlal Nehru Technological University – Gurajada Vizianagaram (JNTU-GV), Andhra Pradesh. The Institute follows the curriculum as prescribed by JNTU-GV. VIET also holds UGC Autonomous status allowing it to design its own curriculum."
   },
   {
     keywords: ["research", "r&d", "patent", "publication", "paper"],

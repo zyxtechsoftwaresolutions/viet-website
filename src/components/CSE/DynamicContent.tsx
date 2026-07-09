@@ -1339,7 +1339,7 @@ This is a sample syllabus document for ${program} under ${regulation} regulation
                   <p className="text-sm text-gray-600">
                     1. Click on any program (B.Tech CSE, M.Tech CSE, etc.) to expand<br/>
                     2. Click on the regulation year (R18, R20, R23, R24) to download the PDF<br/>
-                    3. Each regulation contains updated curriculum as per JNTU GV & VIET AUTONOMOUS guidelines.
+                    3. Each regulation contains updated curriculum as per JNTU-GV & VIET AUTONOMOUS guidelines.
                   </p>
                 </div>
               </div>

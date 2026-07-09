@@ -263,7 +263,7 @@ const aboutPages = [
           <li><strong>UGC:</strong> Recognized by the University Grants Commission</li>
           <li><strong>AICTE:</strong> Approved by the All India Council for Technical Education</li>
           <li><strong>ISO:</strong> Certified with ISO 9001:2015</li>
-          <li><strong>JNTUGV:</strong> Affiliated to Jawaharlal Nehru Technological University, Kakinada</li>
+          <li><strong>JNTU-GV:</strong> Affiliated to Jawaharlal Nehru Technological University – Gurajada Vizianagaram</li>
         </ul>
         <h2 class="text-2xl font-bold mb-4">Recognition</h2>
         <p class="mb-4">Our accreditations and recognitions reflect our commitment to maintaining high standards of education, infrastructure, and student support services. We continuously work towards improving our quality and meeting the expectations of all stakeholders.</p>

@@ -480,7 +480,7 @@ const DiplomaSBTET: React.FC = () => {
                             <div className="space-y-2 text-sm">
                               <p className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4" />
-                                VIET (AUTONOMOUS) & EXAMCELL IN-CHARGE JNTUGV NARAVA- 530027, Andhra Pradesh, India
+                                VIET (AUTONOMOUS) & EXAMCELL IN-CHARGE JNTU-GV NARAVA- 530027, Andhra Pradesh, India
                               </p>
                               <p className="flex items-center gap-2">
                                 <Phone className="w-4 h-4" />
@@ -508,7 +508,7 @@ const DiplomaSBTET: React.FC = () => {
                             <div className="space-y-2 text-sm">
                               <p className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4" />
-                                VIET (AUTONOMOUS) & EXAMCELL IN-CHARGE-2 JNTUGV NARAVA- 530027, Andhra Pradesh, India
+                                VIET (AUTONOMOUS) & EXAMCELL IN-CHARGE-2 JNTU-GV NARAVA- 530027, Andhra Pradesh, India
                               </p>
                               <p className="flex items-center gap-2">
                                 <Phone className="w-4 h-4" />

@@ -181,7 +181,7 @@ const Footer = () => {
               <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-sm">
                 Approved by AICTE New Delhi,
                 <br />
-                Affiliated to JNTUGV, Vizianagaram,
+                Affiliated to JNTU-GV, Vizianagaram,
                 <br />
                 88th Division, Narava, GVMC, Visakhapatnam, Andhra Pradesh - 530027, India.
               </p>

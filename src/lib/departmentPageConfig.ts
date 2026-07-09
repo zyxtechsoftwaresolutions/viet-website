@@ -16,6 +16,12 @@ function matchDept(d: string, ...terms: string[]): boolean {
   return terms.some((t) => lower.includes(t.toLowerCase()));
 }
 
+/** Faculty/HOD records for B.Tech pages use the "ENGINEERING UG - …" department prefix. */
+function matchEngineeringUgDept(d: string, ...terms: string[]): boolean {
+  if (!matchGalleryTier(d, 'engineering-ug')) return false;
+  return terms.length === 0 ? true : matchDept(d, ...terms);
+}
+
 /** Gallery images are tagged with full department names (e.g. "DIPLOMA - …", "ENGINEERING UG - …"). */
 function matchGalleryTier(
   d: string,
@@ -57,7 +63,9 @@ const configs: Record<string, DepartmentPageConfig> = {
   'diploma-cse': {
     slug: 'diploma-cse',
     backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'computer') && (matchDept(d, 'diploma') || matchDept(d, 'computer science engineering')),
+    facultyFilter: (d) =>
+      matchDept(d, 'computer', 'dcme', 'cse') &&
+      (matchDept(d, 'diploma') || matchDept(d, 'computer science engineering', 'computer engineering')),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'diploma') && matchDept(img.department || '', 'computer'),
   },
   'diploma-ece': {
@@ -145,7 +153,7 @@ const configs: Record<string, DepartmentPageConfig> = {
   'cse': {
     slug: 'cse',
     backHref: '/btech',
-    facultyFilter: isCSEFamilyDepartment,
+    facultyFilter: (d) => matchEngineeringUgDept(d) && isCSEFamilyDepartment(d),
     galleryFilter: (img) => {
       const d = (img.department || '').toLowerCase();
       return (
@@ -160,25 +168,26 @@ const configs: Record<string, DepartmentPageConfig> = {
   'cyber-security': {
     slug: 'cyber-security',
     backHref: '/btech',
-    facultyFilter: isCSEFamilyDepartment,
+    facultyFilter: (d) => matchEngineeringUgDept(d) && isCSEFamilyDepartment(d),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'cyber', 'csc'),
   },
   'data-science': {
     slug: 'data-science',
     backHref: '/btech',
-    facultyFilter: isCSEFamilyDepartment,
+    facultyFilter: (d) => matchEngineeringUgDept(d) && isCSEFamilyDepartment(d),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'data science', 'csd'),
   },
   'aiml': {
     slug: 'aiml',
     backHref: '/btech',
-    facultyFilter: isCSEFamilyDepartment,
+    facultyFilter: (d) => matchEngineeringUgDept(d) && isCSEFamilyDepartment(d),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'aiml', 'csm', 'machine learning'),
   },
   'ece': {
     slug: 'ece',
     backHref: '/btech',
     facultyFilter: (d) => {
+      if (!matchGalleryTier(d, 'engineering-ug')) return false;
       const x = (d || '').toLowerCase().trim();
       const hasEce = x.includes('electronics') && x.includes('communication');
       const hasEee = x.includes('electrical') && x.includes('electronics');
@@ -190,6 +199,7 @@ const configs: Record<string, DepartmentPageConfig> = {
     slug: 'eee',
     backHref: '/btech',
     facultyFilter: (d) => {
+      if (!matchGalleryTier(d, 'engineering-ug')) return false;
       const x = (d || '').toLowerCase().trim();
       const hasEee = x.includes('electrical') && x.includes('electronics');
       const hasEce = x.includes('electronics') && x.includes('communication');
@@ -200,25 +210,25 @@ const configs: Record<string, DepartmentPageConfig> = {
   'civil': {
     slug: 'civil',
     backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'civil'),
+    facultyFilter: (d) => matchEngineeringUgDept(d, 'civil'),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'civil'),
   },
   'mechanical': {
     slug: 'mechanical',
     backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'mechanical'),
+    facultyFilter: (d) => matchEngineeringUgDept(d, 'mechanical'),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'mechanical'),
   },
   'automobile': {
     slug: 'automobile',
     backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'automobile', 'ame'),
+    facultyFilter: (d) => matchEngineeringUgDept(d, 'automobile', 'ame'),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'automobile', 'ame'),
   },
   'bsh': {
     slug: 'bsh',
     backHref: '/btech',
-    facultyFilter: (d) => matchDept(d, 'bsh', 'basic science', 'humanities'),
+    facultyFilter: (d) => matchEngineeringUgDept(d, 'bsh', 'basic science', 'humanities'),
     galleryFilter: (img) => matchGalleryTier(img.department || '', 'engineering-ug') && matchDept(img.department || '', 'bsh', 'basic science', 'humanities'),
   },
 };
@@ -234,7 +244,7 @@ export function getAllDepartmentPageSlugs(): string[] {
 /** Display name for gallery/back link (e.g. "Civil Engineering (Diploma)") */
 const displayNames: Record<string, string> = {
   'diploma-civil': 'Civil Engineering (Diploma)',
-  'diploma-cse': 'Computer Science Engineering (Diploma)',
+  'diploma-cse': 'Computer Engineering (Diploma / DCME)',
   'diploma-ece': 'Electronics & Communications (Diploma)',
   'diploma-eee': 'Electrical & Electronics (Diploma)',
   'diploma-mechanical': 'Mechanical Engineering (Diploma)',
@@ -261,11 +271,21 @@ export function getProgrammeHref(stream: string, level: string, name: string): s
   const n = (name || '').toLowerCase();
 
   if (s === 'DIPLOMA') {
-    if (n.includes('civil')) return '/programs/department/diploma-civil';
-    if (n.includes('computer') && n.includes('science')) return '/programs/department/diploma-cse';
-    if (n.includes('ece') || (n.includes('electronics') && n.includes('communication'))) return '/programs/department/diploma-ece';
-    if (n.includes('eee') || (n.includes('electrical') && n.includes('electronics'))) return '/programs/department/diploma-eee';
-    if (n.includes('mechanical')) return '/programs/department/diploma-mechanical';
+    if (n.includes('civil') || n.includes('dce')) return '/programs/department/diploma-civil';
+    if (
+      n.includes('dcme') ||
+      (n.includes('computer') && (n.includes('science') || n.includes('engineering'))) ||
+      (n.includes('cse') && !n.includes('csc') && !n.includes('csd') && !n.includes('csm'))
+    ) {
+      return '/programs/department/diploma-cse';
+    }
+    if (n.includes('dece') || n.includes('ece') || (n.includes('electronics') && n.includes('communication'))) {
+      return '/programs/department/diploma-ece';
+    }
+    if (n.includes('deee') || n.includes('eee') || (n.includes('electrical') && n.includes('electronics'))) {
+      return '/programs/department/diploma-eee';
+    }
+    if (n.includes('mechanical') || n.includes('(dme)')) return '/programs/department/diploma-mechanical';
   }
 
   if (s === 'ENGINEERING' && (l.includes('pg') || l.includes('m.tech'))) {

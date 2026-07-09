@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { getProgrammeHref } from '@/lib/departmentPageConfig';
 
 const ADMISSIONS_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form';
@@ -636,28 +637,8 @@ const HeroSection = () => {
     else if (normalizedName.includes('mba')) icon = 'Management';
     else if (normalizedName.includes('mca')) icon = 'Applications';
     
-    // Href mapping - try to match existing routes
-    let href = '#';
-    if (normalizedName.includes('civil') && level.toLowerCase() === 'diploma') href = '/civil-engineering';
-    else if (normalizedName.includes('civil') && level.toLowerCase() === 'ug') href = '/civil-engineering-ug';
-    else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'diploma') href = '/computer-engineering';
-    else if ((normalizedName.includes('computer') || normalizedName.includes('cse')) && level.toLowerCase() === 'ug') href = '/programs/engineering/ug/cse';
-    else if (normalizedName.includes('datascience') || normalizedName.includes('csd')) href = '/programs/engineering/ug/data-science';
-    else if (normalizedName.includes('cyber') || normalizedName.includes('csc')) href = '/programs/engineering/ug/cyber-security';
-    else if (normalizedName.includes('machine learning') || normalizedName.includes('csm')) href = '/programs/engineering/ug/aiml';
-    else if (normalizedName.includes('ece') && level.toLowerCase() === 'diploma') href = '/electronics-communications-engineering';
-    else if (normalizedName.includes('ece') && level.toLowerCase() === 'ug') href = '/electronics-communications-engineering-ug';
-    else if (normalizedName.includes('eee') && level.toLowerCase() === 'diploma') href = '/electrical-electronics-engineering';
-    else if (normalizedName.includes('eee') && level.toLowerCase() === 'ug') href = '/electrical-electronics-engineering-ug';
-    else if (normalizedName.includes('mechanical') && level.toLowerCase() === 'diploma') href = '/mechanical-engineering';
-    else if (normalizedName.includes('mechanical') && level.toLowerCase() === 'ug') href = '/mechanical-engineering-ug';
-    else if (normalizedName.includes('automobile') || normalizedName.includes('ame')) href = '/automobile-engineering';
-    else if (normalizedName.includes('basic science') || normalizedName.includes('bs&h')) href = '/bs-h';
-    else if (normalizedName.includes('bba')) href = '/bba';
-    else if (normalizedName.includes('bca')) href = '/bca';
-    else if (normalizedName.includes('mba')) href = '/mba';
-    else if (normalizedName.includes('mca')) href = '/mca';
-    
+    const href = getProgrammeHref(stream, level, name);
+
     return { icon, href };
   };
 
