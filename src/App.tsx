@@ -62,7 +62,6 @@ const GenericDepartmentPage = lazy(() => import("./pages/GenericDepartmentPage")
 const HomeSectionRedirect = lazy(() => import("./components/HomeSectionRedirect"));
 const ComingSoonPage = lazy(() => import("./pages/ComingSoonPage"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
-const ContactUs = lazy(() => import("./pages/ContactUs"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));

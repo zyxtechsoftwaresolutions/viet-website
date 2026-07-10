@@ -53,17 +53,3 @@ export function resolveLeaderHeroImage(
     '';
   return raw ? imgUrl(raw) : fallback;
 }
-
-/** Hero/profile image from leader page CMS content (Chairman, Principal, etc.) */
-export function resolveLeaderHeroImage(
-  content: Record<string, unknown> | null | undefined,
-  fallback = '/chairmanedit.jpeg'
-): string {
-  const heroImage = content?.heroImage;
-  const profileImage = content?.profileImage;
-  const raw =
-    (typeof heroImage === 'string' && heroImage.trim()) ||
-    (typeof profileImage === 'string' && profileImage.trim()) ||
-    '';
-  return raw ? imgUrl(raw) : fallback;
-}
