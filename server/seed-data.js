@@ -17,7 +17,6 @@ const departments = [
   { id: 6, name: 'Mechanical Engineering', stream: 'DIPLOMA', level: 'Diploma', image: '/assets/mechanical-department.jpg', createdAt: new Date().toISOString() },
   
   // Engineering UG Programs
-  { id: 7, name: 'Automobile Engineering (AME)', stream: 'ENGINEERING', level: 'UG', image: '/assets/mechanical-department.jpg', createdAt: new Date().toISOString() },
   { id: 8, name: 'Basic Science and Humanities (BS&H)', stream: 'ENGINEERING', level: 'UG', image: '/assets/management-department.jpg', createdAt: new Date().toISOString() },
   { id: 9, name: 'Civil Engineering (CIV)', stream: 'ENGINEERING', level: 'UG', image: '/assets/civil-department.svg', createdAt: new Date().toISOString() },
   { id: 10, name: 'Computer Science and Engineering (CSE)', stream: 'ENGINEERING', level: 'UG', image: '/assets/cse-department.jpg', createdAt: new Date().toISOString() },

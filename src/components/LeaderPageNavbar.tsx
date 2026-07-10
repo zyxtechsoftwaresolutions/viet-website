@@ -35,7 +35,6 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     ],
     engineering: {
       ug: [
-        { name: 'Automobile Engineering (AME)', href: '/programs/engineering/ug/ame', description: 'Design, develop, and manufacture automobiles including cars, trucks, and motorcycles with focus on modern automotive technologies.' },
         { name: 'Basic Science & Humanities (BS&H)', href: '/programs/engineering/ug/bsh', description: 'Strong foundation in physics, chemistry, mathematics, and communication skills essential for all engineering disciplines.' },
         { name: 'Civil Engineering (CIVIL)', href: '/programs/engineering/ug/civil', description: 'Plan, design, and construct infrastructure projects including buildings, bridges, roads, and water systems.' },
         { name: 'Computer Science & Engineering (CSE)', href: '/programs/engineering/ug/cse', description: 'Comprehensive study of programming, algorithms, databases, and software development for the digital age.' },

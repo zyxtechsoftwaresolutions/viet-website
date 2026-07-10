@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Code, Cog, Briefcase, ArrowRight, Zap, Radio, Building2, Car, BookOpen, Users, GraduationCap, Laptop, Calculator, Wrench, Leaf, Shield, Brain, FileText, Mail, Phone } from 'lucide-react';
+import { Code, Cog, Briefcase, ArrowRight, Zap, Radio, Building2, BookOpen, Users, GraduationCap, Laptop, Calculator, Wrench, Leaf, Shield, Brain, FileText, Mail, Phone } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -118,25 +118,6 @@ const PROGRAMS_DATA: Program[] = [
     },
 
     // Engineering UG Programs
-    {
-      icon: Car,
-      title: 'Automobile Engineering (AME)',
-      description: 'Automotive design, manufacturing, and vehicle technology',
-      duration: '4 Years',
-      seats: '60',
-      gradient: 'from-slate-800 to-blue-950',
-      image: mechanicalImage,
-      color: 'hsl(0 70% 50%)',
-      category: 'Engineering UG',
-      faculty: {
-        hod: {
-          name: 'Mr. K. Jagadeeswa Rao',
-          designation: 'Associate Professor & HOD',
-          qualification: 'M.Tech',
-          email: 'amehod@viet.edu.in'
-        }
-      }
-    },
     {
       icon: BookOpen,
       title: 'Basic Science and Humanities (BS&H)',

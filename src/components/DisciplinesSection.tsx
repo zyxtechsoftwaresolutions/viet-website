@@ -16,7 +16,6 @@ import eeeEngineeringImage from '@/assets/eee-engineering.jpg';
 import civilEngineeringImage from '@/assets/civil-engineering.jpg';
 // Department-specific images
 import agricultureImage from '@/assets/agriculture-engineering.jpg';
-import automobileImage from '@/assets/automobile-engineering.jpg';
 import basicScienceImage from '@/assets/basic-science.jpg';
 import datascienceImage from '@/assets/datascience.jpg';
 import cybersecurityImage from '@/assets/cybersecurity.jpg';
@@ -48,7 +47,6 @@ const getDepartmentImage = (departmentName: string): string => {
     'Mechanical Engineering': mechanicalDiplomaImage,
     
     // Engineering UG Programmes - each with unique downloaded image
-    'Automobile Engineering (AME)': automobileImage,
     'Basic Science & Humanities (BS&H)': basicScienceImage,
     'Civil Engineering (CIV)': civilEngineeringImage,
     'Computer Science & Engineering (CSE)': cseImage,
@@ -120,6 +118,7 @@ const DisciplinesSection = () => {
           const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
           if (seen.has(key)) return false;
           if (dept.name.toLowerCase().includes('agriculture')) return false;
+          if (dept.name.toLowerCase().includes('automobile') || dept.name.toLowerCase().includes('(ame)')) return false;
           seen.add(key);
           return true;
         });
@@ -171,7 +170,6 @@ const DisciplinesSection = () => {
     { name: 'Mechanical Engineering', stream: 'DIPLOMA', level: 'Diploma', image: getDepartmentImage('Mechanical Engineering'), icon: Wrench },
     
     // Engineering UG Programmes - each using getDepartmentImage
-    { name: 'Automobile Engineering (AME)', stream: 'ENGINEERING', level: 'B.Tech UG', image: getDepartmentImage('Automobile Engineering (AME)'), icon: Car },
     { name: 'Basic Science & Humanities (BS&H)', stream: 'ENGINEERING', level: 'B.Tech UG', image: getDepartmentImage('Basic Science & Humanities (BS&H)'), icon: Calculator },
     { name: 'Civil Engineering (CIV)', stream: 'ENGINEERING', level: 'B.Tech UG', image: getDepartmentImage('Civil Engineering (CIV)'), icon: Building2 },
     { name: 'Computer Science & Engineering (CSE)', stream: 'ENGINEERING', level: 'B.Tech UG', image: getDepartmentImage('Computer Science & Engineering (CSE)'), icon: Code },

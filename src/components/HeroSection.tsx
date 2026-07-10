@@ -20,7 +20,7 @@ import {
   LineChart,
   LayoutGrid,
 } from 'lucide-react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { heroVideosAPI, departmentsAPI, explorePathVideoSettingsAPI } from '@/lib/api';
@@ -581,6 +581,8 @@ function isExcludedFromExplorePath(name: string): boolean {
   );
 }
 
+const IMAGE_SLIDE_DURATION_MS = 8000;
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -589,11 +591,33 @@ const HeroSection = () => {
   /** Fallback image shown only when video is unsupported (e.g. format not playable). */
   const [unsupportedVideoSlides, setUnsupportedVideoSlides] = useState<Set<number>>(new Set());
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const slideAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [heroVideoRecords, setHeroVideoRecords] = useState<HeroVideoRecord[]>([]);
   const heroSlides = useMemo(
     () => buildHeroSlidesForViewport(heroVideoRecords, isMobile),
     [heroVideoRecords, isMobile]
   );
+
+  const advanceToNextSlide = useCallback(() => {
+    if (heroSlides.length <= 1) return;
+    setCurrentSlide((prev) => {
+      const next = (prev + 1) % heroSlides.length;
+      setTimeout(() => {
+        const nextVideo = videoRefs.current[next];
+        if (nextVideo) {
+          const deferredSource = nextVideo.querySelector('source[data-src]');
+          if (deferredSource) {
+            deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
+            deferredSource.removeAttribute('data-src');
+            nextVideo.preload = 'metadata';
+            nextVideo.load();
+          }
+        }
+      }, 500);
+      return next;
+    });
+  }, [heroSlides.length]);
+
   const [loading, setLoading] = useState(true);
   const [programFinderOpen, setProgramFinderOpen] = useState(false);
   const [programSearchQuery, setProgramSearchQuery] = useState('');
@@ -656,6 +680,7 @@ const HeroSection = () => {
           const key = `${dept.name.toLowerCase().trim()}|${dept.stream}|${dept.level}`;
           if (seen.has(key)) return false;
           if (dept.name.toLowerCase().includes('agriculture')) return false;
+          if (dept.name.toLowerCase().includes('automobile') || dept.name.toLowerCase().includes('(ame)')) return false;
           seen.add(key);
           return true;
         });
@@ -738,32 +763,33 @@ const HeroSection = () => {
     videoRefs.current = [];
   }, [isMobile, heroVideoRecords]);
 
-  // Auto-advance slides
+  // Image / embed slides use a timer; video slides advance when playback ends.
   useEffect(() => {
-    if (!isAutoPlaying || heroSlides.length === 0) return;
-    
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => {
-        const next = (prev + 1) % heroSlides.length;
-        // Preload next video when slide changes (deferred)
-        setTimeout(() => {
-          const nextVideo = videoRefs.current[next];
-          if (nextVideo) {
-            const deferredSource = nextVideo.querySelector('source[data-src]');
-            if (deferredSource) {
-              deferredSource.setAttribute('src', deferredSource.getAttribute('data-src') || '');
-              deferredSource.removeAttribute('data-src');
-              nextVideo.preload = 'metadata';
-              nextVideo.load();
-            }
-          }
-        }, 1000); // Delay preload to avoid blocking
-        return next;
-      });
-    }, 8000); // 8 seconds per slide
-    
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, heroSlides.length]);
+    if (slideAdvanceTimerRef.current) {
+      clearTimeout(slideAdvanceTimerRef.current);
+      slideAdvanceTimerRef.current = null;
+    }
+    if (!isAutoPlaying || heroSlides.length <= 1) return;
+
+    const slide = heroSlides[currentSlide];
+    const useTimer =
+      slide.type === 'image' ||
+      Boolean(slide.embedUrl) ||
+      (slide.type === 'video' && unsupportedVideoSlides.has(currentSlide));
+
+    if (useTimer) {
+      slideAdvanceTimerRef.current = setTimeout(() => {
+        advanceToNextSlide();
+      }, IMAGE_SLIDE_DURATION_MS);
+    }
+
+    return () => {
+      if (slideAdvanceTimerRef.current) {
+        clearTimeout(slideAdvanceTimerRef.current);
+        slideAdvanceTimerRef.current = null;
+      }
+    };
+  }, [currentSlide, isAutoPlaying, heroSlides, unsupportedVideoSlides, advanceToNextSlide]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -801,6 +827,7 @@ const HeroSection = () => {
     pauseOtherVideos();
     const video = videoRefs.current[currentSlide];
     if (video) {
+      video.currentTime = 0;
       const play = () => video.play().catch(() => {});
       if (video.readyState >= 2) {
         play();
@@ -908,11 +935,15 @@ const HeroSection = () => {
                     className="w-full h-full object-cover bg-black"
                     autoPlay={index === currentSlide}
                     muted
-                    loop
                     playsInline
                     preload="metadata"
                     width={1920}
                     height={1080}
+                    onEnded={() => {
+                      if (isAutoPlaying && index === currentSlide && heroSlides.length > 1) {
+                        advanceToNextSlide();
+                      }
+                    }}
                     onError={() =>
                       setUnsupportedVideoSlides((prev) => new Set(prev).add(index))
                     }
@@ -1000,7 +1031,12 @@ const HeroSection = () => {
 
           {/* Navigation Dots */}
           <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-            {heroSlides.map((_, index) => (
+            {heroSlides.map((slide, index) => {
+              const useTimerProgress =
+                slide.type === 'image' ||
+                Boolean(slide.embedUrl) ||
+                (slide.type === 'video' && unsupportedVideoSlides.has(index));
+              return (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
@@ -1010,17 +1046,17 @@ const HeroSection = () => {
                     : 'w-2 h-2 bg-white/50 rounded-full hover:bg-white/70'
                 }`}
               >
-                {/* Progress indicator for current slide */}
-                {index === currentSlide && isAutoPlaying && (
+                {index === currentSlide && isAutoPlaying && useTimerProgress && (
                   <motion.div
                     className="absolute inset-0 bg-white/30 rounded-full origin-left"
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
-                    transition={{ duration: 8, ease: 'linear' }}
+                    transition={{ duration: IMAGE_SLIDE_DURATION_MS / 1000, ease: 'linear' }}
                   />
                 )}
               </button>
-            ))}
+            );
+            })}
           </div>
           
           {/* Carousel arrows — manual navigation */}

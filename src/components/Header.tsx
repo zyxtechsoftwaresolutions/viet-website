@@ -283,7 +283,6 @@ const Header = () => {
 
   // UG Engineering submenu items
   const ugEngineeringSubmenuItems = [
-    { name: 'Automobile Engineering', href: '/automobile-engineering' },
     { name: 'BS & H', href: '/bs-h' },
     { name: 'Civil Engineering', href: '/civil-engineering-ug' },
     { name: 'Computer Science & Engineering', href: '/programs/engineering/ug/cse' },

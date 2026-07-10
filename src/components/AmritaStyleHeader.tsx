@@ -28,7 +28,6 @@ const AmritaStyleHeader = () => {
     ],
     engineering: {
       ug: [
-        { name: 'Automobile Engineering (AME)', href: '/automobile-engineering', description: 'Design, develop, and manufacture automobiles including cars, trucks, and motorcycles with focus on modern automotive technologies.' },
         { name: 'Basic Science & Humanities (BS&H)', href: '/bs-h', description: 'Strong foundation in physics, chemistry, mathematics, and communication skills essential for all engineering disciplines.' },
         { name: 'Civil Engineering (CIV)', href: '/civil-engineering-ug', description: 'Plan, design, and construct infrastructure projects including buildings, bridges, roads, and water systems.' },
         { name: 'Computer Science & Engineering (CSE)', href: '/programs/engineering/ug/cse', description: 'Comprehensive study of programming, algorithms, databases, and software development for the digital age.' },
@@ -264,7 +263,6 @@ const AmritaStyleHeader = () => {
         { title: 'Electrical & Electronics', description: 'EEE department programs', link: '/electrical-electronics-engineering-ug' },
         { title: 'Mechanical Engineering', description: 'Mechanical engineering programs', link: '/mechanical-engineering-ug' },
         { title: 'Civil Engineering', description: 'Civil engineering programs', link: '/civil-engineering-ug' },
-        { title: 'Automobile Engineering', description: 'Automobile engineering programs', link: '/automobile-engineering' },
         { title: 'Basic Sciences & Humanities', description: 'BS&H department', link: '/bs-h' },
       ]
     },

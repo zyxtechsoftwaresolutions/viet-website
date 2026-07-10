@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,7 @@ const GalleryAdmin = () => {
   const [photoEventId, setPhotoEventId] = useState<string>('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [deletePhoto, setDeletePhoto] = useState<GalleryPhoto | null>(null);
 
@@ -177,6 +178,18 @@ const GalleryAdmin = () => {
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete event');
     }
+  };
+
+  const handlePhotoFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    if (picked.length > 0) {
+      setPhotoFiles((prev) => [...prev, ...picked]);
+    }
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  const removePhotoFile = (index: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const uploadPhotos = async () => {
@@ -345,16 +358,47 @@ const GalleryAdmin = () => {
                 <Label>Photos</Label>
                 <div className="flex flex-wrap items-center gap-3">
                   <Input
+                    ref={photoInputRef}
                     type="file"
                     accept="image/*"
                     multiple
                     className="max-w-md cursor-pointer"
-                    onChange={(e) => setPhotoFiles(Array.from(e.target.files || []))}
+                    onChange={handlePhotoFilesChange}
                   />
                   <ImageUploadGuide {...IMAGE_SPECS.galleryPhoto} inline />
                 </div>
                 {photoFiles.length > 0 && (
-                  <p className="text-sm text-muted-foreground">{photoFiles.length} file(s) selected</p>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-sm text-muted-foreground">{photoFiles.length} file(s) selected</p>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setPhotoFiles([])}>
+                        Clear selection
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                      {photoFiles.map((file, index) => (
+                        <div key={`${file.name}-${index}`} className="relative rounded-lg border overflow-hidden">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="w-full aspect-[4/3] object-cover"
+                            onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-7 w-7"
+                            onClick={() => removePhotoFile(index)}
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <p className="p-1.5 text-[10px] text-muted-foreground truncate">{file.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
               <Button onClick={uploadPhotos} disabled={uploadingPhotos || !selectedEvent}>

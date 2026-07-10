@@ -49,14 +49,6 @@
       "createdAt": "2025-01-15T00:00:00.000Z"
     },
     {
-      "id": 7,
-      "name": "ENGINEERING UG - Automobile Engineering (AME)",
-      "stream": "ENGINEERING",
-      "level": "UG",
-      "image": "/assets/mechanical-department.jpg",
-      "createdAt": "2025-01-15T00:00:00.000Z"
-    },
-    {
       "id": 8,
       "name": "ENGINEERING UG - Basic Science and Humanities (BS&H)",
       "stream": "ENGINEERING",

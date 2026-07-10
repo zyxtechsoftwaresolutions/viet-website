@@ -93,11 +93,6 @@ const knowledgeBase: KnowledgeEntry[] = [
     answer: "The Civil Engineering department at VIET offers B.Tech and M.Tech (Structural Engineering) programs. Diploma in Civil Engineering is also available."
   },
   {
-    keywords: ["automobile", "auto", "ame"],
-    phrases: ["about automobile", "automobile engineering", "automobile department"],
-    answer: "The Automobile Engineering (AME) department at VIET provides specialized training in automotive technology. Available at both Diploma and B.Tech levels."
-  },
-  {
     keywords: ["diploma"],
     phrases: ["about diploma", "diploma courses", "diploma programs", "polytechnic"],
     answer: "VIET offers Diploma programs in: Civil, Computer, ECE, EEE, and Mechanical Engineering. Total Diploma students: 1,400+."

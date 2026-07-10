@@ -939,7 +939,6 @@ const DEFAULT_GALLERY_FILE = {
 function normalizeGalleryStore(raw) {
   const base = raw && typeof raw === 'object' ? raw : {};
   const images = Array.isArray(base.images) ? base.images : [];
-  let events = Array.isArray(base.events) ? base.events : [];
   const settings = {
     ...DEFAULT_GALLERY_FILE.settings,
     ...(base.settings || {}),
@@ -949,15 +948,22 @@ function normalizeGalleryStore(raw) {
     },
   };
 
-  if (events.length === 0 && images.length > 0) {
+  let events = Array.isArray(base.events) ? base.events : [];
+  const needsLegacyEventMigration = !Array.isArray(base.events) && images.length > 0;
+  if (needsLegacyEventMigration) {
     const names = [...new Set(images.map((i) => i.eventName || i.alt).filter(Boolean))];
-    events = names.map((name, idx) => ({
-      id: Date.now() + idx,
-      name,
-      badge: '',
-      description: '',
-      order: idx,
-    }));
+    events = names.map((name, idx) => {
+      const related = images.filter((i) => (i.eventName || i.alt) === name);
+      const stableId =
+        related.length > 0 && related[0].id != null ? Number(related[0].id) : Date.now() + idx;
+      return {
+        id: stableId,
+        name,
+        badge: '',
+        description: '',
+        order: idx,
+      };
+    });
   }
 
   const normalizedImages = images.map((img, idx) => {
@@ -990,8 +996,12 @@ function normalizeGalleryStore(raw) {
 }
 
 async function readGalleryStore() {
-  const d = await readJsonFile('gallery');
-  return normalizeGalleryStore(d);
+  const raw = await readJsonFile('gallery');
+  const normalized = normalizeGalleryStore(raw);
+  if (!Array.isArray(raw?.events) && Array.isArray(raw?.images) && raw.images.length > 0) {
+    await writeJsonFile('gallery', normalized);
+  }
+  return normalized;
 }
 
 async function writeGalleryStore(store) {
@@ -1036,7 +1046,7 @@ export async function createGalleryEvent(event) {
 
 export async function updateGalleryEvent(id, patch) {
   const store = await readGalleryStore();
-  const idx = store.events.findIndex((e) => e.id === parseInt(id, 10));
+  const idx = store.events.findIndex((e) => Number(e.id) === Number(id));
   if (idx === -1) return null;
   const prevName = store.events[idx].name;
   store.events[idx] = {
@@ -1046,8 +1056,9 @@ export async function updateGalleryEvent(id, patch) {
     name: patch.name != null ? String(patch.name).trim() : store.events[idx].name,
   };
   if (patch.name && patch.name !== prevName) {
+    const eventId = Number(store.events[idx].id);
     store.images = store.images.map((img) =>
-      img.eventId === store.events[idx].id ? { ...img, eventName: store.events[idx].name } : img
+      Number(img.eventId) === eventId ? { ...img, eventName: store.events[idx].name } : img
     );
   }
   await writeGalleryStore(store);
@@ -1056,9 +1067,16 @@ export async function updateGalleryEvent(id, patch) {
 
 export async function deleteGalleryEvent(id) {
   const store = await readGalleryStore();
-  const eventId = parseInt(id, 10);
-  store.events = store.events.filter((e) => e.id !== eventId);
-  store.images = store.images.filter((img) => img.eventId !== eventId);
+  const eventId = Number(id);
+  const target = store.events.find((e) => Number(e.id) === eventId);
+  const eventName = target?.name;
+  store.events = store.events.filter((e) => Number(e.id) !== eventId);
+  store.images = store.images.filter((img) => {
+    if (Number(img.eventId) === eventId) return false;
+    if (eventName && img.eventName === eventName) return false;
+    if (eventName && !img.eventId && img.alt === eventName) return false;
+    return true;
+  });
   await writeGalleryStore(store);
 }
 
@@ -1105,7 +1123,8 @@ export async function createGalleryItem(item) {
 
 export async function deleteGalleryItem(id) {
   const store = await readGalleryStore();
-  store.images = store.images.filter((i) => i.id !== parseInt(id, 10));
+  const targetId = Number(id);
+  store.images = store.images.filter((i) => Number(i.id) !== targetId);
   await writeGalleryStore(store);
 }
 

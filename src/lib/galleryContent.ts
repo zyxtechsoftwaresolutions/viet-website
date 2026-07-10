@@ -90,7 +90,7 @@ export function normalizeGalleryPageData(raw: unknown): GalleryPageData {
       }))
     : [];
 
-  if (events.length === 0 && images.length > 0) {
+  if (events.length === 0 && images.length > 0 && !Array.isArray(d.events)) {
     const eventNames = [
       ...new Set(
         images
@@ -98,13 +98,18 @@ export function normalizeGalleryPageData(raw: unknown): GalleryPageData {
           .filter((name): name is string => Boolean(name))
       ),
     ];
-    events = eventNames.map((name, idx) => ({
-      id: Date.now() + idx,
-      name,
-      badge: '',
-      description: '',
-      order: idx,
-    }));
+    events = eventNames.map((name, idx) => {
+      const related = images.filter((img) => img.eventName === name);
+      const stableId =
+        related.length > 0 && related[0].id != null ? Number(related[0].id) : Date.now() + idx;
+      return {
+        id: stableId,
+        name,
+        badge: '',
+        description: '',
+        order: idx,
+      };
+    });
     images.forEach((img) => {
       if (!img.eventId && img.eventName) {
         const match = events.find((e) => e.name === img.eventName);
@@ -118,7 +123,13 @@ export function normalizeGalleryPageData(raw: unknown): GalleryPageData {
 }
 
 export function photosForEvent(images: GalleryPhoto[], event: GalleryEvent): GalleryPhoto[] {
+  const eventId = Number(event.id);
   return images
-    .filter((img) => img.eventId === event.id || img.eventName === event.name)
+    .filter(
+      (img) =>
+        Number(img.eventId) === eventId ||
+        img.eventName === event.name ||
+        (!img.eventId && img.alt === event.name)
+    )
     .sort((a, b) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
 }

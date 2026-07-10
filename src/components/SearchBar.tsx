@@ -92,7 +92,6 @@ const SearchBar = () => {
 
     // UG Engineering items
     const ugEngineeringItems = [
-      { name: 'Automobile Engineering', href: '/automobile-engineering', category: 'Departments > Engineering > UG', type: 'submenu' as const },
       { name: 'BS & H', href: '/bs-h', category: 'Departments > Engineering > UG', type: 'submenu' as const },
       { name: 'Civil Engineering', href: '/civil-engineering-ug', category: 'Departments > Engineering > UG', type: 'submenu' as const },
       { name: 'Computer Science & Engineering', href: '/programs/engineering/ug/cse', category: 'Departments > Engineering > UG', type: 'submenu' as const },

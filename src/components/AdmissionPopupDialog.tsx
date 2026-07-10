@@ -28,7 +28,6 @@ const PROGRAMMES = [
     'B.Tech – Electrical & Electronics Engineering',
     'B.Tech – Mechanical Engineering',
     'B.Tech – Civil Engineering',
-    'B.Tech – Automobile Engineering',
   ]},
   { group: 'Diploma', items: [
     'Diploma – Computer Science Engineering',
