@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { pagesAPI } from '@/lib/api';
 import DynamicPage from '@/pages/DynamicPage';
+import ComingSoonPage from '@/pages/ComingSoonPage';
 import NotFound from '@/pages/NotFound';
+import { getComingSoonTitle } from '@/lib/comingSoonPages';
 
 // This component checks if the current route matches a page in the database
 // and renders it if found, otherwise shows 404
@@ -14,6 +16,13 @@ const DynamicRouteHandler = () => {
 
   useEffect(() => {
     const checkPage = async () => {
+      const comingSoonTitle = getComingSoonTitle(location.pathname);
+      if (comingSoonTitle) {
+        setPage({ comingSoon: true, title: comingSoonTitle });
+        setLoading(false);
+        return;
+      }
+
       // Skip admin routes and known routes
       if (location.pathname.startsWith('/admin') || 
           location.pathname.startsWith('/page/')) {
@@ -52,6 +61,10 @@ const DynamicRouteHandler = () => {
 
   if (notFound || !page) {
     return <NotFound />;
+  }
+
+  if (page.comingSoon) {
+    return <ComingSoonPage title={page.title} />;
   }
 
   // Render the dynamic page with the page data

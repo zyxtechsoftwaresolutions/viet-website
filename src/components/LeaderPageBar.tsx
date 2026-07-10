@@ -17,7 +17,7 @@ const LEADER_NAV_LINKS = [
   { name: 'Accreditations', href: '/accreditations' },
   { name: 'Organizational Chart', href: '/organizational-chart' },
   { name: 'Governing Body', href: '/governing-body' },
-  { name: 'Contact', href: '/about#contact' },
+  { name: 'Contact', href: '/contact' },
 ];
 
 interface LeaderPageBarProps {

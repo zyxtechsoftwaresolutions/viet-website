@@ -1,18 +1,45 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Building2, UserCheck, Award, BookOpen, Target } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
+import { pagesAPI } from '@/lib/api';
+import { imgUrl } from '@/lib/imageUtils';
+import {
+  DEFAULT_ORGANIZATIONAL_CHART_CONTENT,
+  DEFAULT_ORG_CHART_IMAGE,
+  normalizeOrganizationalChartContent,
+} from '@/lib/organizationalChartContent';
 
 const OrganizationalChart = () => {
+  const [content, setContent] = useState(DEFAULT_ORGANIZATIONAL_CHART_CONTENT);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const page = await pagesAPI.getBySlug('organizational-chart');
+        setContent(normalizeOrganizationalChartContent(page?.content || null));
+      } catch {
+        setContent(DEFAULT_ORGANIZATIONAL_CHART_CONTENT);
+      }
+    };
+    load();
+  }, []);
+
+  const heroImage = content.hero.heroImage
+    ? imgUrl(content.hero.heroImage)
+    : '/campus-hero.jpg';
+  const chartImage = content.chartImage
+    ? imgUrl(content.chartImage)
+    : DEFAULT_ORG_CHART_IMAGE;
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+      transition: { staggerChildren: 0.1 },
+    },
   };
 
   const itemVariants = {
@@ -20,23 +47,18 @@ const OrganizationalChart = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+      transition: { duration: 0.6, ease: 'easeOut' },
+    },
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <LeaderPageNavbar backHref="/about" />
-      
-      {/* Hero Section */}
+
       <section
         className="relative min-h-[55vh] md:min-h-[90vh] pt-20 md:pt-28 pb-10 md:pb-16 text-white flex items-center bg-[#5a5a5a] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/campus-hero.jpg)' }}
+        style={{ backgroundImage: `url(${heroImage})` }}
       >
-        {/* Dark overlay for text readability */}
         <div
           className="absolute inset-0 bg-gradient-to-r from-black/75 from-40% via-black/50 to-transparent"
           aria-hidden
@@ -50,30 +72,26 @@ const OrganizationalChart = () => {
               transition={{ duration: 0.6 }}
             >
               <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full">
-                Organizational Chart
+                {content.hero.badge || 'Organizational Chart'}
               </p>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm">
-                Organizational Chart
+                {content.hero.title}
               </h1>
-              <p className="text-lg md:text-xl font-semibold text-white/95">
-                Structure and Hierarchy
-              </p>
+              <p className="text-lg md:text-xl font-semibold text-white/95">Structure and Hierarchy</p>
               <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
-                Structure and hierarchy of Visakha Institute of Engineering & Technology
+                {content.hero.description}
               </p>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
       <motion.div
         className="container mx-auto px-4 py-16"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Organizational Chart Section */}
         <motion.section variants={itemVariants} className="mb-16">
           <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8 md:p-12">
@@ -88,14 +106,13 @@ const OrganizationalChart = () => {
                   The organizational structure and administrative hierarchy of VIET
                 </p>
               </div>
-              
-              {/* Organizational Chart Image */}
+
               <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-8 border border-slate-200">
                 <div className="text-center">
-                  <div className="bg-white rounded-lg shadow-lg p-8 inline-block">
-                    <img 
-                      src="/VIET-Org_Chart_Affiliated.png" 
-                      alt="VIET Organizational Chart" 
+                  <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 inline-block max-w-full">
+                    <img
+                      src={chartImage}
+                      alt={content.chartAlt}
                       className="max-w-full h-auto rounded-lg shadow-md"
                     />
                   </div>
@@ -105,7 +122,6 @@ const OrganizationalChart = () => {
           </Card>
         </motion.section>
 
-        {/* Key Leadership Positions */}
         <motion.section variants={itemVariants} className="mb-16">
           <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8 md:p-12">
@@ -120,13 +136,9 @@ const OrganizationalChart = () => {
                   Administrative and academic leadership structure
                 </p>
               </div>
-              
+
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Chairman */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
                   <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-slate-50 to-blue-100">
                     <CardContent className="p-6 text-center">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -139,11 +151,7 @@ const OrganizationalChart = () => {
                   </Card>
                 </motion.div>
 
-                {/* Principal */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
                   <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-emerald-100">
                     <CardContent className="p-6 text-center">
                       <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -156,11 +164,7 @@ const OrganizationalChart = () => {
                   </Card>
                 </motion.div>
 
-                {/* Dean Academics */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
                   <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-purple-50 to-violet-100">
                     <CardContent className="p-6 text-center">
                       <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -173,11 +177,7 @@ const OrganizationalChart = () => {
                   </Card>
                 </motion.div>
 
-                {/* Dean Innovation */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
                   <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-slate-50 to-blue-100">
                     <CardContent className="p-6 text-center">
                       <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-950 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -194,19 +194,18 @@ const OrganizationalChart = () => {
           </Card>
         </motion.section>
 
-        {/* Administrative Structure */}
         <motion.section variants={itemVariants}>
           <Card className="shadow-xl border-0 bg-gradient-to-br from-slate-800 to-blue-900 text-white">
             <CardContent className="p-8 md:p-12">
               <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Administrative Structure
-                </h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Administrative Structure</h2>
                 <p className="text-xl text-blue-100 leading-relaxed max-w-3xl mx-auto">
-                  The organizational chart reflects the hierarchical structure and reporting relationships within Visakha Institute of Engineering & Technology, ensuring effective governance and academic excellence.
+                  The organizational chart reflects the hierarchical structure and reporting
+                  relationships within Visakha Institute of Engineering & Technology, ensuring
+                  effective governance and academic excellence.
                 </p>
               </div>
-              
+
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
                 <div className="grid md:grid-cols-2 gap-8">
                   <div>

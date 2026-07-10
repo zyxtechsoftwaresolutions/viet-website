@@ -245,7 +245,7 @@ const Header = () => {
   const admissionsMenuItems = [
     { name: 'Courses Offered', href: '/courses-offered', hasSubmenu: true },
     { name: 'Online Admission Form', href: 'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   // Courses Offered submenu items

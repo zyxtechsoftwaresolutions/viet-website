@@ -53,8 +53,9 @@ export const EXPECTED_SITE_PAGES: SitePageMeta[] = [
 export function getPageEditorKind(
   slug: string,
   category: string
-): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'generic' {
+): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'organizational-chart' | 'generic' {
   if (slug === 'about') return 'about';
+  if (slug === 'organizational-chart') return 'organizational-chart';
   if (slug === 'transport') return 'transport';
   if (slug === 'campus-life') return 'campus-life';
   if ((LEADER_SLUGS as readonly string[]).includes(slug)) return 'authorities';
@@ -65,6 +66,7 @@ export function getPageEditorKind(
 export function getAdminEditorPath(slug: string, category: string): string {
   const kind = getPageEditorKind(slug, category);
   if (kind === 'about') return '/admin/pages';
+  if (kind === 'organizational-chart') return '/admin/organizational-chart';
   if (kind === 'authorities') return '/admin/authorities';
   if (kind === 'transport') return '/admin/facilities/transport';
   if (kind === 'facilities') return `/admin/facilities/${slug}`;

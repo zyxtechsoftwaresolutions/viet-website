@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
+import ComingSoonPage from '@/pages/ComingSoonPage';
 import { Card, CardContent } from '@/components/ui/card';
 import { pagesAPI } from '@/lib/api';
+import { getComingSoonTitleBySlug } from '@/lib/comingSoonPages';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 import ImageModal from '@/components/ImageModal';
 import { User } from 'lucide-react';
@@ -19,11 +21,17 @@ type DynamicPageProps = {
 const DynamicPage = ({ pageData: initialPageData, slugOverride }: DynamicPageProps = {}) => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const slug = slugOverride || paramSlug;
+  const comingSoonTitle = slug ? getComingSoonTitleBySlug(slug) : undefined;
   const [pageContent, setPageContent] = useState<any>(initialPageData ?? null);
   const [loading, setLoading] = useState(!initialPageData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (comingSoonTitle) {
+      setLoading(false);
+      return;
+    }
+
     if (initialPageData) {
       setPageContent(initialPageData);
       setLoading(false);
@@ -56,7 +64,11 @@ const DynamicPage = ({ pageData: initialPageData, slugOverride }: DynamicPagePro
     };
 
     fetchPageContent();
-  }, [slug, initialPageData]);
+  }, [slug, initialPageData, comingSoonTitle]);
+
+  if (comingSoonTitle) {
+    return <ComingSoonPage title={comingSoonTitle} />;
+  }
 
   if (loading) {
     return (

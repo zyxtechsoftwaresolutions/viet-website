@@ -67,7 +67,7 @@ const SearchBar = () => {
     const admissionsItems = [
       { name: 'Courses Offered', href: '/courses-offered', category: 'Admissions', type: 'dropdown' as const },
       { name: 'Online Admission Form', href: 'https://docs.google.com/forms/d/e/1FAIpQLSfzvrY5qJTPfzBiW1UU1JZAvNAN8qcjv07v6lWSc1Xe0X-wvw/viewform?usp=send_form', category: 'Admissions', type: 'dropdown' as const },
-      { name: 'Contact', href: '#contact', category: 'Admissions', type: 'dropdown' as const },
+      { name: 'Contact', href: '/contact', category: 'Admissions', type: 'dropdown' as const },
     ];
 
     // Courses submenu items

@@ -250,7 +250,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
   ];
 
   const topRibbonRightLinksBeforeLogin = [
-    { name: 'CONTACT', href: '#contact' },
+    { name: 'CONTACT', href: '/contact' },
     { name: 'Student Login', href: CAMU_STUDENT_URL },
     { name: 'Staff Login', href: CAMU_STAFF_URL },
     { name: 'ECAP Login', href: ECAP_URL },
@@ -262,22 +262,17 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     { name: 'About', id: 'about' },
     { name: 'Academics', id: 'academics' },
     { name: 'Departments', id: 'departments' },
-    { name: 'Facilities', id: 'facilities' },
+    { name: 'Exam Cell', href: '/examinations/ug-pg' },
     { name: 'IQAC', id: 'iqac' },
     { name: 'Governance', href: '/governing-body' },
     { name: 'Research', href: '/research-development' },
-    { name: 'Students', href: '/page/students' },
-    { name: 'Linkages', href: '/page/linkages' },
-    { name: 'Global', href: '/page/global' },
+    { name: 'Facilities', id: 'facilities' },
     { name: 'Infrastructure', href: '/page/infrastructure' },
     { name: 'Finance', href: '/page/finance' },
     { name: 'Quality', href: '/iqac' },
-    { name: 'Disclosures', href: '/page/disclosures' },
-    { name: 'Directions', href: '/page/directions' },
-    { name: 'Exam Cell', href: '/examinations/ug-pg' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'Online Payment', href: '/page/online-payment' },
-    { name: 'Contact us', href: '#contact' },
+    { name: 'Contact us', href: '/contact' },
   ];
 
   // Submenu data for each main nav item

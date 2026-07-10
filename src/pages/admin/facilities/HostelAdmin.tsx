@@ -72,6 +72,13 @@ const HostelAdmin = () => {
     setContent((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
   };
 
+  const updateFacilityIcon = (index: number, field: 'title' | 'icon', value: string) => {
+    setContent((prev) => ({
+      ...prev,
+      facilities: prev.facilities.map((f, j) => (j === index ? { ...f, [field]: value } : f)),
+    }));
+  };
+
   return (
     <FacilityAdminLayout
       title="Hostel Page"
@@ -90,6 +97,7 @@ const HostelAdmin = () => {
           <TabsTrigger value="rooms">Rooms</TabsTrigger>
           <TabsTrigger value="community">Community & Rules</TabsTrigger>
           <TabsTrigger value="cta">CTA</TabsTrigger>
+          <TabsTrigger value="contact">Contact</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -144,7 +152,7 @@ const HostelAdmin = () => {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Hostel Facilities
-                <Button type="button" variant="outline" size="sm" onClick={() => setContent((p) => ({ ...p, facilities: [...p.facilities, { title: '', description: '', icon: '' }] }))}>
+                <Button type="button" variant="outline" size="sm" onClick={() => setContent((p) => ({ ...p, facilities: [...p.facilities, { title: '', icon: '' }] }))}>
                   <Plus className="h-4 w-4 mr-1" /> Add
                 </Button>
               </CardTitle>
@@ -155,9 +163,8 @@ const HostelAdmin = () => {
                   <div className="flex justify-between"><Label>Facility {i + 1}</Label>
                     <Button type="button" variant="ghost" size="icon" onClick={() => setContent((p) => ({ ...p, facilities: p.facilities.filter((_, j) => j !== i) }))}><Trash2 className="h-4 w-4" /></Button>
                   </div>
-                  <Input value={item.title} onChange={(e) => setContent((p) => ({ ...p, facilities: p.facilities.map((f, j) => (j === i ? { ...f, title: e.target.value } : f)) }))} placeholder="Title" />
-                  <Textarea value={item.description} onChange={(e) => setContent((p) => ({ ...p, facilities: p.facilities.map((f, j) => (j === i ? { ...f, description: e.target.value } : f)) }))} placeholder="Description" rows={2} />
-                  <Input value={item.icon} onChange={(e) => setContent((p) => ({ ...p, facilities: p.facilities.map((f, j) => (j === i ? { ...f, icon: e.target.value } : f)) }))} placeholder="Icon (emoji or text)" />
+                  <Input value={item.title} onChange={(e) => updateFacilityIcon(i, 'title', e.target.value)} placeholder="Title" />
+                  <Textarea value={item.icon} onChange={(e) => updateFacilityIcon(i, 'icon', e.target.value)} placeholder="SVG path (advanced)" rows={2} className="font-mono text-xs" />
                 </div>
               ))}
             </CardContent>
@@ -233,6 +240,31 @@ const HostelAdmin = () => {
                 <div><Label>Button text</Label><Input value={content.cta.buttonText} onChange={(e) => setContent((p) => ({ ...p, cta: { ...p.cta, buttonText: e.target.value } }))} /></div>
                 <div><Label>Button link</Label><Input value={content.cta.buttonHref} onChange={(e) => setContent((p) => ({ ...p, cta: { ...p.cta, buttonHref: e.target.value } }))} /></div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contact">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Contact Columns
+                <Button type="button" variant="outline" size="sm" onClick={() => setContent((p) => ({ ...p, contact: { columns: [...p.contact.columns, { title: '', lines: [''], email: '' }] } }))}>
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {content.contact.columns.map((col, i) => (
+                <div key={i} className="grid gap-2 border rounded-lg p-4">
+                  <div className="flex justify-between"><Label>Column {i + 1}</Label>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setContent((p) => ({ ...p, contact: { columns: p.contact.columns.filter((_, j) => j !== i) } }))}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                  <Input value={col.title} onChange={(e) => setContent((p) => ({ ...p, contact: { columns: p.contact.columns.map((c, j) => (j === i ? { ...c, title: e.target.value } : c)) } }))} placeholder="Title" />
+                  <StringListEditor label="Lines" items={col.lines} onChange={(lines) => setContent((p) => ({ ...p, contact: { columns: p.contact.columns.map((c, j) => (j === i ? { ...c, lines } : c)) } }))} />
+                  <Input value={col.email ?? ''} onChange={(e) => setContent((p) => ({ ...p, contact: { columns: p.contact.columns.map((c, j) => (j === i ? { ...c, email: e.target.value } : c)) } }))} placeholder="Email (optional)" />
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

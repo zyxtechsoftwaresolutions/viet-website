@@ -33,8 +33,15 @@ export const SITE_PAGE_SEEDS = [
     route: '/organizational-chart',
     category: 'About',
     content: {
-      hero: { title: 'Organizational Chart', description: 'Leadership structure at VIET.' },
-      mainContent: '<p>Add organizational chart details or embed an image via the admin panel.</p>',
+      hero: {
+        badge: 'Organizational Chart',
+        title: 'Organizational Chart',
+        description: 'Structure and hierarchy of Visakha Institute of Engineering & Technology',
+        heroImage: '/campus-hero.jpg',
+      },
+      chartImage: '/VIET-Org_Chart_Affiliated.png',
+      chartAlt: 'VIET Organizational Chart',
+      mainContent: '<p>Organizational chart image is managed in Admin → Organizational Chart.</p>',
     },
   },
   {

@@ -23,9 +23,10 @@ export const FACILITY_HERO_DEFAULTS: Record<string, FacilityHeroDefaults> = {
     badge: 'Facilities',
     title: 'Our Hostel',
     description: 'A safe, comfortable, and vibrant living environment for students. Home away from home.',
-    gradient: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #0f172a 100%)',
-    waveFill: 'rgb(253 251 247)',
-    align: 'center',
+    gradient: 'linear-gradient(155deg, #0f172a 0%, #312e81 35%, #1e3a8a 70%, #0f172a 100%)',
+    waveFill: 'rgb(248 250 252)',
+    showDotPattern: true,
+    align: 'end',
   },
   library: {
     badge: 'Facilities',

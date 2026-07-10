@@ -39,3 +39,31 @@ export const imgUrlDirect = (path: string | undefined | null): string => {
   const base = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3001';
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
 };
+
+/** Hero/profile image from leader page CMS content (Chairman, Principal, etc.) */
+export function resolveLeaderHeroImage(
+  content: Record<string, unknown> | null | undefined,
+  fallback = '/chairmanedit.jpeg'
+): string {
+  const heroImage = content?.heroImage;
+  const profileImage = content?.profileImage;
+  const raw =
+    (typeof heroImage === 'string' && heroImage.trim()) ||
+    (typeof profileImage === 'string' && profileImage.trim()) ||
+    '';
+  return raw ? imgUrl(raw) : fallback;
+}
+
+/** Hero/profile image from leader page CMS content (Chairman, Principal, etc.) */
+export function resolveLeaderHeroImage(
+  content: Record<string, unknown> | null | undefined,
+  fallback = '/chairmanedit.jpeg'
+): string {
+  const heroImage = content?.heroImage;
+  const profileImage = content?.profileImage;
+  const raw =
+    (typeof heroImage === 'string' && heroImage.trim()) ||
+    (typeof profileImage === 'string' && profileImage.trim()) ||
+    '';
+  return raw ? imgUrl(raw) : fallback;
+}

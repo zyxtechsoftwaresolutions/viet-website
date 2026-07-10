@@ -282,6 +282,7 @@ const SitePagesAdmin = () => {
           <CardDescription>Department pages, faculty, homepage sections, and accreditations</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/admin/organizational-chart')}>Organizational Chart</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/department-pages')}>Department Pages</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/campus-life')}>Campus Life</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/faculty')}>Faculty</Button>

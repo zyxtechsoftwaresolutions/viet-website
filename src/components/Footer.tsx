@@ -157,6 +157,7 @@ const Footer = () => {
   ];
 
   const campusLinks = [
+    { name: 'Contact Us', href: '/contact' },
     { name: 'Placements', href: '/placements' },
     { name: 'Placements Cell', href: '/placements-cell' },
     { name: 'Research & Development', href: '/research-development' },

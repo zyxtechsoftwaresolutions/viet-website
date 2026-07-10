@@ -23,6 +23,7 @@ import {
   validatePasswordStrength,
 } from './lib/security.js';
 import { seedMissingSitePages } from './lib/seedPages.js';
+import { FACILITY_SEED_CONTENT, mergeDedicatedFacilityContent } from './lib/facilitySeedContent.js';
 import { restorePagesFromJsonBackup } from './lib/restorePagesFromJson.js';
 
 /** Validate that a URL is from Supabase Storage (backend only stores these). */
@@ -1676,6 +1677,10 @@ app.get('/api/pages/slug/:slug', async (req, res) => {
   try {
     const page = await db.getPageBySlug(req.params.slug);
     if (!page) return res.status(404).json({ error: 'Page not found' });
+    const dedicatedSeed = FACILITY_SEED_CONTENT[req.params.slug];
+    if (dedicatedSeed) {
+      page.content = mergeDedicatedFacilityContent(page.content || {}, dedicatedSeed);
+    }
     res.json(page);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2531,10 +2536,9 @@ if (existsSync(distDir)) {
   });
 }
 
-// Initialize server
+// Initialize server — listen immediately so the Vite proxy can connect while seeding runs in background
 async function startServer() {
   await ensureDirectories();
-  await initializeData();
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Server accessible at http://localhost:${PORT} and http://10.110.70.194:${PORT}`);
@@ -2566,6 +2570,10 @@ async function startServer() {
     } catch (e) {
       console.warn('Explore path video: could not verify video source');
     }
+  });
+
+  initializeData().catch((e) => {
+    console.warn('[init] Background data initialization failed:', e?.message || e);
   });
 }
 

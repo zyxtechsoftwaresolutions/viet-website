@@ -8,6 +8,7 @@ import Chatbot from "./components/Chatbot";
 import ScrollToTop from "./components/ScrollToTop";
 import SocialFloatingIcons from "./components/SocialFloatingIcons";
 import AdmissionPopup from "./components/AdmissionPopup";
+import { COMING_SOON_PAGES } from "./lib/comingSoonPages";
 // Critical components - loaded immediately (above the fold)
 import Index from "./pages/Index";
 
@@ -59,6 +60,9 @@ const FacultyPage = lazy(() => import("./pages/FacultyPage"));
 const DepartmentGallery = lazy(() => import("./pages/DepartmentGallery"));
 const GenericDepartmentPage = lazy(() => import("./pages/GenericDepartmentPage"));
 const HomeSectionRedirect = lazy(() => import("./components/HomeSectionRedirect"));
+const ComingSoonPage = lazy(() => import("./pages/ComingSoonPage"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -85,6 +89,7 @@ const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
+const OrganizationalChartAdmin = lazy(() => import("./pages/admin/OrganizationalChartAdmin"));
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -118,6 +123,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/" element={<Index />} />
             <Route path="/btech" element={<HomeSectionRedirect sectionId="programs-btech" />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<ContactUs />} />
             <Route path="/vision-mission" element={<VisionMission />} />
             <Route path="/chairman" element={<Chairman />} />
             <Route path="/hr" element={<HR />} />
@@ -172,6 +178,11 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             {/* Generic department pages (Diploma, Engineering PG, Management) - same editable content as Engineering UG */}
             <Route path="/programs/department/:slug" element={<GenericDepartmentPage />} />
 
+            {/* Pages under development — show Coming Soon instead of 404 */}
+            {COMING_SOON_PAGES.map(({ path, title }) => (
+              <Route key={path} path={path} element={<ComingSoonPage title={title} />} />
+            ))}
+
             {/* Dynamic Pages Route - Must be after all specific routes */}
             <Route path="/page/:slug" element={<DynamicPage />} />
             
@@ -201,6 +212,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="campus-life" element={<Navigate to="/admin/facilities/campus-life" replace />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="site-pages" element={<SitePagesAdmin />} />
+              <Route path="organizational-chart" element={<OrganizationalChartAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

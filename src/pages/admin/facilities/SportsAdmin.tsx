@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import HeroMediaFields, { type HeroMediaFormState } from '@/components/admin/HeroMediaFields';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import FacilityAdminLayout from '@/components/admin/facility/FacilityAdminLayout';
-import { ParagraphsEditor } from '@/components/admin/facility/AdminFieldHelpers';
+import { FacilityGalleryEditor, ParagraphsEditor, type PendingGalleryFiles } from '@/components/admin/facility/AdminFieldHelpers';
 import { pagesAPI } from '@/lib/api';
-import { saveFacilityPageContent } from '@/lib/facilityAdminSave';
+import { saveFacilityPageContent, uploadFacilityGalleryImages } from '@/lib/facilityAdminSave';
 import { DEFAULT_SPORTS_CONTENT, normalizeSportsContent, type SportsContent } from '@/lib/facilityContent/sportsContent';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ const SportsAdmin = () => {
     imageFile: null,
     videoFile: null,
   });
+  const [galleryFiles, setGalleryFiles] = useState<PendingGalleryFiles>({});
 
   const load = async () => {
     setLoading(true);
@@ -42,6 +43,7 @@ const SportsAdmin = () => {
         imageFile: null,
         videoFile: null,
       });
+      setGalleryFiles({});
     } catch {
       setContent(DEFAULT_SPORTS_CONTENT);
       toast.error('Could not load Sports content — showing defaults.');
@@ -57,9 +59,12 @@ const SportsAdmin = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveFacilityPageContent(SLUG, 'Sports', ROUTE, content as unknown as Record<string, unknown>, heroMedia);
+      const gallery = await uploadFacilityGalleryImages(content.gallery, galleryFiles);
+      const contentToSave = { ...content, gallery };
+      await saveFacilityPageContent(SLUG, 'Sports', ROUTE, contentToSave as unknown as Record<string, unknown>, heroMedia);
       toast.success('Sports page saved');
       setHeroMedia((prev) => ({ ...prev, imageFile: null, videoFile: null }));
+      setGalleryFiles({});
       load();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to save');
@@ -114,24 +119,16 @@ const SportsAdmin = () => {
         <TabsContent value="gallery">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Gallery
-                <Button type="button" variant="outline" size="sm" onClick={() => setContent((p) => ({ ...p, gallery: [...p.gallery, { image: '', title: '', caption: '' }] }))}>
-                  <Plus className="h-4 w-4 mr-1" /> Add
-                </Button>
-              </CardTitle>
+              <CardTitle>Gallery</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {content.gallery.map((item, i) => (
-                <div key={i} className="grid gap-2 border rounded-lg p-4">
-                  <div className="flex justify-between"><Label>Image {i + 1}</Label>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => setContent((p) => ({ ...p, gallery: p.gallery.filter((_, j) => j !== i) }))}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                  <Input value={item.image} onChange={(e) => setContent((p) => ({ ...p, gallery: p.gallery.map((g, j) => (j === i ? { ...g, image: e.target.value } : g)) }))} placeholder="Image URL" />
-                  <Input value={item.title} onChange={(e) => setContent((p) => ({ ...p, gallery: p.gallery.map((g, j) => (j === i ? { ...g, title: e.target.value } : g)) }))} placeholder="Title" />
-                  <Input value={item.caption} onChange={(e) => setContent((p) => ({ ...p, gallery: p.gallery.map((g, j) => (j === i ? { ...g, caption: e.target.value } : g)) }))} placeholder="Caption" />
-                </div>
-              ))}
+            <CardContent>
+              <FacilityGalleryEditor
+                items={content.gallery}
+                onChange={(gallery) => setContent((p) => ({ ...p, gallery }))}
+                pendingFiles={galleryFiles}
+                onPendingFilesChange={setGalleryFiles}
+                imageSpec={IMAGE_SPECS.facilityGallery}
+              />
             </CardContent>
           </Card>
         </TabsContent>

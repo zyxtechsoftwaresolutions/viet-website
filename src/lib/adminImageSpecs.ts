@@ -77,6 +77,11 @@ export const IMAGE_SPECS = {
     aspectRatio: '16:9',
     hint: 'Hero banner image — used when no video is set',
   },
+  orgChartImage: {
+    dimensions: '2400 × 1600 px (or larger)',
+    aspectRatio: '3:2',
+    hint: 'Full organizational chart — PNG recommended for sharp text',
+  },
   facilityHeroVideo: {
     dimensions: '1920 × 1080 px',
     aspectRatio: '16:9',
