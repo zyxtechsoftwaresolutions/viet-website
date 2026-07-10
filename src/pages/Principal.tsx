@@ -5,8 +5,7 @@ import Footer from '@/components/Footer';
 import { pagesAPI } from '@/lib/api';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveLeaderHeroImage } from '@/lib/imageUtils';
 
 const Principal = () => {
   const [pageContent, setPageContent] = useState<any>(null);
@@ -14,16 +13,8 @@ const Principal = () => {
   useEffect(() => {
     const fetchPageContent = async () => {
       try {
-        // Fetch without auth token for public pages
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${API_BASE_URL}/pages/slug/principal`);
-        if (response.ok) {
-          const page = await response.json();
-          setPageContent(page?.content || null);
-        } else {
-          console.error('Error fetching page content:', response.status);
-          setPageContent(null);
-        }
+        const page = await pagesAPI.getBySlug('principal');
+        setPageContent(page?.content || null);
       } catch (error) {
         console.error('Error fetching page content:', error);
         setPageContent(null);
@@ -32,21 +23,7 @@ const Principal = () => {
     fetchPageContent();
   }, []);
 
-  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
-  const profileImageRaw =
-    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
-    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
-    null;
-  let profileImageSrc: string | null = null;
-  if (profileImageRaw) {
-    if (profileImageRaw.startsWith('http')) {
-      profileImageSrc = profileImageRaw;
-    } else {
-      const baseUrl = (API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
-      const cleanPath = profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`;
-      profileImageSrc = `${baseUrl}${cleanPath}`;
-    }
-  }
+  const profileImageSrc = resolveLeaderHeroImage(pageContent);
 
   const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Principal';
   const name = pageContent?.profile?.name || 'Prof. G Vidya Pradeep Varma';

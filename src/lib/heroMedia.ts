@@ -1,10 +1,9 @@
+import { API_BASE_URL, getApiHostBase } from './apiConfig';
 import { convertGoogleDriveToDownload } from '@/lib/googleDriveUtils';
 import { getVideoEmbedUrl, isVideoUrl } from '@/lib/videoUtils';
 import { imgUrl } from '@/lib/imageUtils';
 
-const API_BASE =
-  (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '') ||
-  'http://localhost:3001';
+const API_BASE = getApiHostBase() || 'http://localhost:3001';
 
 export type HeroMediaInput = {
   image?: string;

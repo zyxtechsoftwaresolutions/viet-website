@@ -3,6 +3,7 @@
  */
 
 import { getGoogleDrivePreviewEmbedUrl } from '@/lib/googleDriveUtils';
+import { API_BASE_URL } from '@/lib/apiConfig';
 
 export type VideoPlatform = 'youtube' | 'instagram' | 'vimeo' | 'googledrive' | 'file' | 'unknown';
 
@@ -23,7 +24,7 @@ export function resolveApiMediaPath(path: string): string {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   if (path.startsWith('/api/')) return path;
-  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  const apiBase = API_BASE_URL;
   return path.startsWith('/') ? `${apiBase}${path}` : `${apiBase}/${path}`;
 }
 
@@ -32,7 +33,7 @@ export function buildProxiedPlaybackUrl(data: {
   proxyUrl?: string;
   directUrl?: string;
 }): string | null {
-  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  const apiBase = API_BASE_URL;
   if (data.proxyUrl) {
     return resolveApiMediaPath(data.proxyUrl);
   }

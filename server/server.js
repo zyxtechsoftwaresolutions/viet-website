@@ -74,7 +74,9 @@ const allowedOrigins = [
   'https://www.pragna.info',
   'https://vietvsp.com',
   'https://www.vietvsp.com',
-  process.env.FRONTEND_URL, // Your Vercel URL (set in Render env vars)
+  'https://viet.edu.in',
+  'https://www.viet.edu.in',
+  process.env.FRONTEND_URL, // Vercel / custom domain (set in Render env vars)
 ].filter(Boolean);
 
 if (!allowedOrigins.some(o => o && o.includes('8080'))) {

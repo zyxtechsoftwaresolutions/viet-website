@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://viet-website.onrender.com/api/:path*"
+    },
+    {
+      "source": "/bgvideoexp.mp4",
+      "destination": "https://viet-website.onrender.com/bgvideoexp.mp4"
+    },
+    {
+      "source": "/LOGO_RENDER.mp4",
+      "destination": "https://viet-website.onrender.com/LOGO_RENDER.mp4"
+    },
+    {
       "source": "/((?!api|bgvideoexp\\.mp4|LOGO_RENDER\\.mp4).*)",
       "destination": "/index.html"
     }

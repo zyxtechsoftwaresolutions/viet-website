@@ -5,8 +5,7 @@ import Footer from '@/components/Footer';
 import { pagesAPI } from '@/lib/api';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveLeaderHeroImage } from '@/lib/imageUtils';
 
 const DeanInnovation = () => {
   const [pageContent, setPageContent] = useState<any>(null);
@@ -24,17 +23,7 @@ const DeanInnovation = () => {
     fetchPageContent();
   }, []);
 
-  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
-  const profileImageRaw =
-    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
-    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
-    null;
-  let profileImageSrc: string | null = null;
-  if (profileImageRaw) {
-    profileImageSrc = profileImageRaw.startsWith('http')
-      ? profileImageRaw
-      : `${(API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')}${profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`}`;
-  }
+  const profileImageSrc = resolveLeaderHeroImage(pageContent, '');
 
   const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Dean Innovation & Student Projects';
   const name = pageContent?.profile?.name || 'Dr. Ranga Rao Velamala';

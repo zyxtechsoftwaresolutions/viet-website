@@ -4,12 +4,13 @@
  * load uploads even when the bucket is not publicly readable (403).
  */
 
+import { API_BASE_URL, getApiHostBase } from './apiConfig';
+
 const SUPABASE_PUBLIC_STORAGE =
   /^https?:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
 
 function storageProxyUrl(publicUrl: string): string {
-  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
-  return `${apiBase}/media?url=${encodeURIComponent(publicUrl)}`;
+  return `${API_BASE_URL}/media?url=${encodeURIComponent(publicUrl)}`;
 }
 
 export const imgUrl = (path: string | undefined | null): string => {
@@ -24,8 +25,7 @@ export const imgUrl = (path: string | undefined | null): string => {
   }
 
   // Legacy relative /uploads paths served by the API host
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  const base = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3001';
+  const base = getApiHostBase();
 
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
 };
@@ -35,8 +35,7 @@ export const imgUrlDirect = (path: string | undefined | null): string => {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  const base = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:3001';
+  const base = getApiHostBase();
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
 };
 

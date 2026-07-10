@@ -5,8 +5,7 @@ import Footer from '@/components/Footer';
 import { pagesAPI } from '@/lib/api';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveLeaderHeroImage } from '@/lib/imageUtils';
 
 const DeanAcademics = () => {
   const [pageContent, setPageContent] = useState<any>(null);
@@ -24,17 +23,7 @@ const DeanAcademics = () => {
     fetchPageContent();
   }, []);
 
-  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
-  const profileImageRaw =
-    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
-    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
-    null;
-  let profileImageSrc: string | null = null;
-  if (profileImageRaw) {
-    profileImageSrc = profileImageRaw.startsWith('http')
-      ? profileImageRaw
-      : `${(API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')}${profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`}`;
-  }
+  const profileImageSrc = resolveLeaderHeroImage(pageContent, '');
 
   const designation = pageContent?.profile?.designation || pageContent?.profile?.badge || 'Dean Academics';
   const name = pageContent?.profile?.name || 'Dr. D. Santha Rao';

@@ -7,6 +7,7 @@
  * because VITE_* vars are only embedded at `npm run build` time.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { API_BASE_URL } from '@/lib/apiConfig';
 
 declare global {
   interface Window {
@@ -58,8 +59,7 @@ export async function getSupabase(): Promise<SupabaseClient | null> {
 
       if (!supabaseUrl || !supabaseAnonKey) {
         try {
-          const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
-          const res = await fetch(`${apiBase}/client-config`);
+          const res = await fetch(`${API_BASE_URL}/client-config`);
           if (res.ok) {
             const data = (await res.json()) as Partial<SupabasePublicConfig>;
             supabaseUrl = (data.supabaseUrl || supabaseUrl).trim();

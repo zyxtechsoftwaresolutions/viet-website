@@ -5,8 +5,7 @@ import Footer from '@/components/Footer';
 import { pagesAPI } from '@/lib/api';
 import AlsoVisitLeaders from '@/components/AlsoVisitLeaders';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveLeaderHeroImage } from '@/lib/imageUtils';
 
 const Chairman = () => {
   const [pageContent, setPageContent] = useState<any>(null);
@@ -32,18 +31,7 @@ const Chairman = () => {
   const inspirationAuthor = pageContent?.inspiration?.author;
   const greetingsText = pageContent?.greetings?.text ?? 'Wish you all the best,';
 
-  // Prefer heroImage (set by admin) over profileImage; filter out empty strings
-  const profileImageRaw =
-    (pageContent?.heroImage && String(pageContent.heroImage).trim()) ||
-    (pageContent?.profileImage && String(pageContent.profileImage).trim()) ||
-    null;
-  let heroImageUrl: string | null = null;
-  if (profileImageRaw) {
-    heroImageUrl = profileImageRaw.startsWith('http')
-      ? profileImageRaw
-      : `${(API_BASE_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')}${profileImageRaw.startsWith('/') ? profileImageRaw : `/${profileImageRaw}`}`;
-  }
-  if (!heroImageUrl) heroImageUrl = '/chairmanedit.jpeg';
+  const heroImageUrl = resolveLeaderHeroImage(pageContent);
 
   return (
     <div className="min-h-screen bg-slate-100 font-poppins">

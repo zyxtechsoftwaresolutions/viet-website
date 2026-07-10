@@ -16,3 +16,5 @@ services:
       # - JWT_SECRET
       # For admin image uploads in browser (runtime — set on Render, redeploy once):
       # - SUPABASE_ANON_KEY  (same as Supabase Dashboard → Settings → API → anon public)
+      # When frontend is on Vercel (www.viet.edu.in), set:
+      # - FRONTEND_URL=https://www.viet.edu.in

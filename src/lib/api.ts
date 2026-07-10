@@ -1,6 +1,7 @@
+import { API_BASE_URL } from './apiConfig';
+
 // Use relative URLs in dev (Vite proxy handles it) or use env var if set for production/network access
 // Relative URLs work with Vite proxy, so no need to change when network changes
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Get auth token from localStorage
 const getAuthToken = () => {
