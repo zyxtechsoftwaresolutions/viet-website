@@ -185,12 +185,18 @@ export const heroVideosAPI = {
     subtitle?: string;
     buttonText?: string;
     buttonLink?: string;
+    order?: number;
   }) => {
     return apiCall(`/hero-videos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
+  reorder: (orderUpdates: Array<{ id: number; order: number }>) =>
+    apiCall('/hero-videos/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ orderUpdates }),
+    }),
   delete: (id: number) => apiCall(`/hero-videos/${id}`, {
     method: 'DELETE',
   }),
@@ -287,8 +293,25 @@ export const explorePathVideoSettingsAPI = {
 // Gallery API (src = Supabase Storage URL)
 export const galleryAPI = {
   getAll: () => apiCall('/gallery'),
-  create: (data: { src: string; alt?: string; department?: string }) =>
-    apiCall('/gallery', { method: 'POST', body: JSON.stringify(data) }),
+  getPage: () => apiCall('/gallery/page'),
+  updateSettings: (data: {
+    hero?: { badge?: string; title?: string; description?: string; heroImage?: string; video?: string };
+    eventsSectionLabel?: string;
+    eventsSectionTitle?: string;
+  }) => apiCall('/gallery/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  createEvent: (data: { name: string; badge?: string; description?: string; order?: number }) =>
+    apiCall('/gallery/events', { method: 'POST', body: JSON.stringify(data) }),
+  updateEvent: (id: number, data: { name?: string; badge?: string; description?: string; order?: number }) =>
+    apiCall(`/gallery/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEvent: (id: number) => apiCall(`/gallery/events/${id}`, { method: 'DELETE' }),
+  create: (data: {
+    src: string;
+    alt?: string;
+    caption?: string;
+    department?: string;
+    eventId?: number;
+    eventName?: string;
+  }) => apiCall('/gallery', { method: 'POST', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/gallery/${id}`, { method: 'DELETE' }),
 };
 

@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +37,76 @@ import { uploadVideoToSupabase, uploadImageToSupabase } from '@/lib/storage';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import { IMAGE_SPECS, type ImageUploadSpec } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
-import { Monitor, Smartphone, Video } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Monitor, Smartphone, Video } from 'lucide-react';
+
+function sortByOrder(items: HeroVideo[]) {
+  return items.slice().sort((a, b) => (Number(a.order) ?? 0) - (Number(b.order) ?? 0));
+}
+
+function SortableSlideRow({
+  item,
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
+}: {
+  item: HeroVideo;
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 rounded-lg border bg-white px-3 py-3 ${
+        isDragging ? 'shadow-lg border-primary/40 z-10' : 'border-border'
+      }`}
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        aria-label={`Drag slide ${index + 1}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5" />
+      </button>
+      <span className="w-8 text-sm font-semibold text-muted-foreground tabular-nums">{index + 1}</span>
+      <MediaThumb video={item.src} photo={item.poster} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{item.title || item.badge || `Slide ${index + 1}`}</p>
+        {item.badge && item.title && (
+          <p className="text-xs text-muted-foreground truncate">{item.badge}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <Button type="button" variant="ghost" size="icon" onClick={onMoveUp} disabled={index === 0} aria-label="Move up">
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onMoveDown}
+          disabled={index === total - 1}
+          aria-label="Move down"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 interface HeroVideo {
   id: number;
@@ -107,6 +187,9 @@ function HeroMediaFields({
 
 const HeroVideos = () => {
   const [videos, setVideos] = useState<HeroVideo[]>([]);
+  const [orderedVideos, setOrderedVideos] = useState<HeroVideo[]>([]);
+  const [orderDirty, setOrderDirty] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -134,11 +217,66 @@ const HeroVideos = () => {
   const fetchVideos = async () => {
     try {
       const data = await heroVideosAPI.getAll();
-      setVideos(data);
+      const list = sortByOrder(Array.isArray(data) ? data : []);
+      setVideos(list);
+      setOrderedVideos(list);
+      setOrderDirty(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch hero videos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedVideos.findIndex((v) => v.id === active.id);
+    const newIndex = orderedVideos.findIndex((v) => v.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    setOrderedVideos(arrayMove(orderedVideos, oldIndex, newIndex));
+    setOrderDirty(true);
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const list = [...orderedVideos];
+    [list[index - 1], list[index]] = [list[index], list[index - 1]];
+    setOrderedVideos(list);
+    setOrderDirty(true);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index >= orderedVideos.length - 1) return;
+    const list = [...orderedVideos];
+    [list[index], list[index + 1]] = [list[index + 1], list[index]];
+    setOrderedVideos(list);
+    setOrderDirty(true);
+  };
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const orderUpdates = orderedVideos.map((item, index) => ({
+        id: item.id,
+        order: index,
+      }));
+      const updated = await heroVideosAPI.reorder(orderUpdates);
+      const list = sortByOrder(Array.isArray(updated) ? updated : orderedVideos);
+      setVideos(list);
+      setOrderedVideos(list);
+      setOrderDirty(false);
+      toast.success('Playback order saved');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save playback order');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -296,6 +434,18 @@ const HeroVideos = () => {
 
   const columns = [
     {
+      key: 'order',
+      header: 'Play #',
+      render: (item: HeroVideo) => {
+        const position = orderedVideos.findIndex((v) => v.id === item.id);
+        return (
+          <span className="font-semibold tabular-nums text-muted-foreground">
+            {position + 1}
+          </span>
+        );
+      },
+    },
+    {
       key: 'media',
       header: 'Media',
       render: (item: HeroVideo) => (
@@ -332,12 +482,46 @@ const HeroVideos = () => {
       <div>
         <h1 className="text-3xl font-bold">Hero Slides</h1>
         <p className="text-muted-foreground mt-2">
-          Upload separate desktop and mobile media. Video is shown first; photo is used only if video is missing or cannot play.
+          Upload separate desktop and mobile media. Drag slides below to set the homepage playback order — slide 1 plays first.
         </p>
       </div>
 
+      {orderedVideos.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Playback order</CardTitle>
+              <CardDescription>
+                Drag to reorder or use the arrows. The homepage hero plays slides in this sequence.
+              </CardDescription>
+            </div>
+            <Button onClick={handleSaveOrder} disabled={!orderDirty || savingOrder}>
+              {savingOrder ? 'Saving…' : orderDirty ? 'Save order' : 'Order saved'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={orderedVideos.map((v) => v.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {orderedVideos.map((item, index) => (
+                    <SortableSlideRow
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      total={orderedVideos.length}
+                      onMoveUp={() => handleMoveUp(index)}
+                      onMoveDown={() => handleMoveDown(index)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </CardContent>
+        </Card>
+      )}
+
       <DataTable
-        data={videos}
+        data={orderedVideos}
         columns={columns}
         onAdd={handleAdd}
         onEdit={handleEdit}

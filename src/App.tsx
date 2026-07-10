@@ -62,6 +62,7 @@ const GenericDepartmentPage = lazy(() => import("./pages/GenericDepartmentPage")
 const HomeSectionRedirect = lazy(() => import("./components/HomeSectionRedirect"));
 const ComingSoonPage = lazy(() => import("./pages/ComingSoonPage"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
+const GalleryPage = lazy(() => import("./pages/GalleryPage"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -172,6 +173,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/facilities/cafeteria" element={<Cafeteria />} />
             <Route path="/facilities/:slug" element={<FacilityPage />} />
             <Route path="/campus-life" element={<CampusLife />} />
+            <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/faculty" element={<FacultyPage />} />
             <Route path="/department/:slug/gallery" element={<DepartmentGallery />} />
             {/* Generic department pages (Diploma, Engineering PG, Management) - same editable content as Engineering UG */}

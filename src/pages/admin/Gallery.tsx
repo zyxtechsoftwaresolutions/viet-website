@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
-import { DataTable } from '@/components/admin/DataTable';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -19,8 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -28,281 +29,410 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { galleryAPI, departmentsAPI } from '@/lib/api';
-import { uploadToSupabase } from '@/lib/storage';
+import HeroMediaFields, { type HeroMediaFormState } from '@/components/admin/HeroMediaFields';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
+import { galleryAPI } from '@/lib/api';
+import { uploadToSupabase } from '@/lib/storage';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
+import { imgUrl } from '@/lib/imageUtils';
+import {
+  DEFAULT_GALLERY_SETTINGS,
+  normalizeGalleryPageData,
+  photosForEvent,
+  type GalleryEvent,
+  type GalleryPageData,
+  type GalleryPhoto,
+} from '@/lib/galleryContent';
 import { toast } from 'sonner';
+import { ExternalLink, Plus, Trash2 } from 'lucide-react';
 
-interface GalleryImage {
-  id: number;
-  src: string;
-  alt: string;
-  department?: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
-  stream: string;
-  level: string;
-  image: string;
-}
-
-const Gallery = () => {
-  const [images, setImages] = useState<GalleryImage[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+const GalleryAdmin = () => {
+  const [data, setData] = useState<GalleryPageData>(() =>
+    normalizeGalleryPageData({ settings: DEFAULT_GALLERY_SETTINGS, events: [], images: [] })
+  );
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<GalleryImage | null>(null);
-  const [formData, setFormData] = useState({
-    alt: '',
-    department: '',
+  const [savingHero, setSavingHero] = useState(false);
+  const [heroMedia, setHeroMedia] = useState<HeroMediaFormState>({
+    image: '',
+    video: '',
+    imageFile: null,
+    videoFile: null,
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>('');
 
-  const fetchDepartments = async () => {
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<GalleryEvent | null>(null);
+  const [eventForm, setEventForm] = useState({ name: '', badge: '', description: '' });
+  const [deleteEvent, setDeleteEvent] = useState<GalleryEvent | null>(null);
+
+  const [photoEventId, setPhotoEventId] = useState<string>('');
+  const [photoCaption, setPhotoCaption] = useState('');
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [deletePhoto, setDeletePhoto] = useState<GalleryPhoto | null>(null);
+
+  const load = async () => {
+    setLoading(true);
     try {
-      const data = await departmentsAPI.getAll();
-      if (Array.isArray(data)) {
-        setDepartments(data);
-        if (data.length === 0) {
-          toast.warning('No departments found. Please add departments first in the Departments section.');
-        }
-      } else {
-        console.error('Departments API returned non-array data:', data);
-        setDepartments([]);
+      const page = await galleryAPI.getPage();
+      const normalized = normalizeGalleryPageData(page);
+      setData(normalized);
+      setHeroMedia({
+        image: normalized.settings.hero.heroImage || '',
+        video: normalized.settings.hero.video || '',
+        imageFile: null,
+        videoFile: null,
+      });
+      if (!photoEventId && normalized.events[0]) {
+        setPhotoEventId(String(normalized.events[0].id));
       }
-    } catch (error: any) {
-      console.error('Error fetching departments:', error);
-      toast.error(error.message || 'Failed to fetch departments');
-      setDepartments([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchImages();
-    fetchDepartments();
-  }, []);
-
-  const fetchImages = async () => {
-    try {
-      const data = await galleryAPI.getAll();
-      setImages(data);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch gallery images');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load gallery');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdd = () => {
-    setSelectedItem(null);
-    setFormData({ alt: '', department: '' });
-    setImageFile(null);
-    setPreview('');
-    // Refetch departments when opening the dialog to ensure we have the latest list
-    fetchDepartments();
-    setDialogOpen(true);
-  };
+  useEffect(() => {
+    load();
+  }, []);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const selectedEvent = useMemo(
+    () => data.events.find((e) => String(e.id) === photoEventId),
+    [data.events, photoEventId]
+  );
 
-  const handleDelete = (item: GalleryImage) => {
-    setSelectedItem(item);
-    setDeleteDialogOpen(true);
-  };
+  const eventPhotos = useMemo(() => {
+    if (!selectedEvent) return [];
+    return photosForEvent(data.images, selectedEvent);
+  }, [data.images, selectedEvent]);
 
-  const handleSubmit = async () => {
+  const handleSaveHero = async () => {
+    setSavingHero(true);
     try {
-      if (!imageFile) {
-        toast.error('Please select an image');
-        return;
+      let heroImage = heroMedia.image || data.settings.hero.heroImage || '';
+      if (heroMedia.imageFile) {
+        heroImage = await uploadToSupabase(heroMedia.imageFile, 'gallery', 'hero');
       }
-      toast.info('Uploading image…');
-      const src = await uploadToSupabase(imageFile, 'gallery', 'images');
-      await galleryAPI.create({ src, alt: formData.alt, department: formData.department });
-      toast.success('Gallery image added successfully');
-      setDialogOpen(false);
-      fetchImages();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload gallery image');
+      await galleryAPI.updateSettings({
+        hero: {
+          badge: data.settings.hero.badge,
+          title: data.settings.hero.title,
+          description: data.settings.hero.description,
+          heroImage: heroImage || undefined,
+          video: data.settings.hero.video || undefined,
+        },
+        eventsSectionLabel: data.settings.eventsSectionLabel,
+        eventsSectionTitle: data.settings.eventsSectionTitle,
+      });
+      toast.success('Gallery page settings saved');
+      setHeroMedia((prev) => ({ ...prev, imageFile: null, videoFile: null }));
+      await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save settings');
+    } finally {
+      setSavingHero(false);
     }
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!selectedItem) return;
+  const openAddEvent = () => {
+    setEditingEvent(null);
+    setEventForm({ name: '', badge: '', description: '' });
+    setEventDialogOpen(true);
+  };
+
+  const openEditEvent = (event: GalleryEvent) => {
+    setEditingEvent(event);
+    setEventForm({ name: event.name, badge: event.badge, description: event.description });
+    setEventDialogOpen(true);
+  };
+
+  const saveEvent = async () => {
+    if (!eventForm.name.trim()) {
+      toast.error('Event name is required');
+      return;
+    }
     try {
-      await galleryAPI.delete(selectedItem.id);
-      toast.success('Gallery image deleted successfully');
-      setDeleteDialogOpen(false);
-      fetchImages();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete gallery image');
+      if (editingEvent) {
+        await galleryAPI.updateEvent(editingEvent.id, eventForm);
+        toast.success('Event updated');
+      } else {
+        const created = await galleryAPI.createEvent(eventForm);
+        setPhotoEventId(String(created.id));
+        toast.success('Event created');
+      }
+      setEventDialogOpen(false);
+      await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save event');
     }
   };
 
-  const columns = [
-    {
-      key: 'src',
-      header: 'Image',
-      render: (item: GalleryImage) => {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        const imageSrc = item.src.startsWith('/') 
-          ? `${API_BASE_URL}${item.src}` 
-          : item.src.startsWith('http') 
-            ? item.src 
-            : `${API_BASE_URL}/${item.src}`;
-        return (
-          <img
-            src={imageSrc}
-            alt={item.alt}
-            className="w-20 h-12 object-cover rounded"
-            onError={(e) => {
-              console.error('Failed to load gallery image in admin:', imageSrc);
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-            }}
-          />
-        );
-      },
-    },
-    { key: 'alt', header: 'Alt Text' },
-    { key: 'department', header: 'Department' },
-  ];
+  const confirmDeleteEvent = async () => {
+    if (!deleteEvent) return;
+    try {
+      await galleryAPI.deleteEvent(deleteEvent.id);
+      toast.success('Event and its photos deleted');
+      setDeleteEvent(null);
+      await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete event');
+    }
+  };
+
+  const uploadPhotos = async () => {
+    if (!selectedEvent) {
+      toast.error('Select an event first');
+      return;
+    }
+    if (photoFiles.length === 0) {
+      toast.error('Choose at least one photo');
+      return;
+    }
+    setUploadingPhotos(true);
+    try {
+      for (const file of photoFiles) {
+        const src = await uploadToSupabase(file, 'gallery', 'images');
+        await galleryAPI.create({
+          src,
+          eventId: selectedEvent.id,
+          eventName: selectedEvent.name,
+          caption: photoCaption || file.name.replace(/\.[^.]+$/, ''),
+        });
+      }
+      toast.success(`${photoFiles.length} photo(s) uploaded`);
+      setPhotoFiles([]);
+      setPhotoCaption('');
+      await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload photos');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!deletePhoto) return;
+    try {
+      await galleryAPI.delete(deletePhoto.id);
+      toast.success('Photo deleted');
+      setDeletePhoto(null);
+      await load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete photo');
+    }
+  };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Gallery</h1>
-        <p className="text-muted-foreground mt-2">Manage gallery images</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Gallery</h1>
+          <p className="text-muted-foreground mt-2 max-w-2xl">
+            Manage the public gallery page — customize the hero, create events, and upload photos event-wise.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => window.open('/gallery', '_blank')}>
+          <ExternalLink className="h-4 w-4 mr-2" />
+          View public page
+        </Button>
       </div>
 
-      <DataTable
-        data={images}
-        columns={columns}
-        onAdd={handleAdd}
-        onDelete={handleDelete}
-        addLabel="Add Gallery Image"
-        getId={(item) => item.id}
-      />
+      <Tabs defaultValue="hero" className="space-y-4">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="hero">Page hero</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="photos">Event photos</TabsTrigger>
+        </TabsList>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Gallery Image</DialogTitle>
-            <DialogDescription>Upload a new gallery image</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="image">Image</Label>
-              <div className="flex flex-wrap items-center gap-3">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer max-w-xs"
-                  required
-                />
-                <ImageUploadGuide {...IMAGE_SPECS.galleryPhoto} inline />
+        <TabsContent value="hero">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gallery page hero</CardTitle>
+              <CardDescription>Badge, title, description, and hero background shown at the top of /gallery</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Badge</Label><Input value={data.settings.hero.badge} onChange={(e) => setData((p) => ({ ...p, settings: { ...p.settings, hero: { ...p.settings.hero, badge: e.target.value } } }))} /></div>
+                <div><Label>Title</Label><Input value={data.settings.hero.title} onChange={(e) => setData((p) => ({ ...p, settings: { ...p.settings, hero: { ...p.settings.hero, title: e.target.value } } }))} /></div>
               </div>
-              <div className="flex items-center gap-4">
-                {preview && (
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="w-32 h-20 object-cover rounded"
-                  />
-                )}
+              <div><Label>Description</Label><Textarea value={data.settings.hero.description} onChange={(e) => setData((p) => ({ ...p, settings: { ...p.settings, hero: { ...p.settings.hero, description: e.target.value } } }))} rows={3} /></div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Events section label</Label><Input value={data.settings.eventsSectionLabel} onChange={(e) => setData((p) => ({ ...p, settings: { ...p.settings, eventsSectionLabel: e.target.value } }))} /></div>
+                <div><Label>Events section title</Label><Input value={data.settings.eventsSectionTitle} onChange={(e) => setData((p) => ({ ...p, settings: { ...p.settings, eventsSectionTitle: e.target.value } }))} /></div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="alt">Alt Text</Label>
-              <Input
-                id="alt"
-                value={formData.alt}
-                onChange={(e) => setFormData({ ...formData, alt: e.target.value })}
-                placeholder="Enter alt text"
+              <HeroMediaFields
+                value={heroMedia}
+                onChange={(patch) => setHeroMedia((prev) => ({ ...prev, ...patch }))}
+                imageSpec={IMAGE_SPECS.galleryPhoto}
+                imageLabel="Hero background image"
+                videoLabel="Hero video URL (optional)"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              {departments.length === 0 ? (
-                <>
-                  <Select disabled>
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="No departments available" />
-                    </SelectTrigger>
+              <ImageUploadGuide spec={IMAGE_SPECS.galleryPhoto} />
+              <Button onClick={handleSaveHero} disabled={savingHero}>
+                {savingHero ? 'Saving…' : 'Save page settings'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="events">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+              <div>
+                <CardTitle>Events</CardTitle>
+                <CardDescription>Create events such as AURA FEST, Sports Day, Convocation, etc.</CardDescription>
+              </div>
+              <Button onClick={openAddEvent}><Plus className="h-4 w-4 mr-1" /> Add event</Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.events.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No events yet. Add your first event to start uploading photos.</p>
+              ) : (
+                data.events.map((event) => (
+                  <div key={event.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
+                    <div className="min-w-0">
+                      {event.badge && <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{event.badge}</p>}
+                      <p className="font-semibold">{event.name}</p>
+                      {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-2">{photosForEvent(data.images, event).length} photos</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEditEvent(event)}>Edit</Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteEvent(event)} aria-label="Delete event">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="photos">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload event photos</CardTitle>
+              <CardDescription>Select an event and upload one or more photos. They appear grouped under that event on the public gallery page.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Event</Label>
+                  <Select value={photoEventId} onValueChange={setPhotoEventId}>
+                    <SelectTrigger><SelectValue placeholder="Select event" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="no-departments" disabled>
-                        No departments available
-                      </SelectItem>
+                      {data.events.map((event) => (
+                        <SelectItem key={event.id} value={String(event.id)}>{event.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    No departments found. Please add departments in the <strong>Departments</strong> section first.
-                  </p>
-                </>
-              ) : (
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) => setFormData({ ...formData, department: value })}
-                >
-                  <SelectTrigger id="department">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Caption (optional, applied to all uploads in this batch)</Label>
+                  <Input value={photoCaption} onChange={(e) => setPhotoCaption(e.target.value)} placeholder="e.g. Prize distribution" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Photos</Label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="max-w-md cursor-pointer"
+                    onChange={(e) => setPhotoFiles(Array.from(e.target.files || []))}
+                  />
+                  <ImageUploadGuide {...IMAGE_SPECS.galleryPhoto} inline />
+                </div>
+                {photoFiles.length > 0 && (
+                  <p className="text-sm text-muted-foreground">{photoFiles.length} file(s) selected</p>
+                )}
+              </div>
+              <Button onClick={uploadPhotos} disabled={uploadingPhotos || !selectedEvent}>
+                {uploadingPhotos ? 'Uploading…' : 'Upload photos'}
+              </Button>
+
+              {selectedEvent && (
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-4">Photos in {selectedEvent.name}</h3>
+                  {eventPhotos.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No photos for this event yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {eventPhotos.map((photo) => (
+                        <div key={photo.id} className="relative group rounded-lg border overflow-hidden">
+                          <img src={imgUrl(photo.src)} alt={photo.caption || selectedEvent.name} className="w-full aspect-[4/3] object-cover" />
+                          <div className="p-2 text-xs text-muted-foreground line-clamp-2">{photo.caption || '—'}</div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => setDeletePhoto(photo)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingEvent ? 'Edit event' : 'Add event'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div><Label>Event name</Label><Input value={eventForm.name} onChange={(e) => setEventForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. AURA FEST" /></div>
+            <div><Label>Badge (optional)</Label><Input value={eventForm.badge} onChange={(e) => setEventForm((p) => ({ ...p, badge: e.target.value }))} placeholder="e.g. Cultural" /></div>
+            <div><Label>Description (optional)</Label><Textarea value={eventForm.description} onChange={(e) => setEventForm((p) => ({ ...p, description: e.target.value }))} rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit}>
-              Upload
-            </Button>
+            <Button variant="outline" onClick={() => setEventDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveEvent}>{editingEvent ? 'Update' : 'Create'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={!!deleteEvent} onOpenChange={(open) => !open && setDeleteEvent(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Gallery Image</AlertDialogTitle>
+            <AlertDialogTitle>Delete event?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this gallery image? This action cannot be undone.
+              This will remove &quot;{deleteEvent?.name}&quot; and all photos linked to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDeleteEvent} className="bg-destructive">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletePhoto} onOpenChange={(open) => !open && setDeletePhoto(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete photo?</AlertDialogTitle>
+            <AlertDialogDescription>This photo will be removed from the gallery.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeletePhoto} className="bg-destructive">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -310,7 +440,4 @@ const Gallery = () => {
   );
 };
 
-export default Gallery;
-
-
-
+export default GalleryAdmin;

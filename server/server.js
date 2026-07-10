@@ -1177,11 +1177,32 @@ app.put('/api/hero-videos/:id', authenticateToken, checkSectionAccess, async (re
     if (subtitle !== undefined) updateData.subtitle = subtitle;
     if (buttonText !== undefined) updateData.buttonText = buttonText;
     if (buttonLink !== undefined) updateData.buttonLink = buttonLink;
+    if (req.body.order !== undefined) updateData.order = Number(req.body.order);
     const updated = await db.updateHeroVideo(req.params.id, updateData);
     if (!updated) return res.status(404).json({ error: 'Video not found' });
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/hero-videos/reorder', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const { orderUpdates } = req.body || {};
+    if (!Array.isArray(orderUpdates)) {
+      return res.status(400).json({ error: 'orderUpdates must be an array of { id, order }' });
+    }
+    for (const item of orderUpdates) {
+      if (item?.id == null || item?.order == null || Number.isNaN(Number(item.order))) {
+        return res.status(400).json({ error: 'Each order update requires id and order' });
+      }
+    }
+    const videos = await db.reorderHeroVideos(
+      orderUpdates.map((item) => ({ id: item.id, order: Number(item.order) }))
+    );
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Failed to reorder hero slides' });
   }
 });
 
@@ -1406,6 +1427,65 @@ app.get('/api/gallery', async (req, res) => {
   }
 });
 
+app.get('/api/gallery/page', async (req, res) => {
+  try {
+    const page = await db.getGalleryPage();
+    res.set('Cache-Control', 'public, max-age=120');
+    res.json(page);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/gallery/settings', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const updated = await db.updateGallerySettings(req.body || {});
+    res.json(updated.settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/gallery/events', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    if (!name) return res.status(400).json({ error: 'Event name is required' });
+    const event = await db.createGalleryEvent({
+      name,
+      badge: req.body?.badge || '',
+      description: req.body?.description || '',
+      order: req.body?.order,
+    });
+    res.json(event);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/gallery/events/:id', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const updated = await db.updateGalleryEvent(req.params.id, {
+      name: req.body?.name,
+      badge: req.body?.badge,
+      description: req.body?.description,
+      order: req.body?.order,
+    });
+    if (!updated) return res.status(404).json({ error: 'Event not found' });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/gallery/events/:id', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    await db.deleteGalleryEvent(req.params.id);
+    res.json({ message: 'Event deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/gallery', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
     const body = req.body || {};
@@ -1413,7 +1493,14 @@ app.post('/api/gallery', authenticateToken, checkSectionAccess, async (req, res)
     if (!src || !isValidMediaUrl(src)) {
       return res.status(400).json({ error: 'src must be a Supabase Storage URL or Google Drive file link' });
     }
-    const newImage = await db.createGalleryItem({ src, alt: body.alt || 'Gallery image', department: body.department || '' });
+    const newImage = await db.createGalleryItem({
+      src,
+      alt: body.alt || body.caption || 'Gallery image',
+      department: body.department || '',
+      eventId: body.eventId,
+      eventName: body.eventName || '',
+      caption: body.caption || body.alt || '',
+    });
     res.json(newImage);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -615,6 +615,30 @@ export async function deleteHeroVideo(id) {
   if (error) throw error;
 }
 
+export async function reorderHeroVideos(orderUpdates) {
+  if (!Array.isArray(orderUpdates) || orderUpdates.length === 0) {
+    return getHeroVideos();
+  }
+  if (useJsonFallback) {
+    const d = await readJsonFile('hero-videos');
+    orderUpdates.forEach(({ id, order }) => {
+      const idx = d.videos.findIndex((v) => v.id === parseInt(id, 10));
+      if (idx !== -1) {
+        d.videos[idx].order = order;
+      }
+    });
+    await writeJsonFile('hero-videos', d);
+    return getHeroVideos();
+  }
+  const promises = orderUpdates.map(({ id, order }) =>
+    supabase.from('hero_videos').update({ order }).eq('id', id)
+  );
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+  return getHeroVideos();
+}
+
 // ==================== DEPARTMENTS ====================
 export async function getDepartments() {
   if (useJsonFallback) {
@@ -897,39 +921,192 @@ export async function reorderHods(orderUpdates) {
 }
 
 // ==================== GALLERY ====================
-export async function getGallery() {
-  if (useJsonFallback) {
-    const d = await readJsonFile('gallery');
-    return d.images;
+const DEFAULT_GALLERY_FILE = {
+  settings: {
+    hero: {
+      badge: 'Campus Life',
+      title: 'Gallery',
+      description: 'Browse photos from campus events, celebrations, and student activities at VIET.',
+      heroImage: '/campus-hero.jpg',
+    },
+    eventsSectionLabel: 'Events',
+    eventsSectionTitle: 'Browse by event',
+  },
+  events: [],
+  images: [],
+};
+
+function normalizeGalleryStore(raw) {
+  const base = raw && typeof raw === 'object' ? raw : {};
+  const images = Array.isArray(base.images) ? base.images : [];
+  let events = Array.isArray(base.events) ? base.events : [];
+  const settings = {
+    ...DEFAULT_GALLERY_FILE.settings,
+    ...(base.settings || {}),
+    hero: {
+      ...DEFAULT_GALLERY_FILE.settings.hero,
+      ...(base.settings?.hero || {}),
+    },
+  };
+
+  if (events.length === 0 && images.length > 0) {
+    const names = [...new Set(images.map((i) => i.eventName || i.alt).filter(Boolean))];
+    events = names.map((name, idx) => ({
+      id: Date.now() + idx,
+      name,
+      badge: '',
+      description: '',
+      order: idx,
+    }));
   }
-  const { data, error } = await supabase.from('gallery').select('*').order('id');
-  if (error) throw error;
-  return (data || []).map(row => ({ ...row, id: row.id, src: row.src, alt: row.alt, department: row.department }));
+
+  const normalizedImages = images.map((img, idx) => {
+    const eventName = img.eventName || img.alt || '';
+    let eventId = img.eventId != null ? Number(img.eventId) : undefined;
+    if (!eventId && eventName) {
+      const match = events.find((e) => e.name === eventName);
+      if (match) eventId = match.id;
+    }
+    return {
+      ...img,
+      eventId,
+      eventName,
+      caption: img.caption || img.alt || '',
+      order: img.order != null ? Number(img.order) : idx,
+    };
+  });
+
+  events = events
+    .map((e, idx) => ({
+      id: Number(e.id) || Date.now() + idx,
+      name: String(e.name || ''),
+      badge: String(e.badge || ''),
+      description: String(e.description || ''),
+      order: e.order != null ? Number(e.order) : idx,
+    }))
+    .sort((a, b) => a.order - b.order);
+
+  return { settings, events, images: normalizedImages };
+}
+
+async function readGalleryStore() {
+  const d = await readJsonFile('gallery');
+  return normalizeGalleryStore(d);
+}
+
+async function writeGalleryStore(store) {
+  const normalized = normalizeGalleryStore(store);
+  await writeJsonFile('gallery', normalized);
+  return normalized;
+}
+
+export async function getGalleryPage() {
+  return readGalleryStore();
+}
+
+export async function getGallery() {
+  const store = await readGalleryStore();
+  return store.images;
+}
+
+export async function updateGallerySettings(settings) {
+  const store = await readGalleryStore();
+  store.settings = {
+    ...store.settings,
+    ...settings,
+    hero: { ...store.settings.hero, ...(settings?.hero || {}) },
+  };
+  return writeGalleryStore(store);
+}
+
+export async function createGalleryEvent(event) {
+  const store = await readGalleryStore();
+  const newEvent = {
+    id: Date.now(),
+    name: String(event.name || '').trim(),
+    badge: String(event.badge || ''),
+    description: String(event.description || ''),
+    order: event.order != null ? Number(event.order) : store.events.length,
+  };
+  if (!newEvent.name) throw new Error('Event name is required');
+  store.events.push(newEvent);
+  await writeGalleryStore(store);
+  return newEvent;
+}
+
+export async function updateGalleryEvent(id, patch) {
+  const store = await readGalleryStore();
+  const idx = store.events.findIndex((e) => e.id === parseInt(id, 10));
+  if (idx === -1) return null;
+  const prevName = store.events[idx].name;
+  store.events[idx] = {
+    ...store.events[idx],
+    ...patch,
+    id: store.events[idx].id,
+    name: patch.name != null ? String(patch.name).trim() : store.events[idx].name,
+  };
+  if (patch.name && patch.name !== prevName) {
+    store.images = store.images.map((img) =>
+      img.eventId === store.events[idx].id ? { ...img, eventName: store.events[idx].name } : img
+    );
+  }
+  await writeGalleryStore(store);
+  return store.events[idx];
+}
+
+export async function deleteGalleryEvent(id) {
+  const store = await readGalleryStore();
+  const eventId = parseInt(id, 10);
+  store.events = store.events.filter((e) => e.id !== eventId);
+  store.images = store.images.filter((img) => img.eventId !== eventId);
+  await writeGalleryStore(store);
 }
 
 export async function createGalleryItem(item) {
-  const dbItem = { src: item.src, alt: item.alt, department: item.department };
-  if (useJsonFallback) {
-    const d = await readJsonFile('gallery');
-    const newItem = { id: Date.now(), ...item };
-    d.images.push(newItem);
-    await writeJsonFile('gallery', d);
-    return newItem;
+  const store = await readGalleryStore();
+  let eventName = item.eventName ? String(item.eventName).trim() : '';
+  let eventId = item.eventId != null ? Number(item.eventId) : undefined;
+  if (eventId) {
+    const ev = store.events.find((e) => e.id === eventId);
+    if (ev) eventName = ev.name;
+  } else if (eventName) {
+    let ev = store.events.find((e) => e.name === eventName);
+    if (!ev) {
+      ev = {
+        id: Date.now(),
+        name: eventName,
+        badge: '',
+        description: '',
+        order: store.events.length,
+      };
+      store.events.push(ev);
+      eventId = ev.id;
+    } else {
+      eventId = ev.id;
+    }
   }
-  const { data, error } = await supabase.from('gallery').insert(dbItem).select().single();
-  if (error) throw error;
-  return data;
+
+  const eventPhotos = store.images.filter((img) => img.eventId === eventId);
+  const newItem = {
+    id: Date.now(),
+    src: item.src,
+    alt: item.alt || item.caption || eventName || 'Gallery image',
+    department: item.department || '',
+    eventId,
+    eventName,
+    caption: item.caption || item.alt || '',
+    order: item.order != null ? Number(item.order) : eventPhotos.length,
+    createdAt: new Date().toISOString(),
+  };
+  store.images.push(newItem);
+  await writeGalleryStore(store);
+  return newItem;
 }
 
 export async function deleteGalleryItem(id) {
-  if (useJsonFallback) {
-    const d = await readJsonFile('gallery');
-    d.images = d.images.filter(i => i.id !== parseInt(id));
-    await writeJsonFile('gallery', d);
-    return;
-  }
-  const { error } = await supabase.from('gallery').delete().eq('id', id);
-  if (error) throw error;
+  const store = await readGalleryStore();
+  store.images = store.images.filter((i) => i.id !== parseInt(id, 10));
+  await writeGalleryStore(store);
 }
 
 // ==================== PLACEMENT SECTION ====================
