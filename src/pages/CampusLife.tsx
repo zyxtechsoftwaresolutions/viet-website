@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
+import FacilityWaveHero from '@/components/FacilityWaveHero';
 import { pagesAPI } from '@/lib/api';
 import { imgUrl } from '@/lib/imageUtils';
 import {
@@ -10,8 +11,6 @@ import {
   highlightGridClass,
   type CampusLifeContent,
 } from '@/lib/campusLifeContent';
-import { resolveHeroMedia, heroHasVideo } from '@/lib/heroMedia';
-import HeroMediaBackground from '@/components/HeroMediaBackground';
 
 export default function CampusLife() {
   const [content, setContent] = useState<CampusLifeContent>(DEFAULT_CAMPUS_LIFE_CONTENT);
@@ -43,49 +42,21 @@ export default function CampusLife() {
     return imgUrl(path) || path;
   };
 
-  const heroMedia = resolveHeroMedia(content.hero);
-  const hasBackgroundMedia = heroHasVideo(heroMedia) || Boolean(heroMedia.imageUrl);
-
   return (
     <div className="min-h-screen bg-slate-100">
       <LeaderPageNavbar backHref="/about" />
 
-      <section className="relative min-h-[55vh] md:min-h-[90vh] pt-20 md:pt-28 pb-10 md:pb-16 flex items-center overflow-hidden">
-        <HeroMediaBackground
-          media={heroMedia}
-          fallbackGradient="linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)"
-          imageOpacityClass="opacity-100"
-        />
-        {hasBackgroundMedia && (
-          <div
-            className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-r from-black/50 from-0% via-black/20 via-[30%] to-transparent to-[55%]"
-            aria-hidden
-          />
-        )}
-        <div className="container mx-auto px-4 md:px-10 lg:px-12 relative z-10">
-          <motion.div
-            className="max-w-2xl"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="inline-block px-4 py-1.5 text-sm md:text-base font-bold tracking-[0.2em] text-white uppercase bg-white/20 backdrop-blur-sm border border-white/40 rounded-full mb-5">
-              {content.hero.badge}
-            </p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-sm mb-4">
-              {content.hero.title}
-            </h1>
-            <p className="text-base md:text-lg text-white/90 leading-relaxed max-w-xl">
-              {content.hero.description}
-            </p>
-          </motion.div>
-        </div>
-
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-          <div className="w-px h-16 bg-gradient-to-b from-transparent via-white/80 to-transparent"></div>
-          <div className="w-2 h-2 rounded-full bg-amber-300"></div>
-        </div>
-      </section>
+      <FacilityWaveHero
+        badge={content.hero.badge}
+        title={content.hero.title}
+        description={content.hero.description}
+        heroImage={content.hero.image}
+        video={content.hero.video}
+        gradient="linear-gradient(160deg, #422006 0%, #713f12 35%, #a16207 70%, #ca8a04 100%)"
+        waveFill="#fafafa"
+        showDotPattern
+        align="end"
+      />
 
       <section className="py-20 md:py-28 bg-[#fafafa] border-t border-slate-200">
         <div className="container mx-auto px-4 md:px-10 lg:px-12">
@@ -433,13 +404,6 @@ export default function CampusLife() {
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
-        }
-        @keyframes bounce {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(-10px); }
-        }
-        .animate-bounce {
-          animation: bounce 2s ease-in-out infinite;
         }
       `}</style>
     </div>
