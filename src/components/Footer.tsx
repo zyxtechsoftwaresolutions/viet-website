@@ -258,22 +258,13 @@ const Footer = () => {
                       </a>
                     </li>
                     <li>
-                      <span className="inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200">
+                      <a
+                        href="tel:+919959617476"
+                        className="group inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200"
+                      >
                         <Phone className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
-                        <span className="inline-flex flex-wrap items-center justify-center lg:justify-start gap-x-1">
-                          <a href="tel:+919959617476" className="hover:text-white transition-colors duration-200">
-                            +91 9959617476
-                          </a>
-                          <span aria-hidden>/</span>
-                          <a href="tel:+919550957054" className="hover:text-white transition-colors duration-200">
-                            9550957054
-                          </a>
-                          <span aria-hidden>/</span>
-                          <a href="tel:+919959617477" className="hover:text-white transition-colors duration-200">
-                            9959617477
-                          </a>
-                        </span>
-                      </span>
+                        <span>+91 9959617476 / 9959617477</span>
+                      </a>
                     </li>
                     <li>
                       <span className="inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200">
@@ -398,11 +389,9 @@ const Footer = () => {
                 <span className="font-semibold text-white">Contact Person:</span> P Subba Raju
                 <br />
                 <span className="font-semibold text-white">Phone:</span>{' '}
-                <a href="tel:+919959617476" className="hover:text-primary transition-colors">9959617476</a>
-                {', '}
-                <a href="tel:+919550957054" className="hover:text-primary transition-colors">9550957054</a>
-                {', '}
                 <a href="tel:+919959617477" className="hover:text-primary transition-colors">9959617477</a>
+                {', '}
+                <a href="tel:+919959617476" className="hover:text-primary transition-colors">9959617476</a>
                 <br />
                 <span className="font-semibold text-white">Email:</span>{' '}
                 <a href="mailto:vietvsp@gmail.com" className="hover:text-primary transition-colors">vietvsp@gmail.com</a>
