@@ -358,6 +358,28 @@ const ContactUs = () => {
                     </a>
                   </p>
                 )}
+                {contact.whatsapp && contact.whatsapp.length > 0 && (
+                  <p className="text-slate-600 mb-2">
+                    <span className="font-semibold text-slate-800">WhatsApp: </span>
+                    {contact.whatsapp.map((number, idx) => {
+                      const digits = number.replace(/\D/g, '');
+                      const waNumber = digits.startsWith('91') ? digits : `91${digits}`;
+                      return (
+                        <span key={number}>
+                          {idx > 0 && ', '}
+                          <a
+                            href={`https://wa.me/${waNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 hover:text-indigo-800"
+                          >
+                            {number}
+                          </a>
+                        </span>
+                      );
+                    })}
+                  </p>
+                )}
                 {contact.extra && <p className="text-slate-600 text-sm leading-relaxed">{contact.extra}</p>}
               </motion.div>
             ))}

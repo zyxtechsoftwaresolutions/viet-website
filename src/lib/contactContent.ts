@@ -19,6 +19,7 @@ export type KeyContact = {
   person?: string;
   phone?: string;
   email?: string;
+  whatsapp?: string[];
   extra?: string;
 };
 
@@ -26,7 +27,7 @@ export const COLLEGE_INFO = {
   name: 'Visakha Institute of Engineering & Technology (Autonomous)',
   shortName: 'VIET',
   address: '88th Division, Narava, GVMC, Visakhapatnam, Andhra Pradesh 530027, India',
-  phones: ['+91 9959617476', '+91 9959617477'],
+  phones: ['+91 9959617476', '+91 9550957054', '+91 9959617477'],
   emails: ['website@viet.edu.in', 'vietvsp@gmail.com', 'admissions@viet.edu.in'],
   officeHours: 'Monday – Friday, 9:00 AM – 5:00 PM',
   website: 'https://vietvsp.com',
@@ -87,7 +88,7 @@ export const KEY_CONTACTS: KeyContact[] = [
   {
     title: 'Admissions & Enquiry',
     person: 'P. Subba Raju',
-    phone: '+91 9959617477, +91 9959617476',
+    phone: '+91 9959617476, +91 9550957054, +91 9959617477',
     email: 'vietvsp@gmail.com',
   },
   {
@@ -98,7 +99,7 @@ export const KEY_CONTACTS: KeyContact[] = [
   },
   {
     title: 'Grievance Redressal',
-    extra: 'WhatsApp: +91 9494670501, +91 9550957054',
+    whatsapp: ['+91 9494670501', '+91 9550957054'],
   },
   {
     title: 'Anti-Ragging Helpline',

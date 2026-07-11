@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-const WHATSAPP_URL = 'https://wa.me/919959617476';
+const WHATSAPP_URL = 'https://wa.me/919550957054';
 const INSTAGRAM_URL = 'https://www.instagram.com/visakha_college_official/';
 
 const InstagramIcon = () => (
