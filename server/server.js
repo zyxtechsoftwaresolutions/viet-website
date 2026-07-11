@@ -2469,7 +2469,8 @@ app.put('/api/department-pages/:slug', authenticateToken, checkSectionAccess, as
     });
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[department-pages PUT]', req.params.slug, error);
+    res.status(500).json({ error: error.message || 'Failed to save department page' });
   }
 });
 

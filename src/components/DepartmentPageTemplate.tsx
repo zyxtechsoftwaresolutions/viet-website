@@ -220,7 +220,10 @@ export type DepartmentPageTemplateProps = {
   facultyFilter?: (department: string) => boolean;
 };
 
-type FacultyOrderFilter = 'designation' | 'experience' | 'designation-experience';
+type FacultyOrderFilter = 'custom' | 'designation' | 'experience' | 'designation-experience';
+
+const isFacultyOrderFilter = (value: unknown): value is FacultyOrderFilter =>
+  value === 'custom' || value === 'designation' || value === 'experience' || value === 'designation-experience';
 
 const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
   slug,
@@ -288,21 +291,30 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         const data = await departmentPagesAPI.getBySlug(slug);
         const facultyIds = Array.isArray(data?.sections?.faculty?.facultyIds) ? data.sections.faculty.facultyIds : [];
         const facultyHodIds = Array.isArray(data?.sections?.faculty?.hodIds) ? data.sections.faculty.hodIds : [];
-        const hasExplicitFacultyHodIds = Object.prototype.hasOwnProperty.call(data?.sections?.faculty ?? {}, 'hodIds');
-        const hodIds = Array.isArray(data?.sections?.hod?.hodIds) ? data.sections.hod.hodIds : [];
-        if (hodIds.length > 0) {
-          const idSet = new Set(hodIds);
+
+        // Head of Department section: ONLY HODs whose home department matches this page.
+        // Never use faculty.hodIds here — those are teaching assignments only.
+        // Optional override: sections.hod.hodIds (still must pass strictDeptFilter).
+        const pageHodIds = Array.isArray(data?.sections?.hod?.hodIds) ? data.sections.hod.hodIds : [];
+        if (pageHodIds.length > 0) {
+          const idSet = new Set(pageHodIds);
           setHods(h.filter((x: any) => idSet.has(x.id) && strictDeptFilter(x.department || '')));
         } else {
           setHods(h.filter((x: any) => strictDeptFilter(x.department || '')));
         }
-        const teachingHods = hasExplicitFacultyHodIds
-          ? h.filter((x: any) => facultyHodIds.includes(x.id) && strictDeptFilter(x.department || ''))
-          : h.filter((x: any) => strictDeptFilter(x.department || ''));
-        setTeachingFacultyHods(teachingHods);
+
+        // Faculty list teaching HODs: only explicitly ticked IDs (any department).
+        // Cross-dept HODs may teach here but must NOT appear in the HOD section above.
+        setTeachingFacultyHods(
+          facultyHodIds.length > 0
+            ? h.filter((x: any) => facultyHodIds.includes(x.id))
+            : []
+        );
+
+        // Regular faculty: trust admin ticks (do not re-filter by page department pool).
         if (facultyIds.length > 0) {
           const idSet = new Set(facultyIds);
-          setFaculty(f.filter((x: any) => idSet.has(x.id) && pageFacultyFilter(x.department || '')));
+          setFaculty(f.filter((x: any) => idSet.has(x.id)));
         } else {
           setFaculty([]);
         }
@@ -313,7 +325,7 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
       }
     };
     loadFacultyAndHods();
-  }, [slug, pageFacultyFilter, strictDeptFilter]);
+  }, [slug, strictDeptFilter]);
 
 
   const scrollTo = (id: string) => {
@@ -398,10 +410,12 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     return heroVideoRaw.startsWith('/') ? `${API_BASE}${heroVideoRaw}` : `${API_BASE}/${heroVideoRaw}`;
   })();
   const admissionLink = s.admission?.link || DEFAULT_ADMISSIONS_URL;
-  const facultyOrderFilter: FacultyOrderFilter =
-    s.faculty?.sortBy === 'designation' || s.faculty?.sortBy === 'experience' || s.faculty?.sortBy === 'designation-experience'
-      ? s.faculty.sortBy
-      : 'designation-experience';
+  const facultyOrderFilter: FacultyOrderFilter = isFacultyOrderFilter(s.faculty?.sortBy)
+    ? s.faculty.sortBy
+    : 'custom';
+  const facultyDisplayOrder: string[] = Array.isArray(s.faculty?.displayOrder)
+    ? s.faculty.displayOrder.filter((key: unknown): key is string => typeof key === 'string')
+    : [];
 
   const curriculumPrograms = deptPage?.curriculum?.programs ?? [];
   const curriculumFromApi = curriculumPrograms.length > 0;
@@ -440,9 +454,38 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
     return 1;
   };
 
-  // Faculty list: this department's HOD(s) first, then this department's faculty,
-  // then shared/other faculty — each group sorted by Admin order settings.
+  // Faculty list only (never feeds Head of Department section).
+  // Custom order is per department page (sections.faculty.displayOrder) and does not
+  // affect the overall Faculty page.
   const sortedFacultyWithHods = useMemo(() => {
+    const withKeys = [
+      ...teachingFacultyHods.map((h: any) => ({ ...h, _listKey: `hod-${Number(h.id)}` })),
+      ...faculty.map((f: any) => ({ ...f, _listKey: `faculty-${Number(f.id)}` })),
+    ];
+
+    const seen = new Set<string>();
+    const unique: any[] = [];
+    for (const item of withKeys) {
+      const nameKey = (item.name || '').trim().toLowerCase();
+      if (!nameKey || seen.has(nameKey)) continue;
+      seen.add(nameKey);
+      unique.push(item);
+    }
+
+    if (facultyOrderFilter === 'custom') {
+      const normalizedOrder = facultyDisplayOrder.map((key) => {
+        const match = /^(faculty|hod)-(\d+)$/.exec(key);
+        return match ? `${match[1]}-${Number(match[2])}` : key;
+      });
+      const orderIndex = new Map(normalizedOrder.map((key, idx) => [key, idx]));
+      return [...unique].sort((a, b) => {
+        const idxA = orderIndex.has(a._listKey) ? orderIndex.get(a._listKey)! : Number.MAX_SAFE_INTEGER;
+        const idxB = orderIndex.has(b._listKey) ? orderIndex.get(b._listKey)! : Number.MAX_SAFE_INTEGER;
+        if (idxA !== idxB) return idxA - idxB;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+    }
+
     const sortFacultyGroup = (items: any[]) =>
       [...items].sort((a: any, b: any) => {
         if (facultyOrderFilter === 'designation') {
@@ -464,52 +507,38 @@ const DepartmentPageTemplate: React.FC<DepartmentPageTemplateProps> = ({
         return String(a.name || '').localeCompare(String(b.name || ''));
       });
 
-    const sortedHods = [...teachingFacultyHods].sort((a: any, b: any) => {
-      const hpA = getHodPriority(a.designation);
-      const hpB = getHodPriority(b.designation);
-      if (hpB !== hpA) return hpB - hpA;
-      const drA = getDesignationRank(a.designation);
-      const drB = getDesignationRank(b.designation);
-      if (drB !== drA) return drB - drA;
-      const exA = parseExperienceYears(a.experience);
-      const exB = parseExperienceYears(b.experience);
-      if (exB !== exA) return exB - exA;
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
+    const sortTeachingHods = (items: any[]) =>
+      [...items].sort((a: any, b: any) => {
+        const homeA = strictDeptFilter(a.department || '') ? 1 : 0;
+        const homeB = strictDeptFilter(b.department || '') ? 1 : 0;
+        if (homeB !== homeA) return homeB - homeA;
+        const hpA = getHodPriority(a.designation);
+        const hpB = getHodPriority(b.designation);
+        if (hpB !== hpA) return hpB - hpA;
+        const drA = getDesignationRank(a.designation);
+        const drB = getDesignationRank(b.designation);
+        if (drB !== drA) return drB - drA;
+        const exA = parseExperienceYears(a.experience);
+        const exB = parseExperienceYears(b.experience);
+        if (exB !== exA) return exB - exA;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
 
+    const homeTeachingHods = sortTeachingHods(
+      unique.filter((member: any) => member._listKey.startsWith('hod-') && strictDeptFilter(member.department || ''))
+    );
+    const otherTeachingHods = sortTeachingHods(
+      unique.filter((member: any) => member._listKey.startsWith('hod-') && !strictDeptFilter(member.department || ''))
+    );
     const primaryFaculty = sortFacultyGroup(
-      faculty.filter((member: any) => strictDeptFilter(member.department || ''))
+      unique.filter((member: any) => member._listKey.startsWith('faculty-') && strictDeptFilter(member.department || ''))
     );
     const otherFaculty = sortFacultyGroup(
-      faculty.filter((member: any) => !strictDeptFilter(member.department || ''))
+      unique.filter((member: any) => member._listKey.startsWith('faculty-') && !strictDeptFilter(member.department || ''))
     );
 
-    const seen = new Set<string>();
-    const result: any[] = [];
-
-    for (const h of sortedHods) {
-      const key = (h.name || '').trim().toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      result.push({ ...h, _listKey: `hod-${h.id}` });
-    }
-
-    for (const f of primaryFaculty) {
-      const key = (f.name || '').trim().toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      result.push({ ...f, _listKey: `faculty-${f.id}` });
-    }
-
-    for (const f of otherFaculty) {
-      const key = (f.name || '').trim().toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      result.push({ ...f, _listKey: `faculty-${f.id}` });
-    }
-
-    return result;
-  }, [teachingFacultyHods, faculty, facultyOrderFilter, strictDeptFilter]);
+    return [...homeTeachingHods, ...otherTeachingHods, ...primaryFaculty, ...otherFaculty];
+  }, [teachingFacultyHods, faculty, facultyOrderFilter, facultyDisplayOrder, strictDeptFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50">

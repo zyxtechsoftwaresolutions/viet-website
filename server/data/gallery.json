@@ -1,25 +1,56 @@
 {
+  "settings": {
+    "hero": {
+      "badge": "Campus Life",
+      "title": "Gallery",
+      "description": "Browse photos from campus events, celebrations, and student activities at VIET.",
+      "heroImage": "/campus-hero.jpg"
+    },
+    "eventsSectionLabel": "Events",
+    "eventsSectionTitle": "Browse by event"
+  },
+  "events": [
+    {
+      "id": 1770212411112,
+      "name": "AURA FEST",
+      "badge": "",
+      "description": "",
+      "order": 0
+    }
+  ],
   "images": [
     {
       "id": 1770212411112,
       "src": "/uploads/gallery/image-1770212410607-609094220.JPG",
       "alt": "AURA FEST",
       "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
-      "createdAt": "2026-02-04T13:40:11.112Z"
+      "createdAt": "2026-02-04T13:40:11.112Z",
+      "eventId": 1770212411112,
+      "eventName": "AURA FEST",
+      "caption": "AURA FEST",
+      "order": 0
     },
     {
       "id": 1770212461739,
       "src": "/uploads/gallery/image-1770212461293-281954466.JPG",
       "alt": "AURA FEST",
       "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
-      "createdAt": "2026-02-04T13:41:01.739Z"
+      "createdAt": "2026-02-04T13:41:01.739Z",
+      "eventId": 1770212411112,
+      "eventName": "AURA FEST",
+      "caption": "AURA FEST",
+      "order": 1
     },
     {
       "id": 1770212480859,
       "src": "/uploads/gallery/image-1770212479892-195565087.JPG",
       "alt": "AURA FEST",
       "department": "ENGINEERING UG - Computer Science and Engineering (CSE)",
-      "createdAt": "2026-02-04T13:41:20.859Z"
+      "createdAt": "2026-02-04T13:41:20.859Z",
+      "eventId": 1770212411112,
+      "eventName": "AURA FEST",
+      "caption": "AURA FEST",
+      "order": 2
     }
   ]
 }
