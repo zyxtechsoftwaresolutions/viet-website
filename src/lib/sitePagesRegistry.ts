@@ -53,11 +53,12 @@ export const EXPECTED_SITE_PAGES: SitePageMeta[] = [
 export function getPageEditorKind(
   slug: string,
   category: string
-): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'organizational-chart' | 'generic' {
+): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'examinations' | 'organizational-chart' | 'generic' {
   if (slug === 'about') return 'about';
   if (slug === 'organizational-chart') return 'organizational-chart';
   if (slug === 'transport') return 'transport';
   if (slug === 'campus-life') return 'campus-life';
+  if (slug === 'ug-pg-examinations' || category.toLowerCase() === 'examinations') return 'examinations';
   if ((LEADER_SLUGS as readonly string[]).includes(slug)) return 'authorities';
   if (category.toLowerCase() === 'facilities') return 'facilities';
   return 'generic';
@@ -71,5 +72,9 @@ export function getAdminEditorPath(slug: string, category: string): string {
   if (kind === 'transport') return '/admin/facilities/transport';
   if (kind === 'facilities') return `/admin/facilities/${slug}`;
   if (kind === 'campus-life') return '/admin/facilities/campus-life';
+  if (kind === 'examinations') {
+    if (slug === 'ug-pg-examinations') return '/admin/examinations/ug-pg-examinations';
+    return '/admin/examinations';
+  }
   return '/admin/site-pages';
 }

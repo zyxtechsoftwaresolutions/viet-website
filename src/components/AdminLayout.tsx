@@ -61,6 +61,7 @@ const AdminLayout = () => {
     { icon: Laptop, label: 'Recruiters', path: '/admin/recruiters', section: 'recruiters', adminOnly: false },
     { icon: Briefcase, label: 'Placement Section', path: '/admin/placement-section', section: 'placement-section', adminOnly: false },
     { icon: Warehouse, label: 'Facilities', path: '/admin/facilities', section: 'facilities', adminOnly: false },
+    { icon: GraduationCap, label: 'Examinations', path: '/admin/examinations', section: 'examinations', adminOnly: false },
     { icon: FileText, label: 'All Site Pages', path: '/admin/site-pages', section: 'pages', adminOnly: false },
     { icon: FileText, label: 'Org. Chart', path: '/admin/organizational-chart', section: 'pages', adminOnly: false },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
@@ -97,6 +98,7 @@ const AdminLayout = () => {
     allowedSections.includes(section) ||
     (section === 'transport' && allowedSections.includes('transport-routes')) ||
     (section === 'campus-life' && (allowedSections.includes('pages') || allowedSections.includes('campus-life'))) ||
+    (section === 'examinations' && (allowedSections.includes('pages') || allowedSections.includes('examinations'))) ||
     (section === 'facilities' &&
       (allowedSections.includes('facilities') ||
         allowedSections.includes('transport') ||
@@ -111,13 +113,16 @@ const AdminLayout = () => {
   });
 
   const currentSection = allMenuItems.find((m) =>
-    m.path === location.pathname || (m.path === '/admin/facilities' && location.pathname.startsWith('/admin/facilities/'))
+    m.path === location.pathname ||
+    (m.path === '/admin/facilities' && location.pathname.startsWith('/admin/facilities/')) ||
+    (m.path === '/admin/examinations' && location.pathname.startsWith('/admin/examinations/'))
   )?.section;
   const canAccessCurrentPath =
     isAdmin ||
     currentSection === 'dashboard' ||
     (currentSection && sectionAllowed(currentSection)) ||
     (location.pathname.startsWith('/admin/facilities/') && sectionAllowed('facilities')) ||
+    (location.pathname.startsWith('/admin/examinations/') && sectionAllowed('examinations')) ||
     (location.pathname === '/admin' || location.pathname === '/admin/');
 
   if (isAuthenticated === null) {

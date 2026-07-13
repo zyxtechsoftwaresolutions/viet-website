@@ -285,6 +285,8 @@ const SitePagesAdmin = () => {
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/organizational-chart')}>Organizational Chart</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/department-pages')}>Department Pages</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/campus-life')}>Campus Life</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/admin/facilities/center-of-excellence')}>Center of Excellence</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/admin/examinations')}>Examinations</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/faculty')}>Faculty</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/accreditations')}>Accreditations PDFs</Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/admin/placement-section')}>Home Placement Section</Button>

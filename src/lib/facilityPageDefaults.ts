@@ -73,6 +73,15 @@ export const FACILITY_HERO_DEFAULTS: Record<string, FacilityHeroDefaults> = {
     waveFill: 'rgb(248 250 252)',
     align: 'end',
   },
+  'center-of-excellence': {
+    badge: 'Facilities',
+    title: 'Center of Excellence',
+    description: 'EISC, COE and innovation labs driving research, startups, and industry collaboration at VIET.',
+    gradient: 'linear-gradient(155deg, #0f172a 0%, #312e81 35%, #1e3a8a 70%, #0f172a 100%)',
+    waveFill: 'rgb(248 250 252)',
+    showDotPattern: true,
+    align: 'end',
+  },
 };
 
 export function getFacilityHeroDefaults(slug: string): FacilityHeroDefaults {

@@ -30,7 +30,7 @@ export const FACILITY_PAGES: FacilityPageDef[] = [
     slug: 'center-of-excellence',
     title: 'Center of Excellence',
     route: '/facilities/center-of-excellence',
-    description: 'EISC, COE and innovation labs.',
+    description: 'EISC, COE and innovation labs — edit hero, content, stats, features, and gallery.',
     editor: 'standard',
   },
   {

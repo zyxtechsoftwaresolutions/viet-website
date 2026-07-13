@@ -85,6 +85,8 @@ const AccreditationsAdmin = lazy(() => import("./pages/admin/Accreditations"));
 const DepartmentPages = lazy(() => import("./pages/admin/DepartmentPages"));
 const FacilitiesAdmin = lazy(() => import("./pages/admin/FacilitiesAdmin"));
 const FacilityEditorRouter = lazy(() => import("./pages/admin/FacilityEditorRouter"));
+const ExaminationsAdmin = lazy(() => import("./pages/admin/ExaminationsAdmin"));
+const ExamEditorRouter = lazy(() => import("./pages/admin/ExamEditorRouter"));
 const IntroVideoAdmin = lazy(() => import("./pages/admin/IntroVideo"));
 const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
@@ -208,9 +210,13 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="placement-section" element={<PlacementSection />} />
               <Route path="facilities" element={<FacilitiesAdmin />} />
               <Route path="facilities/:slug" element={<FacilityEditorRouter />} />
+              <Route path="examinations" element={<ExaminationsAdmin />} />
+              <Route path="examinations/:slug" element={<ExamEditorRouter />} />
+              <Route path="ug-pg-examinations" element={<Navigate to="/admin/examinations/ug-pg-examinations" replace />} />
               <Route path="transport" element={<Navigate to="/admin/facilities/transport" replace />} />
               <Route path="transport-routes" element={<Navigate to="/admin/facilities/transport" replace />} />
               <Route path="campus-life" element={<Navigate to="/admin/facilities/campus-life" replace />} />
+              <Route path="center-of-excellence" element={<Navigate to="/admin/facilities/center-of-excellence" replace />} />
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="site-pages" element={<SitePagesAdmin />} />
               <Route path="organizational-chart" element={<OrganizationalChartAdmin />} />

@@ -465,7 +465,7 @@ const API_TO_SECTION = [
   [/^\/api\/transport-routes/, 'transport'],
   [/^\/api\/accreditations/, 'accreditations'],
   [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
-  [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport', 'campus-life']],
+  [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport', 'campus-life', 'examinations']],
   [/^\/api\/faculty-settings/, 'faculty'],
 ];
 
