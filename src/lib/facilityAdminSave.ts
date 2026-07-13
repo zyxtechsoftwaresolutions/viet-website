@@ -16,7 +16,7 @@ export async function uploadFacilityGalleryImages(
 
   for (const [idxStr, file] of entries) {
     const idx = Number(idxStr);
-    const url = await uploadToSupabase(file, 'facilities', 'gallery');
+    const url = await uploadToSupabase(file, 'facilities', 'images');
     if (result[idx]) {
       result[idx] = { ...result[idx], image: url };
     } else {

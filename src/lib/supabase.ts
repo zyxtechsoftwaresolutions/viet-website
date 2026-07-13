@@ -1,10 +1,6 @@
 /**
- * Browser Supabase client for direct Storage uploads (e.g. hero videos).
- * Uses anon key; Storage bucket must allow public uploads or use RLS policies.
- *
- * Local dev: reads VITE_SUPABASE_* from .env at dev-server start.
- * Production (Render): server injects window.__VIET_RUNTIME_CONFIG__ or /api/client-config
- * because VITE_* vars are only embedded at `npm run build` time.
+ * Browser helpers for Supabase public URLs (read-only).
+ * Uploads must go through authenticated /api/upload/sign — never write with the anon key.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { API_BASE_URL } from '@/lib/apiConfig';
@@ -50,7 +46,7 @@ function createSupabaseClient(url: string, anonKey: string): SupabaseClient {
   return createClient(url, anonKey);
 }
 
-/** Lazy Supabase client — fetches /api/client-config on production if build-time env is missing. */
+/** Lazy read-only Supabase client (optional; uploads use signed URLs via the API). */
 export async function getSupabase(): Promise<SupabaseClient | null> {
   if (cachedClient) return cachedClient;
   if (!clientInitPromise) {
@@ -66,7 +62,7 @@ export async function getSupabase(): Promise<SupabaseClient | null> {
             supabaseAnonKey = (data.supabaseAnonKey || supabaseAnonKey).trim();
           }
         } catch {
-          /* non-fatal — caller shows configure message */
+          /* non-fatal */
         }
       }
 
@@ -88,10 +84,10 @@ export const supabase = (() => {
     : null;
 })();
 
-/** Bucket for video files (hero, vibe-at-viet). Must be public. */
+/** Bucket for video files (hero, vibe-at-viet). Must be public for reads. */
 export const VIDEOS_BUCKET = 'videos';
 
-/** Bucket for images (carousel, gallery, events, faculty, etc.). Must be public. */
+/** Bucket for images (carousel, gallery, events, faculty, etc.). Must be public for reads. */
 export const IMAGES_BUCKET = 'images';
 
 function publicBaseUrl(): string {
@@ -99,18 +95,12 @@ function publicBaseUrl(): string {
   return supabaseUrl;
 }
 
-/**
- * Get public URL for a file in the videos bucket.
- */
 export function getVideosPublicUrl(path: string): string {
   const supabaseUrl = publicBaseUrl();
   if (!supabaseUrl) return '';
   return `${supabaseUrl}/storage/v1/object/public/${VIDEOS_BUCKET}/${path}`;
 }
 
-/**
- * Get public URL for a file in the images bucket.
- */
 export function getImagesPublicUrl(path: string): string {
   const supabaseUrl = publicBaseUrl();
   if (!supabaseUrl) return '';

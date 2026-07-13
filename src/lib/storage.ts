@@ -1,14 +1,12 @@
 /**
- * Client-side uploads to Supabase Storage. Admin uploads files directly from the browser; backend only stores URLs.
- * Use uploadToSupabase() for all media. Videos go to "videos" bucket, images/documents to "images" bucket.
- * Large videos (>6MB) use resumable (TUS) uploads for reliability and to respect higher size limits.
+ * Authenticated media uploads.
+ * Flow: admin JWT → POST /api/upload/sign (service role) → PUT file to signed URL.
+ * The public anon key is never used for writes (prevents storage overwrite attacks).
  */
-import { getSupabase, readSupabasePublicConfig, VIDEOS_BUCKET, IMAGES_BUCKET, getVideosPublicUrl, getImagesPublicUrl } from './supabase';
+import { API_BASE_URL } from './apiConfig';
 import { compressImageForUpload, imageTooLargeMessage, isImageTooLargeForUpload } from './compressImage';
 
 export type StorageBucket = 'videos' | 'images';
-
-const RESUMABLE_THRESHOLD = 6 * 1024 * 1024; // 6 MB – use TUS for larger files
 
 function isSizeLimitError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -31,138 +29,114 @@ function wrapUploadError(error: unknown): Error {
     (error instanceof Error ? error.message : String(error));
   if (isSizeLimitError(msg)) {
     const hint =
-      ' Your file exceeds Supabase’s limit. Free plan: max 50 MB. To allow larger files (Pro): Supabase Dashboard → your project → Storage → Settings → set “Global file size limit” (e.g. 500 MB), then try again.';
+      ' Your file exceeds the storage limit. Free plan: max 50 MB. Pro: raise “Global file size limit” in Supabase Storage settings.';
     return new Error(msg + hint);
   }
-  return error instanceof Error ? error : new Error(String(error));
+  return error instanceof Error ? error : new Error(String(msg));
 }
 
-/**
- * Resumable (TUS) upload for large video files. Uses direct storage hostname and 6MB chunks.
- * Loads tus-js-client dynamically so the admin page works even if the package is not installed.
- */
-async function uploadVideoResumable(
-  file: File,
-  path: string,
-  bucketName: string,
-  contentType: string
-): Promise<void> {
-  const { supabaseUrl, supabaseAnonKey } = readSupabasePublicConfig();
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL and anon key are required for resumable upload.');
+type SignedUploadResponse = {
+  signedUrl: string;
+  token?: string;
+  path: string;
+  bucket: string;
+  publicUrl: string;
+};
+
+async function requestSignedUpload(params: {
+  folder: string;
+  fileName: string;
+  contentType: string;
+  bucket: StorageBucket;
+  fileSize: number;
+}): Promise<SignedUploadResponse> {
+  const token = localStorage.getItem('admin_token');
+  if (!token) {
+    throw new Error('You must be logged in as admin to upload files.');
   }
 
-  let tus: typeof import('tus-js-client');
-  try {
-    const mod = await import('tus-js-client');
-    tus = mod.default ?? mod;
-  } catch {
-    throw new Error(
-      'Resumable upload requires tus-js-client. Run: npm install tus-js-client'
-    );
-  }
-
-  const projectId = new URL(supabaseUrl).hostname.split('.')[0];
-  const endpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
-
-  const UploadClass = (tus as { Upload?: unknown })?.Upload ?? tus;
-  return new Promise((resolve, reject) => {
-    const upload = new UploadClass(file, {
-      endpoint,
-      retryDelays: [0, 3000, 5000, 10000, 20000],
-      headers: {
-        authorization: `Bearer ${supabaseAnonKey}`,
-        'x-upsert': 'true',
-      },
-      uploadDataDuringCreation: true,
-      removeFingerprintOnSuccess: true,
-      metadata: {
-        bucketName,
-        objectName: path,
-        contentType: contentType || 'video/mp4',
-      },
-      chunkSize: 6 * 1024 * 1024, // 6 MB required by Supabase
-      onError: (err: Error) => reject(err),
-      onSuccess: () => resolve(),
-    });
-    upload.findPreviousUploads().then((previousUploads: unknown[]) => {
-      if (previousUploads.length) {
-        upload.resumeFromPreviousUpload(previousUploads[0]);
-      }
-      upload.start();
-    });
+  const response = await fetch(`${API_BASE_URL}/upload/sign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(params),
   });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create upload URL' }));
+    throw new Error(error.error || 'Failed to create upload URL');
+  }
+
+  return response.json();
+}
+
+async function putToSignedUrl(signedUrl: string, file: Blob, contentType: string): Promise<void> {
+  const response = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': contentType || 'application/octet-stream',
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(text || `Upload failed (${response.status})`);
+  }
 }
 
 /**
- * Upload a file to Supabase Storage and return its public URL.
+ * Upload a file via authenticated signed URL and return its public URL.
  * - Videos (video/*) → bucket "videos"
  * - Images and other files (e.g. PDF) → bucket "images"
- * For videos >6MB, uses resumable (TUS) upload.
  */
 export async function uploadToSupabase(
   file: File,
   folder: string,
   bucket?: StorageBucket
 ): Promise<string> {
-  const supabase = await getSupabase();
-  if (!supabase) {
-    throw new Error(
-      'Supabase is not configured. On Render set SUPABASE_URL and SUPABASE_ANON_KEY (or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), then redeploy.'
-    );
-  }
-
   const resolvedBucket: StorageBucket =
-    bucket ||
-    (file.type.startsWith('video/') ? 'videos' : 'images');
-  const bucketName = resolvedBucket === 'videos' ? VIDEOS_BUCKET : IMAGES_BUCKET;
-  const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-  const path = `${folder}/${fileName}`;
+    bucket === 'videos' || bucket === 'images'
+      ? bucket
+      : file.type.startsWith('video/')
+        ? 'videos'
+        : 'images';
 
-  let uploadFile = file;
+  let uploadFile: File | Blob = file;
   if (resolvedBucket === 'images' && file.type.startsWith('image/')) {
     uploadFile = await compressImageForUpload(file);
-    if (isImageTooLargeForUpload(uploadFile)) {
-      throw new Error(imageTooLargeMessage(uploadFile));
+    if (isImageTooLargeForUpload(uploadFile as File)) {
+      throw new Error(imageTooLargeMessage(uploadFile as File));
     }
   }
 
   const contentType =
-    uploadFile.type || (resolvedBucket === 'images' ? 'image/jpeg' : 'application/octet-stream');
+    (uploadFile instanceof File ? uploadFile.type : file.type) ||
+    (resolvedBucket === 'images' ? 'image/jpeg' : 'application/octet-stream');
 
-  if (resolvedBucket === 'videos' && uploadFile.size > RESUMABLE_THRESHOLD) {
-    try {
-      await getSupabase();
-      await uploadVideoResumable(uploadFile, path, bucketName, contentType);
-      return getVideosPublicUrl(path);
-    } catch (err) {
-      console.error('Supabase resumable upload error:', err);
-      throw wrapUploadError(err);
-    }
-  }
-
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(path, uploadFile, {
+  try {
+    const signed = await requestSignedUpload({
+      folder,
+      fileName: file.name,
       contentType,
-      upsert: true,
+      bucket: resolvedBucket,
+      fileSize: uploadFile.size,
     });
 
-  if (error) {
-    console.error('Supabase upload error:', error);
-    throw wrapUploadError(error);
+    await putToSignedUrl(signed.signedUrl, uploadFile, contentType);
+    if (!signed.publicUrl) {
+      throw new Error('Upload succeeded but no public URL was returned.');
+    }
+    return signed.publicUrl;
+  } catch (err) {
+    console.error('Secure upload error:', err);
+    throw wrapUploadError(err);
   }
-
-  const publicUrl =
-    resolvedBucket === 'videos'
-      ? getVideosPublicUrl(data.path)
-      : getImagesPublicUrl(data.path);
-  return publicUrl;
 }
 
-/**
- * Upload a video file (hero, vibe-at-viet). Uses "videos" bucket.
- */
+/** Upload a video file (hero, vibe-at-viet). Uses "videos" bucket. */
 export async function uploadVideoToSupabase(
   file: File,
   folder: string = 'hero-videos'
@@ -170,9 +144,7 @@ export async function uploadVideoToSupabase(
   return uploadToSupabase(file, folder, 'videos');
 }
 
-/**
- * Upload an image file (poster, carousel, gallery, etc.). Uses "images" bucket.
- */
+/** Upload an image file (poster, carousel, gallery, etc.). Uses "images" bucket. */
 export async function uploadImageToSupabase(
   file: File,
   folder: string
@@ -180,34 +152,15 @@ export async function uploadImageToSupabase(
   return uploadToSupabase(file, folder, 'images');
 }
 
-/**
- * Upload poster image for hero (kept in videos bucket for hero assets).
- */
+/** Upload poster image for hero (kept in videos bucket for hero assets). */
 export async function uploadPosterToSupabase(
   file: File,
   folder: string = 'hero-videos'
 ): Promise<string> {
-  const supabase = await getSupabase();
-  if (!supabase) {
-    throw new Error(
-      'Supabase is not configured. On Render set SUPABASE_URL and SUPABASE_ANON_KEY (or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), then redeploy.'
-    );
-  }
-  const ext = file.name.split('.').pop() || 'jpg';
-  const filename = `${folder}/poster-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
-  const { data, error } = await supabase.storage
-    .from(VIDEOS_BUCKET)
-    .upload(filename, file, {
-      contentType: file.type || 'image/jpeg',
-      upsert: true,
-    });
-  if (error) throw new Error(`Failed to upload poster: ${error.message}`);
-  return getVideosPublicUrl(data.path);
+  return uploadToSupabase(file, folder, 'videos');
 }
 
-/**
- * Upload a video file for vibe-at-viet section.
- */
+/** Upload a video file for vibe-at-viet section. */
 export async function uploadVibeVideoToSupabase(file: File): Promise<string> {
   return uploadVideoToSupabase(file, 'vibe-at-viet');
 }

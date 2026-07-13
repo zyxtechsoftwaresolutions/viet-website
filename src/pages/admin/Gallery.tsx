@@ -112,7 +112,7 @@ const GalleryAdmin = () => {
     try {
       let heroImage = heroMedia.image || data.settings.hero.heroImage || '';
       if (heroMedia.imageFile) {
-        heroImage = await uploadToSupabase(heroMedia.imageFile, 'gallery', 'hero');
+        heroImage = await uploadToSupabase(heroMedia.imageFile, 'gallery', 'images');
       }
       await galleryAPI.updateSettings({
         hero: {

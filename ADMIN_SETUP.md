@@ -34,11 +34,15 @@ npm run dev
 
 The server will start on `http://localhost:3001`
 
-**Default Admin Credentials:**
-- Username: `admin`
-- Password: `admin123`
+**Create an admin user** (required — no default password is shipped):
 
-⚠️ **Important:** Change the default password in production!
+```bash
+ADMIN_PASSWORD="YourStrongPass1" npm run create-admin
+```
+
+Use a unique password (12+ characters, mixed case + number). Never reuse passwords from docs or chat history.
+
+⚠️ **After any security incident:** rotate all admin passwords and run `scripts/supabase-storage-policies.sql` in the Supabase SQL Editor.
 
 ### 3. Install Frontend Dependencies (if not already done)
 
@@ -71,9 +75,7 @@ The frontend will start on `http://localhost:5173` (or another port if 5173 is b
 ## Accessing the Admin Panel
 
 1. Navigate to `http://localhost:5173/admin/login`
-2. Login with the default credentials:
-   - Username: `admin`
-   - Password: `admin123`
+2. Login with the admin username/password you created via `create-admin`
 
 ## Admin Panel Features
 

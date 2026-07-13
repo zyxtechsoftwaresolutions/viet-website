@@ -50,12 +50,19 @@ export function isValidGoogleAppsScriptUrl(url) {
   }
 }
 
-const MIN_SUB_ADMIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 12;
 
 export function validatePasswordStrength(password, { fieldName = 'Password' } = {}) {
   const value = String(password ?? '');
-  if (value.length < MIN_SUB_ADMIN_PASSWORD_LENGTH) {
-    return `${fieldName} must be at least ${MIN_SUB_ADMIN_PASSWORD_LENGTH} characters`;
+  if (value.length < MIN_PASSWORD_LENGTH) {
+    return `${fieldName} must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  }
+  if (!/[A-Z]/.test(value) || !/[a-z]/.test(value) || !/[0-9]/.test(value)) {
+    return `${fieldName} must include upper and lower case letters and a number`;
+  }
+  const weak = ['admin123', 'password', 'password123', 'vietstaff', 'changeme'];
+  if (weak.some((w) => value.toLowerCase().includes(w))) {
+    return `${fieldName} is too common; choose a stronger password`;
   }
   return null;
 }

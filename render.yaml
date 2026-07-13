@@ -10,11 +10,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Required for API + database
+      # Required for API + database + secure signed uploads:
       # - SUPABASE_URL
-      # - SUPABASE_SERVICE_ROLE_KEY
-      # - JWT_SECRET
-      # For admin image uploads in browser (runtime — set on Render, redeploy once):
-      # - SUPABASE_ANON_KEY  (same as Supabase Dashboard → Settings → API → anon public)
+      # - SUPABASE_SERVICE_ROLE_KEY  (server only — never expose to browser)
+      # - JWT_SECRET  (32+ random chars)
       # When frontend is on Vercel (www.viet.edu.in), set:
       # - FRONTEND_URL=https://www.viet.edu.in
+      # After deploy: run scripts/supabase-storage-policies.sql in Supabase SQL Editor
+      # to revoke anonymous storage INSERT/UPDATE (required after the media overwrite incident).

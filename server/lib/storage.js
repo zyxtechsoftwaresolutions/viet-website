@@ -1,5 +1,153 @@
 import { supabase, UPLOADS_BUCKET, getStoragePublicUrl } from './supabase.js';
 
+export const IMAGES_BUCKET = 'images';
+export const VIDEOS_BUCKET = 'videos';
+
+const ALLOWED_FOLDERS = new Set([
+  'carousel',
+  'placement-carousel',
+  'hero-videos',
+  'intro-video',
+  'explore-path',
+  'vibe-at-viet',
+  'gallery',
+  'home-gallery',
+  'events',
+  'campus-updates',
+  'campus-life',
+  'facilities',
+  'departments',
+  'department-hero',
+  'department-pages',
+  'department-assets',
+  'syllabus',
+  'faculty',
+  'hods',
+  'recruiters',
+  'accreditations',
+  'aicte-letters',
+  'admission-popup',
+  'about',
+  'pages',
+  'organizational-chart',
+  'transport-routes',
+  'ug-pg-examinations',
+  'examinations',
+]);
+
+const ALLOWED_BUCKETS = new Set([IMAGES_BUCKET, VIDEOS_BUCKET, UPLOADS_BUCKET]);
+
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB (enforced by Supabase plan too)
+const MAX_DOC_BYTES = 25 * 1024 * 1024; // 25 MB
+
+/**
+ * Sanitize folder and original filename; build a unique non-guessable object path.
+ * Unique paths prevent attackers from overwriting known public URLs even if write
+ * access is somehow regained.
+ */
+export function buildUniqueObjectPath(folder, originalName) {
+  const safeFolder = String(folder || 'uploads')
+    .replace(/[^a-zA-Z0-9/_-]/g, '')
+    .replace(/\/+/g, '/')
+    .replace(/^\/|\/$/g, '')
+    .slice(0, 80);
+  const base = String(originalName || 'file')
+    .split(/[/\\]/)
+    .pop()
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 80);
+  const ext = base.includes('.') ? base.slice(base.lastIndexOf('.')) : '';
+  const stem = base.includes('.') ? base.slice(0, base.lastIndexOf('.')) : base;
+  const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${safeFolder || 'uploads'}/${stem || 'file'}-${unique}${ext}`;
+}
+
+export function assertAllowedUpload({ folder, bucket, contentType, fileSize }) {
+  const folderKey = String(folder || '').split('/')[0];
+  if (!ALLOWED_FOLDERS.has(folderKey)) {
+    throw Object.assign(new Error('Upload folder is not allowed'), { status: 400 });
+  }
+  if (!ALLOWED_BUCKETS.has(bucket)) {
+    throw Object.assign(new Error('Upload bucket is not allowed'), { status: 400 });
+  }
+
+  const type = String(contentType || '').toLowerCase();
+  const size = Number(fileSize) || 0;
+
+  if (bucket === VIDEOS_BUCKET) {
+    if (!type.startsWith('video/') && !type.startsWith('image/')) {
+      // posters may land in videos bucket historically
+      throw Object.assign(new Error('Invalid content type for videos bucket'), { status: 400 });
+    }
+    if (size > MAX_VIDEO_BYTES) {
+      throw Object.assign(new Error('File exceeds maximum allowed size'), { status: 400 });
+    }
+    return;
+  }
+
+  const allowedImageOrDoc =
+    type.startsWith('image/') ||
+    type === 'application/pdf' ||
+    type === 'application/msword' ||
+    type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    type === 'application/octet-stream';
+  if (!allowedImageOrDoc) {
+    throw Object.assign(new Error('Invalid content type for images bucket'), { status: 400 });
+  }
+  const limit = type.startsWith('image/') ? MAX_IMAGE_BYTES : MAX_DOC_BYTES;
+  if (size > limit) {
+    throw Object.assign(new Error('File exceeds maximum allowed size'), { status: 400 });
+  }
+}
+
+function publicUrlFor(bucket, objectPath) {
+  const base = process.env.SUPABASE_URL;
+  if (!base) return null;
+  return `${base.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${objectPath}`;
+}
+
+/**
+ * Mint a short-lived signed upload URL (service role). Browser uploads directly
+ * to Supabase without needing anon INSERT/UPDATE policies.
+ */
+export async function createSignedUpload({ folder, originalName, contentType, bucket, fileSize }) {
+  if (!supabase) {
+    throw Object.assign(
+      new Error('Supabase not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'),
+      { status: 503 }
+    );
+  }
+
+  const resolvedBucket =
+    bucket === 'videos' || bucket === VIDEOS_BUCKET ? VIDEOS_BUCKET : IMAGES_BUCKET;
+
+  assertAllowedUpload({
+    folder,
+    bucket: resolvedBucket,
+    contentType,
+    fileSize,
+  });
+
+  const objectPath = buildUniqueObjectPath(folder, originalName);
+  const { data, error } = await supabase.storage
+    .from(resolvedBucket)
+    .createSignedUploadUrl(objectPath);
+
+  if (error || !data) {
+    console.error('Signed upload URL error:', error);
+    throw Object.assign(new Error(error?.message || 'Failed to create upload URL'), { status: 500 });
+  }
+
+  return {
+    bucket: resolvedBucket,
+    path: data.path || objectPath,
+    token: data.token,
+    signedUrl: data.signedUrl,
+    publicUrl: publicUrlFor(resolvedBucket, data.path || objectPath),
+  };
+}
+
 /**
  * Upload file buffer to Supabase Storage and return public URL
  * @param {Buffer} fileBuffer - File content
@@ -13,12 +161,12 @@ export async function uploadToStorage(fileBuffer, folder, filename, contentType)
     throw new Error('Supabase not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
 
-  const path = `${folder}/${filename}`;
+  const path = buildUniqueObjectPath(folder, filename);
   const { data, error } = await supabase.storage
     .from(UPLOADS_BUCKET)
     .upload(path, fileBuffer, {
       contentType: contentType || 'application/octet-stream',
-      upsert: true
+      upsert: false,
     });
 
   if (error) {

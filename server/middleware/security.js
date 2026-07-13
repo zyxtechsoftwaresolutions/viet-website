@@ -46,7 +46,16 @@ export function applySecurityMiddleware(app) {
     message: { count: 0, todayCount: 0 },
   });
 
+  const uploadSignLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: isProduction() ? 60 : 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many upload requests. Please try again later.' },
+  });
+
   app.use('/api/auth/login', loginLimiter);
+  app.use('/api/upload', uploadSignLimiter);
   app.use('/api/admission-leads', (req, res, next) => {
     if (req.method === 'POST') return admissionLimiter(req, res, next);
     return next();

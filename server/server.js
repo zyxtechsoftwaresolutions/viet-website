@@ -7,7 +7,7 @@ import { dirname, join, resolve } from 'path';
 import fs from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import * as db from './lib/db.js';
-import { deleteFromStorage, downloadFromPublicUrl } from './lib/storage.js';
+import { deleteFromStorage, downloadFromPublicUrl, createSignedUpload } from './lib/storage.js';
 import {
   resolveInstagramReelDirectUrl,
   isAllowedVideoProxyUrl,
@@ -109,13 +109,13 @@ app.use(cors({
 applySecurityMiddleware(app);
 app.use(express.json({ limit: '1mb' }));
 
-// Public config for browser Supabase uploads (runtime — not baked into Vite build)
+// Public site only needs the project URL for constructing public object URLs.
+// The anon key is NOT used for uploads (signed URLs + service role). Do not expose write capabilities.
 app.get('/api/client-config', (req, res) => {
-  const { supabaseUrl, supabaseAnonKey } = getPublicSupabaseConfig();
+  const { supabaseUrl } = getPublicSupabaseConfig();
   res.json({
     supabaseUrl,
-    supabaseAnonKey,
-    configured: Boolean(supabaseUrl && supabaseAnonKey),
+    configured: Boolean(supabaseUrl && supabase),
   });
 });
 
@@ -240,7 +240,7 @@ app.get('/api/video-proxy', async (req, res) => {
   }
 });
 
-/** Public Supabase keys for browser uploads (anon key is safe to expose). */
+/** Public Supabase project URL for the browser (read-only). Anon key is not injected. */
 function getPublicSupabaseConfig() {
   const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
   const supabaseAnonKey = (
@@ -252,11 +252,11 @@ function getPublicSupabaseConfig() {
 }
 
 function injectRuntimeConfig(html) {
-  const { supabaseUrl, supabaseAnonKey } = getPublicSupabaseConfig();
-  if (!supabaseUrl || !supabaseAnonKey) return html;
+  const { supabaseUrl } = getPublicSupabaseConfig();
+  if (!supabaseUrl) return html;
+  // Never inject service role or write credentials into HTML.
   const script = `<script>window.__VIET_RUNTIME_CONFIG__=${JSON.stringify({
     supabaseUrl,
-    supabaseAnonKey,
   })}</script>`;
   if (html.includes('</head>')) {
     return html.replace('</head>', `${script}</head>`);
@@ -384,21 +384,12 @@ async function initializeData() {
     }
   }
 
-  // Create default admin user if no users exist (development only)
+  // Never auto-create weak default credentials — use create-admin with ADMIN_PASSWORD
   const users = await db.getUsers();
   if (users.length === 0) {
-    if (isProduction()) {
-      console.warn('No admin users found. Run: cd server && npm run create-admin');
-    } else {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      await db.createUser({
-        username: 'admin',
-        email: 'admin@viet.edu.in',
-        password: hashedPassword,
-        role: 'admin'
-      });
-      console.warn('Development: default admin created (username: admin, password: admin123). Change before production.');
-    }
+    console.warn(
+      'No admin users found. Create one with: ADMIN_PASSWORD="your-strong-password" npm run create-admin --prefix server'
+    );
   }
 
   // Initialize home-gallery with 8 placeholder images if empty
@@ -467,6 +458,7 @@ const API_TO_SECTION = [
   [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
   [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport', 'campus-life', 'examinations']],
   [/^\/api\/faculty-settings/, 'faculty'],
+  [/^\/api\/upload/, '*'], // any authenticated admin/sub-admin may request a signed upload
 ];
 
 function getSectionsForPath(path) {
@@ -486,6 +478,12 @@ const checkSectionAccess = (req, res, next) => {
   if (sections.length === 0) {
     return res.status(403).json({ error: 'Access denied to this section' });
   }
+  // Authenticated upload signing: any sub-admin with at least one section
+  if (sections.includes('*')) {
+    const allowed = req.user.allowedSections || req.user.allowed_sections || [];
+    if (Array.isArray(allowed) && allowed.length > 0) return next();
+    return res.status(403).json({ error: 'Access denied to this section' });
+  }
   const allowed = req.user.allowedSections || req.user.allowed_sections || [];
   const sectionAllowed = (s) =>
     Array.isArray(allowed) &&
@@ -499,6 +497,32 @@ const requireAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') return next();
   return res.status(403).json({ error: 'Admin access required' });
 };
+
+// ==================== SECURE MEDIA UPLOAD ====================
+// Browser never writes with the public anon key. Admin JWT → signed URL → Supabase.
+
+app.post('/api/upload/sign', authenticateToken, checkSectionAccess, async (req, res) => {
+  try {
+    const { folder, fileName, contentType, bucket, fileSize } = req.body || {};
+    if (!folder || !fileName) {
+      return res.status(400).json({ error: 'folder and fileName are required' });
+    }
+    const signed = await createSignedUpload({
+      folder: String(folder),
+      originalName: String(fileName),
+      contentType: contentType ? String(contentType) : 'application/octet-stream',
+      bucket: bucket === 'videos' ? 'videos' : 'images',
+      fileSize: typeof fileSize === 'number' ? fileSize : Number(fileSize) || 0,
+    });
+    return res.json(signed);
+  } catch (error) {
+    const status = error?.status || 500;
+    console.error('Upload sign error:', error?.message || error);
+    return res.status(status).json({
+      error: publicErrorMessage(error, 'Failed to create upload URL'),
+    });
+  }
+});
 
 // ==================== AUTHENTICATION ROUTES ====================
 
@@ -535,7 +559,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role, allowedSections },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '8h' }
     );
 
     return res.json({
@@ -2633,9 +2657,8 @@ async function startServer() {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
     console.log(`Server accessible at http://localhost:${PORT} and http://10.110.70.194:${PORT}`);
     console.log(`Database: ${supabase ? 'Supabase ✓' : 'JSON files (fallback)'}`);
-    const pub = getPublicSupabaseConfig();
     console.log(
-      `Admin uploads (browser): ${pub.supabaseUrl && pub.supabaseAnonKey ? 'configured ✓' : 'missing SUPABASE_ANON_KEY'}`
+      `Secure uploads (signed URLs): ${supabase ? 'service role configured ✓' : 'missing SUPABASE_SERVICE_ROLE_KEY'}`
     );
     if (!isProduction()) {
       console.log('Development mode: ensure default admin password is changed before production deploy.');

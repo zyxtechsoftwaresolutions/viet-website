@@ -1,7 +1,6 @@
 /**
  * Diagnose admin login against the same DB as the API.
- * Run from backend/: node scripts/verify-login.js vietstaff
- * Optional password: ADMIN_PASSWORD=Admin@2026 node scripts/verify-login.js vietstaff
+ * Run from backend/: ADMIN_PASSWORD="..." node scripts/verify-login.js <username>
  */
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
@@ -14,10 +13,14 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 import * as db from '../src/models/db.js';
 
-const username = process.argv[2] || process.env.USERNAME || 'vietstaff';
-const password = process.env.ADMIN_PASSWORD || 'Admin@2026';
+const username = process.argv[2] || process.env.USERNAME || 'admin';
+const password = process.env.ADMIN_PASSWORD;
 
 async function main() {
+  if (!password) {
+    console.error('Set ADMIN_PASSWORD to the password you want to verify.');
+    process.exit(1);
+  }
   const users = await db.getUsers();
   console.log('Users in DB:', users.length);
   const user = await db.findUserByUsernameOrEmail(username);
