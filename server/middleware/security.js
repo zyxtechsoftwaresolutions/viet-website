@@ -54,8 +54,35 @@ export function applySecurityMiddleware(app) {
     message: { error: 'Too many upload requests. Please try again later.' },
   });
 
+  const mediaProxyLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: isProduction() ? 120 : 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many media requests. Please try again later.' },
+  });
+
+  const videoProxyLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: isProduction() ? 60 : 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many video proxy requests. Please try again later.',
+  });
+
+  const resolveVideoLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: isProduction() ? 30 : 150,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many resolve requests. Please try again later.' },
+  });
+
   app.use('/api/auth/login', loginLimiter);
   app.use('/api/upload', uploadSignLimiter);
+  app.use('/api/media', mediaProxyLimiter);
+  app.use('/api/video-proxy', videoProxyLimiter);
+  app.use('/api/resolve-video', resolveVideoLimiter);
   app.use('/api/admission-leads', (req, res, next) => {
     if (req.method === 'POST') return admissionLimiter(req, res, next);
     return next();

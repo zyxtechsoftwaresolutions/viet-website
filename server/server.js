@@ -60,6 +60,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = resolveJwtSecret();
 
+// Render (and similar) terminate TLS at one reverse-proxy hop; required for per-IP rate limits.
+app.set('trust proxy', 1);
+
 // Middleware
 // CORS configuration - allows requests from frontend domains
 const allowedOrigins = [
@@ -185,7 +188,7 @@ app.get('/api/video-proxy', async (req, res) => {
     if (!rawUrl || typeof rawUrl !== 'string') {
       return res.status(400).send('Missing url');
     }
-    const url = decodeURIComponent(rawUrl.trim());
+    let url = decodeURIComponent(rawUrl.trim());
     if (!isAllowedVideoProxyUrl(url)) {
       return res.status(400).send('URL not allowed');
     }
@@ -200,12 +203,29 @@ app.get('/api/video-proxy', async (req, res) => {
       upstreamHeaders.Range = req.headers.range;
     }
 
-    const upstream = await fetch(url, {
-      headers: upstreamHeaders,
-      redirect: 'follow',
-    });
+    // Manual redirects: re-validate each Location against the allowlist (no blind follow).
+    let upstream = null;
+    for (let hop = 0; hop < 5; hop++) {
+      upstream = await fetch(url, {
+        headers: upstreamHeaders,
+        redirect: 'manual',
+      });
+      if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
+      const location = upstream.headers.get('location');
+      if (!location) {
+        return res.status(502).send('Upstream video unavailable');
+      }
+      try {
+        url = new URL(location, url).href;
+      } catch {
+        return res.status(400).send('URL not allowed');
+      }
+      if (!isAllowedVideoProxyUrl(url)) {
+        return res.status(400).send('URL not allowed');
+      }
+    }
 
-    if (!upstream.ok && upstream.status !== 206) {
+    if (!upstream || (!upstream.ok && upstream.status !== 206)) {
       return res.status(502).send('Upstream video unavailable');
     }
 
@@ -413,7 +433,7 @@ async function initializeData() {
   }
 }
 
-// Authentication middleware
+// Authentication middleware — JWT signature + live DB role/sections (revocation takes effect immediately)
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -422,14 +442,124 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, async (err, decoded) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
-    req.user = user;
-    next();
+    try {
+      const dbUser = await db.getUserById(decoded.id);
+      if (!dbUser) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+      const allowedSections = dbUser.allowed_sections ?? dbUser.allowedSections ?? [];
+      req.user = {
+        id: dbUser.id,
+        username: dbUser.username,
+        email: dbUser.email,
+        role: dbUser.role,
+        allowedSections: Array.isArray(allowedSections) ? allowedSections : [],
+        allowed_sections: Array.isArray(allowedSections) ? allowedSections : [],
+      };
+      next();
+    } catch (e) {
+      console.error('authenticateToken DB lookup failed:', e?.message || e);
+      return res.status(500).json({ error: 'Authentication failed' });
+    }
   });
 };
+
+/** Upload folder (first path segment) → admin section key for sub-admin ACL */
+const FOLDER_TO_SECTION = {
+  carousel: 'hero-videos',
+  'placement-carousel': 'placement-section',
+  'hero-videos': 'hero-videos',
+  'intro-video': 'intro-video',
+  'explore-path': 'intro-video',
+  'vibe-at-viet': 'vibe-at-viet',
+  gallery: 'gallery',
+  'home-gallery': 'gallery',
+  events: 'events',
+  'campus-updates': 'news-announcements',
+  'campus-life': 'campus-life',
+  facilities: 'facilities',
+  departments: 'departments',
+  'department-hero': 'department-pages',
+  'department-pages': 'department-pages',
+  'department-assets': 'department-pages',
+  syllabus: 'department-pages',
+  faculty: 'faculty',
+  hods: 'hods',
+  recruiters: 'recruiters',
+  accreditations: 'accreditations',
+  'aicte-letters': 'accreditations',
+  'admission-popup': 'admission-popup',
+  about: 'pages',
+  pages: 'pages',
+  'organizational-chart': 'pages',
+  'transport-routes': 'transport',
+  'ug-pg-examinations': 'examinations',
+  examinations: 'examinations',
+};
+
+const AUTHORITY_PAGE_SLUGS = new Set([
+  'principal',
+  'diploma-principal',
+  'chairman',
+  'hr',
+  'dean-academics',
+  'dean-innovation',
+]);
+
+const FACILITY_PAGE_SLUGS = new Set([
+  'library',
+  'laboratory',
+  'hostel',
+  'nss',
+  'sports',
+  'cafeteria',
+  'center-of-excellence',
+  'transport',
+]);
+
+const EXAMINATION_PAGE_SLUGS = new Set(['ug-pg-examinations', 'diploma-sbtet']);
+
+/** Map a CMS page slug/category to the single required admin section. */
+function requiredSectionForPage(slug, category) {
+  const s = String(slug || '').toLowerCase();
+  const cat = String(category || '').toLowerCase();
+  if (s === 'transport') return 'transport';
+  if (s === 'campus-life' || cat === 'campus') return 'campus-life';
+  if (EXAMINATION_PAGE_SLUGS.has(s) || cat === 'examinations') return 'examinations';
+  if (AUTHORITY_PAGE_SLUGS.has(s)) return 'authorities';
+  if (FACILITY_PAGE_SLUGS.has(s) || cat === 'facilities') return 'facilities';
+  return 'pages';
+}
+
+function userHasSection(user, section) {
+  const allowed = user?.allowedSections || user?.allowed_sections || [];
+  if (!Array.isArray(allowed)) return false;
+  if (allowed.includes(section)) return true;
+  if (section === 'transport' && allowed.includes('transport-routes')) return true;
+  // Match AdminLayout: pages grants facilities / campus-life / examinations CMS (not authorities/transport)
+  if (
+    allowed.includes('pages') &&
+    (section === 'pages' ||
+      section === 'facilities' ||
+      section === 'campus-life' ||
+      section === 'examinations')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function assertCanWritePage(req, res, slug, category) {
+  if (req.user?.role === 'admin') return true;
+  const required = requiredSectionForPage(slug, category);
+  if (userHasSection(req.user, required)) return true;
+  res.status(403).json({ error: 'Access denied to this section' });
+  return false;
+}
 
 // Map API paths to admin section keys (for sub-admin access control)
 const API_TO_SECTION = [
@@ -458,7 +588,7 @@ const API_TO_SECTION = [
   [/^\/api\/aicte-affiliation-letters/, 'accreditations'],
   [/^\/api\/pages/, ['pages', 'facilities', 'authorities', 'transport', 'campus-life', 'examinations']],
   [/^\/api\/faculty-settings/, 'faculty'],
-  [/^\/api\/upload/, '*'], // any authenticated admin/sub-admin may request a signed upload
+  [/^\/api\/upload/, 'upload'], // folder → section checked in checkSectionAccess
 ];
 
 function getSectionsForPath(path) {
@@ -478,17 +608,16 @@ const checkSectionAccess = (req, res, next) => {
   if (sections.length === 0) {
     return res.status(403).json({ error: 'Access denied to this section' });
   }
-  // Authenticated upload signing: any sub-admin with at least one section
-  if (sections.includes('*')) {
-    const allowed = req.user.allowedSections || req.user.allowed_sections || [];
-    if (Array.isArray(allowed) && allowed.length > 0) return next();
-    return res.status(403).json({ error: 'Access denied to this section' });
+  // Signed uploads: require the section that owns the target folder
+  if (sections.includes('upload')) {
+    const folderKey = String(req.body?.folder || '').split('/')[0];
+    const required = FOLDER_TO_SECTION[folderKey];
+    if (!required || !userHasSection(req.user, required)) {
+      return res.status(403).json({ error: 'Access denied to this section' });
+    }
+    return next();
   }
-  const allowed = req.user.allowedSections || req.user.allowed_sections || [];
-  const sectionAllowed = (s) =>
-    Array.isArray(allowed) &&
-    (allowed.includes(s) || (s === 'transport' && allowed.includes('transport-routes')));
-  const hasAccess = sections.some(sectionAllowed);
+  const hasAccess = sections.some((s) => userHasSection(req.user, s));
   if (hasAccess) return next();
   return res.status(403).json({ error: 'Access denied to this section' });
 };
@@ -507,12 +636,15 @@ app.post('/api/upload/sign', authenticateToken, checkSectionAccess, async (req, 
     if (!folder || !fileName) {
       return res.status(400).json({ error: 'folder and fileName are required' });
     }
+    if (!contentType || typeof contentType !== 'string') {
+      return res.status(400).json({ error: 'contentType is required' });
+    }
     const signed = await createSignedUpload({
       folder: String(folder),
       originalName: String(fileName),
-      contentType: contentType ? String(contentType) : 'application/octet-stream',
+      contentType: String(contentType),
       bucket: bucket === 'videos' ? 'videos' : 'images',
-      fileSize: typeof fileSize === 'number' ? fileSize : Number(fileSize) || 0,
+      fileSize: typeof fileSize === 'number' ? fileSize : Number(fileSize),
     });
     return res.json(signed);
   } catch (error) {
@@ -527,6 +659,9 @@ app.post('/api/upload/sign', authenticateToken, checkSectionAccess, async (req, 
 // ==================== AUTHENTICATION ROUTES ====================
 
 // Login
+// Dummy bcrypt hash for timing equalization when username is unknown (not a real password).
+const DUMMY_BCRYPT_HASH = '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW';
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -535,12 +670,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = await db.findUserByUsernameOrEmail(username);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    const hashed = user.password ?? user.password_hash;
-    if (!hashed || typeof hashed !== 'string') {
+    const hashed = user ? (user.password ?? user.password_hash) : DUMMY_BCRYPT_HASH;
+    if (user && (!hashed || typeof hashed !== 'string')) {
       console.error('Login: user has no password (id=%s)', user.id);
+      await bcrypt.compare(String(password), DUMMY_BCRYPT_HASH).catch(() => false);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -551,7 +684,7 @@ app.post('/api/auth/login', async (req, res) => {
       console.error('Login bcrypt error:', err.message);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    if (!validPassword) {
+    if (!user || !validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -1769,6 +1902,7 @@ app.get('/api/pages', async (req, res) => {
 
 app.post('/api/pages/seed', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
+    if (!assertCanWritePage(req, res, 'about', 'About')) return;
     const result = await seedMissingSitePages(db);
     res.json({ success: true, ...result });
   } catch (error) {
@@ -1812,6 +1946,7 @@ app.get('/api/pages/:id', async (req, res) => {
 
 app.post('/api/pages', authenticateToken, checkSectionAccess, async (req, res) => {
   try {
+    if (!assertCanWritePage(req, res, req.body?.slug, req.body?.category)) return;
     const newPage = await db.createPage({
       slug: req.body.slug,
       title: req.body.title,
@@ -1829,6 +1964,8 @@ app.put('/api/pages/slug/:slug', authenticateToken, checkSectionAccess, async (r
   try {
     const slug = req.params.slug;
     const existing = await db.getPageBySlug(slug);
+    const category = req.body?.category ?? existing?.category;
+    if (!assertCanWritePage(req, res, slug, category)) return;
     const finalContent = mergePageContent(existing?.content, req.body.content);
     const payload = {
       slug,
@@ -1859,13 +1996,17 @@ app.put('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, res
     const existingPage = await db.getPageById(pageId);
     if (!existingPage) return res.status(404).json({ error: 'Page not found' });
 
+    const slug = req.body.slug ?? existingPage.slug;
+    const category = req.body.category ?? existingPage.category;
+    if (!assertCanWritePage(req, res, slug, category)) return;
+
     const currentContent = existingPage.content || {};
     const finalContent = mergePageContent(currentContent, req.body.content || {});
     const updatePayload = {
-      slug: req.body.slug ?? existingPage.slug,
+      slug,
       title: req.body.title ?? existingPage.title,
       route: req.body.route ?? existingPage.route,
-      category: req.body.category ?? existingPage.category,
+      category,
       content: finalContent,
       updated_at: new Date().toISOString(),
     };
@@ -1884,6 +2025,7 @@ app.delete('/api/pages/:id', authenticateToken, checkSectionAccess, async (req, 
     const pageId = parseInt(req.params.id);
     const page = await db.getPageById(pageId);
     if (!page) return res.status(404).json({ error: 'Page not found' });
+    if (!assertCanWritePage(req, res, page.slug, page.category)) return;
 
     if (page.content && typeof page.content === 'object') {
       const imageKeys = ['heroImage', 'profileImage', 'image1', 'image2', 'image3'];
@@ -2178,10 +2320,11 @@ app.get('/api/admission-popup-settings', async (req, res) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.role === 'admin') {
+        const dbUser = await db.getUserById(decoded.id);
+        if (dbUser?.role === 'admin') {
           canViewAdminFields = true;
-        } else if (decoded.role === 'sub_admin') {
-          const allowed = decoded.allowedSections || decoded.allowed_sections || [];
+        } else if (dbUser?.role === 'sub_admin') {
+          const allowed = dbUser.allowed_sections ?? dbUser.allowedSections ?? [];
           canViewAdminFields = Array.isArray(allowed) && allowed.includes('admission-popup');
         }
       } catch {
@@ -2303,11 +2446,17 @@ app.post('/api/admission-leads', async (req, res) => {
       return res.json({ success: true });
     }
 
-    const name = String(body.name || '').trim();
+    const name = String(body.name || '').trim().slice(0, 100);
     const mobileRaw = String(body.mobile || '').replace(/\D/g, '');
     const mobile = mobileRaw.slice(-10);
-    const email = body.email ? String(body.email).trim() : '';
-    const program = body.program ? String(body.program).trim() : '';
+    const email = body.email ? String(body.email).trim().slice(0, 254) : '';
+    const program = body.program ? String(body.program).trim().slice(0, 100) : '';
+    const qualification = body.qualification != null
+      ? String(body.qualification).trim().slice(0, 200)
+      : undefined;
+    const city = body.city != null ? String(body.city).trim().slice(0, 100) : undefined;
+    const district = body.district != null ? String(body.district).trim().slice(0, 100) : undefined;
+    const message = body.message != null ? String(body.message).trim().slice(0, 1000) : undefined;
 
     if (!name || name.length < 2) {
       return res.status(400).json({ error: 'Please enter your full name' });
@@ -2327,10 +2476,10 @@ app.post('/api/admission-leads', async (req, res) => {
       mobile,
       email: email || null,
       program,
-      qualification: body.qualification,
-      city: body.city,
-      district: body.district,
-      message: body.message,
+      qualification,
+      city,
+      district,
+      message,
       source: 'popup',
     });
 

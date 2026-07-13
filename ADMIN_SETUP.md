@@ -42,7 +42,11 @@ ADMIN_PASSWORD="YourStrongPass1" npm run create-admin
 
 Use a unique password (12+ characters, mixed case + number). Never reuse passwords from docs or chat history.
 
-⚠️ **After any security incident:** rotate all admin passwords and run `scripts/supabase-storage-policies.sql` in the Supabase SQL Editor.
+⚠️ **After any security incident:** rotate all admin passwords and run both of these in the Supabase SQL Editor:
+1. `scripts/supabase-storage-policies.sql` — revoke anonymous storage writes
+2. `scripts/enable-table-rls.sql` — enable RLS on CMS tables (API uses service role; site keeps working)
+
+Do **not** set `VITE_SUPABASE_ANON_KEY` on frontend builds.
 
 ### 3. Install Frontend Dependencies (if not already done)
 

@@ -114,7 +114,7 @@ export async function uploadToSupabase(
 
   const contentType =
     (uploadFile instanceof File ? uploadFile.type : file.type) ||
-    (resolvedBucket === 'images' ? 'image/jpeg' : 'application/octet-stream');
+    (resolvedBucket === 'images' ? 'image/jpeg' : 'video/mp4');
 
   try {
     const signed = await requestSignedUpload({

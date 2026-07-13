@@ -16,5 +16,7 @@ services:
       # - JWT_SECRET  (32+ random chars)
       # When frontend is on Vercel (www.viet.edu.in), set:
       # - FRONTEND_URL=https://www.viet.edu.in
-      # After deploy: run scripts/supabase-storage-policies.sql in Supabase SQL Editor
-      # to revoke anonymous storage INSERT/UPDATE (required after the media overwrite incident).
+      # After deploy (Supabase SQL Editor):
+      # 1) scripts/supabase-storage-policies.sql — revoke anonymous storage INSERT/UPDATE
+      # 2) scripts/enable-table-rls.sql — enable RLS on CMS tables (service role bypasses RLS)
+      # Do NOT set VITE_SUPABASE_ANON_KEY on the frontend build.

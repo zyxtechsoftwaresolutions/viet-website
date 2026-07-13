@@ -38,3 +38,11 @@ DROP POLICY IF EXISTS "Allow anon uploads to videos" ON storage.objects;
 DROP POLICY IF EXISTS "Allow public uploads" ON storage.objects;
 DROP POLICY IF EXISTS "Give anon users access to images folder" ON storage.objects;
 DROP POLICY IF EXISTS "Give anon users access to videos folder 1oj01fe_0" ON storage.objects;
+
+-- Verify: leftover write policies (should return 0 rows for INSERT/UPDATE/DELETE on images/videos)
+-- If any remain, DROP POLICY IF EXISTS "<policyname>" ON storage.objects;
+SELECT policyname, cmd, roles::text
+FROM pg_policies
+WHERE schemaname = 'storage'
+  AND tablename = 'objects'
+  AND cmd IN ('INSERT', 'UPDATE', 'DELETE', 'ALL');

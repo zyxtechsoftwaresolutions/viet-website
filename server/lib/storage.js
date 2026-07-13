@@ -36,10 +36,25 @@ const ALLOWED_FOLDERS = new Set([
 ]);
 
 const ALLOWED_BUCKETS = new Set([IMAGES_BUCKET, VIDEOS_BUCKET, UPLOADS_BUCKET]);
+const MEDIA_PROXY_BUCKETS = new Set([IMAGES_BUCKET, VIDEOS_BUCKET]);
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
 const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB (enforced by Supabase plan too)
 const MAX_DOC_BYTES = 25 * 1024 * 1024; // 25 MB
+
+const ALLOWED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+
+const ALLOWED_DOC_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 
 /**
  * Sanitize folder and original filename; build a unique non-guessable object path.
@@ -72,30 +87,32 @@ export function assertAllowedUpload({ folder, bucket, contentType, fileSize }) {
     throw Object.assign(new Error('Upload bucket is not allowed'), { status: 400 });
   }
 
-  const type = String(contentType || '').toLowerCase();
-  const size = Number(fileSize) || 0;
+  const type = String(contentType || '').toLowerCase().split(';')[0].trim();
+  const size = Number(fileSize);
+  if (!Number.isFinite(size) || size <= 0) {
+    throw Object.assign(new Error('Valid fileSize is required'), { status: 400 });
+  }
 
   if (bucket === VIDEOS_BUCKET) {
-    if (!type.startsWith('video/') && !type.startsWith('image/')) {
-      // posters may land in videos bucket historically
+    const okVideo = type.startsWith('video/');
+    const okPoster = ALLOWED_IMAGE_TYPES.has(type);
+    if (!okVideo && !okPoster) {
       throw Object.assign(new Error('Invalid content type for videos bucket'), { status: 400 });
     }
     if (size > MAX_VIDEO_BYTES) {
       throw Object.assign(new Error('File exceeds maximum allowed size'), { status: 400 });
     }
+    if (okPoster && size > MAX_IMAGE_BYTES) {
+      throw Object.assign(new Error('File exceeds maximum allowed size'), { status: 400 });
+    }
     return;
   }
 
-  const allowedImageOrDoc =
-    type.startsWith('image/') ||
-    type === 'application/pdf' ||
-    type === 'application/msword' ||
-    type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-    type === 'application/octet-stream';
+  const allowedImageOrDoc = ALLOWED_IMAGE_TYPES.has(type) || ALLOWED_DOC_TYPES.has(type);
   if (!allowedImageOrDoc) {
     throw Object.assign(new Error('Invalid content type for images bucket'), { status: 400 });
   }
-  const limit = type.startsWith('image/') ? MAX_IMAGE_BYTES : MAX_DOC_BYTES;
+  const limit = ALLOWED_IMAGE_TYPES.has(type) ? MAX_IMAGE_BYTES : MAX_DOC_BYTES;
   if (size > limit) {
     throw Object.assign(new Error('File exceeds maximum allowed size'), { status: 400 });
   }
@@ -189,14 +206,27 @@ export function parseSupabasePublicUrl(url) {
   return { bucket: m[1], objectPath: decodeURIComponent(m[2]) };
 }
 
+function isOurSupabaseHost(url) {
+  const base = process.env.SUPABASE_URL;
+  if (!base) return true; // cannot verify; other checks still apply
+  try {
+    return new URL(url).hostname.toLowerCase() === new URL(base).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Download a file from Supabase Storage using the service role (works even when bucket is private).
+ * Restricted to images/videos buckets on this project's host.
  * @param {string} publicUrl - Full public storage URL stored in the database
  * @returns {Promise<Blob | null>}
  */
 export async function downloadFromPublicUrl(publicUrl) {
   const parsed = parseSupabasePublicUrl(publicUrl);
   if (!parsed || !supabase) return null;
+  if (!MEDIA_PROXY_BUCKETS.has(parsed.bucket)) return null;
+  if (!isOurSupabaseHost(publicUrl)) return null;
   const { data, error } = await supabase.storage.from(parsed.bucket).download(parsed.objectPath);
   if (error || !data) {
     console.error('Storage download error:', error?.message || 'no data');
@@ -206,15 +236,23 @@ export async function downloadFromPublicUrl(publicUrl) {
 }
 
 /**
- * Delete file from Supabase Storage by full public URL (supports any bucket: images, videos, etc.)
+ * Delete file from Supabase Storage by full public URL.
+ * Restricted to images/videos and known upload folders.
  * @param {string} urlOrPath - Full public URL (e.g. https://xxx.supabase.co/storage/v1/object/public/bucket/path)
  */
 export async function deleteFromStorage(urlOrPath) {
   if (!supabase || !urlOrPath) return;
 
   const m = urlOrPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
-  if (m) {
-    const [, bucket, objectPath] = m;
-    await supabase.storage.from(bucket).remove([objectPath]);
-  }
+  if (!m) return;
+  const [, bucket, objectPathRaw] = m;
+  const objectPath = decodeURIComponent(objectPathRaw.split('?')[0]);
+  if (!MEDIA_PROXY_BUCKETS.has(bucket)) return;
+  if (!isOurSupabaseHost(urlOrPath)) return;
+  const folderKey = objectPath.split('/')[0];
+  if (!ALLOWED_FOLDERS.has(folderKey)) return;
+
+  await supabase.storage.from(bucket).remove([objectPath]);
 }
+
+export { ALLOWED_FOLDERS };
