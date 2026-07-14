@@ -39,6 +39,14 @@ DROP POLICY IF EXISTS "Allow public uploads" ON storage.objects;
 DROP POLICY IF EXISTS "Give anon users access to images folder" ON storage.objects;
 DROP POLICY IF EXISTS "Give anon users access to videos folder 1oj01fe_0" ON storage.objects;
 
+-- Names found in production incident (Robin / anon upsert overwrite)
+DROP POLICY IF EXISTS "images_anon_insert" ON storage.objects;
+DROP POLICY IF EXISTS "images_anon_update" ON storage.objects;
+DROP POLICY IF EXISTS "images_anon_delete" ON storage.objects;
+DROP POLICY IF EXISTS "videos_anon_insert" ON storage.objects;
+DROP POLICY IF EXISTS "videos_anon_update" ON storage.objects;
+DROP POLICY IF EXISTS "videos_anon_delete" ON storage.objects;
+
 -- Verify: leftover write policies (should return 0 rows for INSERT/UPDATE/DELETE on images/videos)
 -- If any remain, DROP POLICY IF EXISTS "<policyname>" ON storage.objects;
 SELECT policyname, cmd, roles::text
