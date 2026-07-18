@@ -140,6 +140,15 @@ export const SITE_PAGE_SEEDS = [
       message: '<p>Edit in Admin → Authorities.</p>',
     },
   },
+  {
+    slug: 'iqac',
+    title: 'IQAC',
+    route: '/iqac',
+    category: 'About',
+    // Content shape is defined in src/lib/iqacContent.ts; the public page and
+    // admin editor fall back to built-in defaults until the admin saves.
+    content: {},
+  },
   // —— Placements & campus ——
   {
     slug: 'placements',
@@ -317,6 +326,21 @@ export const SITE_PAGE_SEEDS = [
           'A dedicated indoor sports room, expert PT staff, and a wide range of indoor and outdoor games for fitness and fun.',
       },
       mainContent: '<p>Indoor and outdoor sports facilities for students.</p>',
+    },
+  },
+  {
+    slug: 'scouts',
+    title: 'Scouts & Guides',
+    route: '/facilities/scouts',
+    category: 'Facilities',
+    content: {
+      hero: {
+        badge: 'Facilities',
+        title: 'Scouts & Guides',
+        description:
+          'Building character, confidence, leadership, and a spirit of service through scouting activities at VIET.',
+      },
+      mainContent: '<p>Scouting events, activities, and unit leadership at VIET.</p>',
     },
   },
   {

@@ -274,6 +274,19 @@ const DEFAULT_LIBRARY_CONTENT = {
     'No food or drinks inside the library',
     'Handle books with care',
   ],
+  librarian: {
+    label: 'Library leadership',
+    title: 'Meet Our Librarian',
+    name: 'College Librarian',
+    designation: 'Librarian',
+    qualification: '',
+    intro: 'Supporting learning, research, and access to knowledge across the institution.',
+    image: '',
+    message:
+      'The library team is committed to helping students and faculty discover, access, and use academic resources effectively in a welcoming learning environment.',
+    phone: '',
+    email: 'admissions@viet.edu.in',
+  },
 };
 
 const DEFAULT_LABORATORY_CONTENT = {
@@ -443,6 +456,56 @@ const DEFAULT_SPORTS_CONTENT = {
   },
 };
 
+const DEFAULT_SCOUTS_CONTENT = {
+  hero: {
+    badge: 'Facilities',
+    title: 'Scouts & Guides',
+    description:
+      'Building character, confidence, leadership, and a spirit of service through scouting activities at VIET.',
+    heroImage: '',
+    video: '',
+  },
+  about: {
+    label: 'About',
+    title: 'Scouting at VIET',
+    paragraphs: [
+      'The Scouts and Guides unit at VIET encourages students to become responsible citizens through discipline, teamwork, outdoor learning, and community service.',
+      'Students participate in camps, awareness drives, service programmes, leadership activities, and skill-building events that nurture confidence and social responsibility.',
+    ],
+  },
+  eventsSection: {
+    label: 'Events & activities',
+    title: 'Scouts in Action',
+    description: 'Highlights from camps, service programmes, celebrations, and leadership activities.',
+  },
+  events: [
+    { image: '/GALLERY/section2.jpg', title: 'Community Service', caption: 'Serving society together' },
+    { image: '/GALLERY/section3.jpg', title: 'Scouting Camp', caption: 'Learning through outdoor activities' },
+    { image: '/GALLERY/bg1.jpg', title: 'Leadership Activities', caption: 'Building confidence and teamwork' },
+  ],
+  activities: [
+    'Community service and awareness drives',
+    'Scouting camps and outdoor activities',
+    'First-aid and emergency preparedness',
+    'Leadership and team-building programmes',
+    'Environmental conservation initiatives',
+    'National and institutional celebrations',
+  ],
+  leader: {
+    label: 'Leadership',
+    title: 'Scouts Leader',
+    name: 'Scouts Coordinator',
+    designation: 'Scouts & Guides Unit Leader',
+    qualification: '',
+    intro: 'Guiding students through service, discipline, and leadership.',
+    image: '',
+    message:
+      'Our Scouts and Guides unit provides students with opportunities to develop practical skills, a service mindset, and the confidence to lead with responsibility.',
+    phone: '',
+    email: 'admissions@viet.edu.in',
+  },
+};
+
 const DEFAULT_CAFETERIA_CONTENT = {
   hero: {
     badge: 'Facilities',
@@ -514,6 +577,7 @@ export const FACILITY_SEED_CONTENT = {
   library: DEFAULT_LIBRARY_CONTENT,
   laboratory: DEFAULT_LABORATORY_CONTENT,
   sports: DEFAULT_SPORTS_CONTENT,
+  scouts: DEFAULT_SCOUTS_CONTENT,
   cafeteria: DEFAULT_CAFETERIA_CONTENT,
 };
 
@@ -524,7 +588,7 @@ export function mergeDedicatedFacilityContent(existing = {}, seed = {}) {
   // Hero: merge fields, existing wins if non-empty
   const out = { ...seed, ...existing };
   out.hero = { ...(seed.hero || {}), ...(existing.hero || {}) };
-  const arrayKeys = ['stats','objectives','activities','facilities','rooms','features','gallery','hallOfFame','sportsOffered','labs','rules','timings'];
+  const arrayKeys = ['stats','objectives','activities','facilities','rooms','features','gallery','events','hallOfFame','sportsOffered','labs','rules','timings'];
   for (const key of arrayKeys) {
     const ex = existing[key];
     const sd = seed[key];
@@ -533,7 +597,7 @@ export function mergeDedicatedFacilityContent(existing = {}, seed = {}) {
     }
   }
   // nested objects: about, intro, specialCamp, getInvolved, contact, boysHostel, girlsHostel, community, rules, cta, collection, resources
-  for (const key of ['about','intro','specialCamp','getInvolved','contact','boysHostel','girlsHostel','community','collection','resources','cta']) {
+  for (const key of ['about','intro','specialCamp','getInvolved','contact','boysHostel','girlsHostel','community','collection','resources','cta','eventsSection','leader','librarian']) {
     if (seed[key] && typeof seed[key] === 'object') {
       out[key] = { ...seed[key], ...(existing[key] || {}) };
       // if existing nested object has empty paragraphs array, use seed

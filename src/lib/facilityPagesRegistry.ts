@@ -7,6 +7,7 @@ export type FacilityEditorKind =
   | 'library'
   | 'laboratory'
   | 'sports'
+  | 'scouts'
   | 'cafeteria';
 
 export type FacilityPageDef = {
@@ -67,6 +68,13 @@ export const FACILITY_PAGES: FacilityPageDef[] = [
     route: '/facilities/sports',
     description: 'Sports facilities and activities.',
     editor: 'sports',
+  },
+  {
+    slug: 'scouts',
+    title: 'Scouts & Guides',
+    route: '/facilities/scouts',
+    description: 'Scouting events, activities, and unit leadership.',
+    editor: 'scouts',
   },
   {
     slug: 'wifi',

@@ -262,13 +262,12 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
     { name: 'Academics', id: 'academics' },
     { name: 'Departments', id: 'departments' },
     { name: 'Exam Cell', href: '/examinations/ug-pg' },
-    { name: 'IQAC', id: 'iqac' },
+    { name: 'IQAC', href: '/iqac' },
     { name: 'Governance', href: '/governing-body' },
     { name: 'Research', href: '/research-development' },
     { name: 'Facilities', id: 'facilities' },
     { name: 'Infrastructure', href: '/page/infrastructure' },
     { name: 'Finance', href: '/page/finance' },
-    { name: 'Quality', href: '/iqac' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'Online Payment', href: '/page/online-payment' },
     { name: 'Contact us', href: '/contact' },
@@ -339,6 +338,7 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
         { title: 'NSS', description: 'National Service Scheme activities', link: '/facilities/nss' },
         { title: 'Hostel', description: 'Comfortable accommodation facilities', link: '/facilities/hostel' },
         { title: 'Sports', description: 'Sports facilities and activities', link: '/facilities/sports' },
+        { title: 'Scouts & Guides', description: 'Scouting activities, events, and leadership', link: '/facilities/scouts' },
         { title: 'WIFI', description: 'High-speed internet connectivity', link: '/facilities/wifi' },
         { title: 'Transport', description: 'College transport services', link: '/facilities/transport' },
         { title: 'Medical Facility', description: 'Healthcare services on campus', link: '/facilities/medical-facility' },
@@ -346,20 +346,6 @@ const LeaderPageNavbar = ({ backHref = '/about' }: LeaderPageNavbarProps) => {
         { title: 'RO Water Plant', description: 'Safe drinking water facility', link: '/facilities/ro-water-plant' },
         { title: 'Green Initiatives', description: 'Eco-friendly campus initiatives', link: '/facilities/green-initiatives' },
         { title: 'Solar Power Plant', description: 'Renewable energy on campus', link: '/facilities/solar-power-plant' },
-      ]
-    },
-    iqac: {
-      title: 'Internal Quality Assurance Cell',
-      description: 'IQAC ensures quality enhancement through continuous improvement initiatives.',
-      knowMoreLink: '/iqac',
-      columns: [
-        { title: 'AQAR 2023-2024', description: 'Annual Quality Assurance Report', link: '/aqar-2023-2024' },
-        { title: 'AQAR 2022-2023', description: 'Annual Quality Assurance Report', link: '/aqar-2022-2023' },
-        { title: 'AQAR 2021-2022', description: 'Annual Quality Assurance Report', link: '/aqar-2021-2022' },
-        { title: 'NIRF', description: 'National Institutional Ranking Framework', link: '/nirf' },
-        { title: 'SSR', description: 'Self Study Report', link: '/ssr' },
-        { title: 'Best Practices', description: 'Institutional best practices', link: '/best-practices' },
-        { title: 'Feedback', description: 'Stakeholder feedback mechanism', link: '/feedback-form' },
       ]
     },
   };

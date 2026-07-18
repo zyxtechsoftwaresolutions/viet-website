@@ -141,6 +141,7 @@ const SearchBar = () => {
       { name: 'NSS', href: '/facilities/nss', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Hostel', href: '/facilities/hostel', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Sports', href: '/facilities/sports', category: 'Facilities', type: 'dropdown' as const },
+      { name: 'Scouts & Guides', href: '/facilities/scouts', category: 'Facilities', type: 'dropdown' as const },
       { name: 'WIFI', href: '/facilities/wifi', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Transport', href: '/facilities/transport', category: 'Facilities', type: 'dropdown' as const },
       { name: 'Medical Facility', href: '/facilities/medical-facility', category: 'Facilities', type: 'dropdown' as const },

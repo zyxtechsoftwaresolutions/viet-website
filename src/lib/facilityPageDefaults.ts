@@ -54,6 +54,16 @@ export const FACILITY_HERO_DEFAULTS: Record<string, FacilityHeroDefaults> = {
     showDotPattern: true,
     align: 'end',
   },
+  scouts: {
+    badge: 'Facilities',
+    title: 'Scouts & Guides',
+    description:
+      'Building character, confidence, leadership, and a spirit of service through scouting activities at VIET.',
+    gradient: 'linear-gradient(155deg, #0f172a 0%, #312e81 35%, #1e3a8a 70%, #0f172a 100%)',
+    waveFill: 'rgb(248 250 252)',
+    showDotPattern: true,
+    align: 'end',
+  },
   cafeteria: {
     badge: 'Facilities',
     title: 'Cafeteria & Canteen',

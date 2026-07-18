@@ -50,6 +50,7 @@ const Laboratory = lazy(() => import("./pages/Laboratory"));
 const Hostel = lazy(() => import("./pages/Hostel"));
 const NSSPage = lazy(() => import("./pages/NSS"));
 const Sports = lazy(() => import("./pages/Sports"));
+const Scouts = lazy(() => import("./pages/Scouts"));
 const Cafeteria = lazy(() => import("./pages/Cafeteria"));
 const FacilityPage = lazy(() => import("./pages/FacilityPage"));
 const CampusLife = lazy(() => import("./pages/CampusLife"));
@@ -63,6 +64,7 @@ const HomeSectionRedirect = lazy(() => import("./components/HomeSectionRedirect"
 const ComingSoonPage = lazy(() => import("./pages/ComingSoonPage"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage"));
+const IQAC = lazy(() => import("./pages/IQAC"));
 
 // Admin routes - heavy, lazy loaded
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -92,6 +94,7 @@ const SubAdmins = lazy(() => import("./pages/admin/SubAdmins"));
 const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
 const OrganizationalChartAdmin = lazy(() => import("./pages/admin/OrganizationalChartAdmin"));
+const IQACAdmin = lazy(() => import("./pages/admin/IQACAdmin"));
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -163,6 +166,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/programs/engineering/ug/mechanical" element={<MechanicalEngineering />} />
             <Route path="/examinations/ug-pg" element={<UGPGExaminations />} />
             <Route path="/examinations/diploma" element={<DiplomaSBTET />} />
+            <Route path="/iqac" element={<IQAC />} />
             <Route path="/aqar-2023-2024" element={<AQAR2023_2024 />} />
             <Route path="/aqar-2022-2023" element={<AQAR2022_2023 />} />
             <Route path="/aqar-2021-2022" element={<AQAR2021_2022 />} />
@@ -172,6 +176,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
             <Route path="/facilities/hostel" element={<Hostel />} />
             <Route path="/facilities/nss" element={<NSSPage />} />
             <Route path="/facilities/sports" element={<Sports />} />
+            <Route path="/facilities/scouts" element={<Scouts />} />
             <Route path="/facilities/cafeteria" element={<Cafeteria />} />
             <Route path="/facilities/:slug" element={<FacilityPage />} />
             <Route path="/campus-life" element={<CampusLife />} />
@@ -220,6 +225,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="accreditations" element={<AccreditationsAdmin />} />
               <Route path="site-pages" element={<SitePagesAdmin />} />
               <Route path="organizational-chart" element={<OrganizationalChartAdmin />} />
+              <Route path="iqac" element={<IQACAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

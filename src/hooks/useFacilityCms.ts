@@ -8,21 +8,24 @@ import {
   normalizeLaboratoryContent,
   normalizeSportsContent,
   normalizeCafeteriaContent,
+  normalizeScoutsContent,
   DEFAULT_NSS_CONTENT,
   DEFAULT_HOSTEL_CONTENT,
   DEFAULT_LIBRARY_CONTENT,
   DEFAULT_LABORATORY_CONTENT,
   DEFAULT_SPORTS_CONTENT,
   DEFAULT_CAFETERIA_CONTENT,
+  DEFAULT_SCOUTS_CONTENT,
   type NssContent,
   type HostelContent,
   type LibraryContent,
   type LaboratoryContent,
   type SportsContent,
   type CafeteriaContent,
+  type ScoutsContent,
 } from '@/lib/facilityContent';
 
-type FacilityCmsSlug = 'nss' | 'hostel' | 'library' | 'laboratory' | 'sports' | 'cafeteria';
+type FacilityCmsSlug = 'nss' | 'hostel' | 'library' | 'laboratory' | 'sports' | 'cafeteria' | 'scouts';
 
 type ContentMap = {
   nss: NssContent;
@@ -31,6 +34,7 @@ type ContentMap = {
   laboratory: LaboratoryContent;
   sports: SportsContent;
   cafeteria: CafeteriaContent;
+  scouts: ScoutsContent;
 };
 
 const DEFAULTS: ContentMap = {
@@ -40,6 +44,7 @@ const DEFAULTS: ContentMap = {
   laboratory: DEFAULT_LABORATORY_CONTENT,
   sports: DEFAULT_SPORTS_CONTENT,
   cafeteria: DEFAULT_CAFETERIA_CONTENT,
+  scouts: DEFAULT_SCOUTS_CONTENT,
 };
 
 const NORMALIZERS: Record<FacilityCmsSlug, (raw: unknown) => ContentMap[FacilityCmsSlug]> = {
@@ -49,6 +54,7 @@ const NORMALIZERS: Record<FacilityCmsSlug, (raw: unknown) => ContentMap[Facility
   laboratory: normalizeLaboratoryContent,
   sports: normalizeSportsContent,
   cafeteria: normalizeCafeteriaContent,
+  scouts: normalizeScoutsContent,
 };
 
 export function useFacilityCms<S extends FacilityCmsSlug>(slug: S) {

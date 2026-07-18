@@ -1,4 +1,5 @@
 import { asStatPairs, asString, asStringArray, normalizeHero, type FacilityHero } from './helpers';
+import { normalizeLeaderProfile, type FacilityLeaderProfile } from './leaderProfile';
 
 export type LibraryFeature = { icon: string; title: string; description: string };
 export type LibraryTiming = { day: string; time: string };
@@ -10,6 +11,7 @@ export type LibraryContent = {
   collection: { label: string; title: string; stats: { value: string; label: string }[] };
   timings: LibraryTiming[];
   rules: string[];
+  librarian: FacilityLeaderProfile;
 };
 
 export const DEFAULT_LIBRARY_CONTENT: LibraryContent = {
@@ -82,6 +84,19 @@ export const DEFAULT_LIBRARY_CONTENT: LibraryContent = {
     'No food or drinks inside the library',
     'Handle books with care',
   ],
+  librarian: {
+    label: 'Library leadership',
+    title: 'Meet Our Librarian',
+    name: 'College Librarian',
+    designation: 'Librarian',
+    qualification: '',
+    intro: 'Supporting learning, research, and access to knowledge across the institution.',
+    image: '',
+    message:
+      'The library team is committed to helping students and faculty discover, access, and use academic resources effectively in a welcoming learning environment.',
+    phone: '',
+    email: 'admissions@viet.edu.in',
+  },
 };
 
 function normalizeLibraryFeatures(v: unknown, fallback: LibraryFeature[]): LibraryFeature[] {
@@ -123,5 +138,6 @@ export function normalizeLibraryContent(raw: unknown): LibraryContent {
     },
     timings: normalizeTimings(c.timings, d.timings),
     rules: asStringArray(c.rules, d.rules),
+    librarian: normalizeLeaderProfile(c.librarian, d.librarian),
   };
 }

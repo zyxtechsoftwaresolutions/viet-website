@@ -329,6 +329,7 @@ const Header = () => {
     { name: 'NSS', href: '/facilities/nss' },
     { name: 'Hostel', href: '/facilities/hostel' },
     { name: 'Sports', href: '/facilities/sports' },
+    { name: 'Scouts & Guides', href: '/facilities/scouts' },
     { name: 'WIFI', href: '/facilities/wifi' },
     { name: 'Transport', href: '/facilities/transport' },
     { name: 'Medical Facility', href: '/facilities/medical-facility' },

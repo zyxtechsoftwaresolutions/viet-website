@@ -33,6 +33,7 @@ const ALLOWED_FOLDERS = new Set([
   'transport-routes',
   'ug-pg-examinations',
   'examinations',
+  'iqac',
 ]);
 
 const ALLOWED_BUCKETS = new Set([IMAGES_BUCKET, VIDEOS_BUCKET, UPLOADS_BUCKET]);

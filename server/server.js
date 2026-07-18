@@ -499,6 +499,7 @@ const FOLDER_TO_SECTION = {
   'transport-routes': 'transport',
   'ug-pg-examinations': 'examinations',
   examinations: 'examinations',
+  iqac: 'pages',
 };
 
 const AUTHORITY_PAGE_SLUGS = new Set([
@@ -516,6 +517,7 @@ const FACILITY_PAGE_SLUGS = new Set([
   'hostel',
   'nss',
   'sports',
+  'scouts',
   'cafeteria',
   'center-of-excellence',
   'transport',

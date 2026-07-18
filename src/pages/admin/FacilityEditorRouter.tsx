@@ -10,6 +10,7 @@ import HostelAdmin from './facilities/HostelAdmin';
 import LibraryAdmin from './facilities/LibraryAdmin';
 import LaboratoryAdmin from './facilities/LaboratoryAdmin';
 import SportsAdmin from './facilities/SportsAdmin';
+import ScoutsAdmin from './facilities/ScoutsAdmin';
 import CafeteriaAdmin from './facilities/CafeteriaAdmin';
 import { getFacilityBySlug } from '@/lib/facilityPagesRegistry';
 
@@ -21,6 +22,7 @@ const DEDICATED_EDITORS: Record<string, ComponentType> = {
   library: LibraryAdmin,
   laboratory: LaboratoryAdmin,
   sports: SportsAdmin,
+  scouts: ScoutsAdmin,
   cafeteria: CafeteriaAdmin,
 };
 

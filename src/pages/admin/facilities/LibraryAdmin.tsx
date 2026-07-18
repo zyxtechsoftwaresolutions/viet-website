@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import HeroMediaFields, { type HeroMediaFormState } from '@/components/admin/HeroMediaFields';
 import ImageUploadGuide from '@/components/admin/ImageUploadGuide';
 import FacilityAdminLayout from '@/components/admin/facility/FacilityAdminLayout';
+import FacilityLeaderEditor from '@/components/admin/facility/FacilityLeaderEditor';
 import { ParagraphsEditor, StatPairsEditor, StringListEditor } from '@/components/admin/facility/AdminFieldHelpers';
 import { pagesAPI } from '@/lib/api';
 import { saveFacilityPageContent } from '@/lib/facilityAdminSave';
+import { uploadToSupabase } from '@/lib/storage';
 import { DEFAULT_LIBRARY_CONTENT, normalizeLibraryContent, type LibraryContent } from '@/lib/facilityContent/libraryContent';
 import { IMAGE_SPECS } from '@/lib/adminImageSpecs';
 import { toast } from 'sonner';
@@ -32,6 +34,7 @@ const LibraryAdmin = () => {
     imageFile: null,
     videoFile: null,
   });
+  const [librarianImageFile, setLibrarianImageFile] = useState<File | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -45,6 +48,7 @@ const LibraryAdmin = () => {
         imageFile: null,
         videoFile: null,
       });
+      setLibrarianImageFile(null);
     } catch {
       setContent(DEFAULT_LIBRARY_CONTENT);
       toast.error('Could not load Library content — showing defaults.');
@@ -60,7 +64,21 @@ const LibraryAdmin = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveFacilityPageContent(SLUG, 'Library', ROUTE, content as unknown as Record<string, unknown>, heroMedia);
+      let librarianImage = content.librarian.image;
+      if (librarianImageFile) {
+        librarianImage = await uploadToSupabase(librarianImageFile, 'facilities', 'images');
+      }
+      const contentToSave = {
+        ...content,
+        librarian: { ...content.librarian, image: librarianImage },
+      };
+      await saveFacilityPageContent(
+        SLUG,
+        'Library',
+        ROUTE,
+        contentToSave as unknown as Record<string, unknown>,
+        heroMedia
+      );
       toast.success('Library page saved');
       setHeroMedia((prev) => ({ ...prev, imageFile: null, videoFile: null }));
       load();
@@ -87,6 +105,7 @@ const LibraryAdmin = () => {
           <TabsTrigger value="collection">Collection Stats</TabsTrigger>
           <TabsTrigger value="timings">Timings</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
+          <TabsTrigger value="librarian">Librarian</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -191,6 +210,21 @@ const LibraryAdmin = () => {
             <CardHeader><CardTitle>Library Rules</CardTitle></CardHeader>
             <CardContent>
               <StringListEditor label="Rules" items={content.rules} onChange={(rules) => setContent((p) => ({ ...p, rules }))} placeholder="Rule" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="librarian">
+          <Card>
+            <CardHeader><CardTitle>Librarian Profile</CardTitle></CardHeader>
+            <CardContent>
+              <FacilityLeaderEditor
+                value={content.librarian}
+                onChange={(librarian) => setContent((p) => ({ ...p, librarian }))}
+                imageFile={librarianImageFile}
+                onImageFileChange={setLibrarianImageFile}
+                personLabel="Librarian"
+              />
             </CardContent>
           </Card>
         </TabsContent>

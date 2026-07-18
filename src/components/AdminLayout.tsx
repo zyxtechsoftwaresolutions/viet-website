@@ -64,6 +64,7 @@ const AdminLayout = () => {
     { icon: GraduationCap, label: 'Examinations', path: '/admin/examinations', section: 'examinations', adminOnly: false },
     { icon: FileText, label: 'All Site Pages', path: '/admin/site-pages', section: 'pages', adminOnly: false },
     { icon: FileText, label: 'Org. Chart', path: '/admin/organizational-chart', section: 'pages', adminOnly: false },
+    { icon: Award, label: 'IQAC', path: '/admin/iqac', section: 'pages', adminOnly: false },
     { icon: Award, label: 'Accreditations', path: '/admin/accreditations', section: 'accreditations', adminOnly: false },
     { icon: FileText, label: 'About Us', path: '/admin/pages', section: 'pages', adminOnly: false },
     { icon: UserCog, label: 'AUTHORITIES', path: '/admin/authorities', section: 'authorities', adminOnly: false },

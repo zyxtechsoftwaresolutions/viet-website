@@ -4,6 +4,7 @@ import LeaderPageNavbar from "@/components/LeaderPageNavbar";
 import Footer from "@/components/Footer";
 import FacilityWaveHero from "@/components/FacilityWaveHero";
 import { useFacilityCms } from "@/hooks/useFacilityCms";
+import FacilityLeaderProfile from "@/components/FacilityLeaderProfile";
 
 const FEATURE_ICONS: Record<string, LucideIcon> = {
   "book-open": BookOpen,
@@ -59,6 +60,8 @@ const Library = () => {
           </motion.div>
         </div>
       </section>
+
+      <FacilityLeaderProfile profile={content.librarian} />
 
       {/* Features — Chairman-style spacing */}
       <section className="py-20 md:py-28 bg-white border-t border-slate-200">

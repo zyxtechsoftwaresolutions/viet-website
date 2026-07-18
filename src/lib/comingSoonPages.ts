@@ -5,7 +5,6 @@ export const COMING_SOON_PAGES: { path: string; title: string }[] = [
   { path: '/page/global', title: 'Global' },
   { path: '/page/infrastructure', title: 'Infrastructure' },
   { path: '/page/finance', title: 'Finance' },
-  { path: '/iqac', title: 'Quality' },
   { path: '/page/disclosures', title: 'Disclosures' },
   { path: '/page/directions', title: 'Directions' },
   { path: '/page/online-payment', title: 'Online Payment' },
