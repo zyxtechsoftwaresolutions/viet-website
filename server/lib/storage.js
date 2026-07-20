@@ -30,6 +30,7 @@ const ALLOWED_FOLDERS = new Set([
   'about',
   'pages',
   'organizational-chart',
+  'research-development',
   'transport-routes',
   'ug-pg-examinations',
   'examinations',

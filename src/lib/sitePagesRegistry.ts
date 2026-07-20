@@ -55,10 +55,11 @@ export const EXPECTED_SITE_PAGES: SitePageMeta[] = [
 export function getPageEditorKind(
   slug: string,
   category: string
-): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'examinations' | 'organizational-chart' | 'iqac' | 'generic' {
+): 'about' | 'authorities' | 'facilities' | 'transport' | 'campus-life' | 'examinations' | 'organizational-chart' | 'iqac' | 'research-development' | 'generic' {
   if (slug === 'about') return 'about';
   if (slug === 'organizational-chart') return 'organizational-chart';
   if (slug === 'iqac') return 'iqac';
+  if (slug === 'research-development') return 'research-development';
   if (slug === 'transport') return 'transport';
   if (slug === 'campus-life') return 'campus-life';
   if (slug === 'ug-pg-examinations' || category.toLowerCase() === 'examinations') return 'examinations';
@@ -72,6 +73,7 @@ export function getAdminEditorPath(slug: string, category: string): string {
   if (kind === 'about') return '/admin/pages';
   if (kind === 'organizational-chart') return '/admin/organizational-chart';
   if (kind === 'iqac') return '/admin/iqac';
+  if (kind === 'research-development') return '/admin/research-development';
   if (kind === 'authorities') return '/admin/authorities';
   if (kind === 'transport') return '/admin/facilities/transport';
   if (kind === 'facilities') return `/admin/facilities/${slug}`;

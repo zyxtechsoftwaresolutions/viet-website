@@ -95,6 +95,7 @@ const AdmissionPopupAdmin = lazy(() => import("./pages/admin/AdmissionPopup"));
 const SitePagesAdmin = lazy(() => import("./pages/admin/SitePagesAdmin"));
 const OrganizationalChartAdmin = lazy(() => import("./pages/admin/OrganizationalChartAdmin"));
 const IQACAdmin = lazy(() => import("./pages/admin/IQACAdmin"));
+const ResearchDevelopmentAdmin = lazy(() => import("./pages/admin/ResearchDevelopmentAdmin"));
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -226,6 +227,7 @@ const App = () => (  <QueryClientProvider client={queryClient}>
               <Route path="site-pages" element={<SitePagesAdmin />} />
               <Route path="organizational-chart" element={<OrganizationalChartAdmin />} />
               <Route path="iqac" element={<IQACAdmin />} />
+              <Route path="research-development" element={<ResearchDevelopmentAdmin />} />
               <Route path="pages" element={<AboutUsAdmin />} />
               <Route path="authorities" element={<Authorities />} />
               <Route path="sub-admins" element={<SubAdmins />} />

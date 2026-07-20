@@ -500,6 +500,7 @@ const FOLDER_TO_SECTION = {
   'ug-pg-examinations': 'examinations',
   examinations: 'examinations',
   iqac: 'pages',
+  'research-development': 'pages',
 };
 
 const AUTHORITY_PAGE_SLUGS = new Set([

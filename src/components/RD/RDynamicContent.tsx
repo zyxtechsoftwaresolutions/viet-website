@@ -1,437 +1,621 @@
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  ChevronRight,
-  ExternalLink,
+import { useMemo, useState } from 'react';
+import type { ElementType, FC, ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Award,
+  BookOpen,
+  Briefcase,
   FileText,
-  User
+  FlaskConical,
+  Lightbulb,
+  Search,
+  Sparkles,
+  Target,
+  User,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import {
+  type RdContent,
+} from '@/lib/rdContent';
 
 interface RDynamicContentProps {
   activeSection: string;
+  content: RdContent;
 }
 
-const RDynamicContent: React.FC<RDynamicContentProps> = ({ activeSection }) => {
-  // R&D Committee data - Exact data from website
-  const rdCommittee = [
-    { sno: 1, name: 'Dr G.Vidya Pradeep Varma', designation: 'Principal', role: 'Chairman', responsibility: 'Over all Supervision and guidance' },
-    { sno: 2, name: 'Dr T Satyanarayana', designation: 'Associate Professor', role: 'R&D Dean', responsibility: 'Co-ordinating all the members, Conducting R&D meetings and compiling data' },
-    { sno: 3, name: 'Dr D Santha Rao', designation: 'Professor', role: 'member', responsibility: 'Advisor of R&D' },
-    { sno: 4, name: 'Dr.P.V.V Satyanarayana', designation: 'Associate Professor', role: 'member', responsibility: 'Monitoring of R&D activities at Mechanical Dept. level' },
-    { sno: 5, name: 'Ms M Sowjanya', designation: 'Assistant Professor', role: 'member', responsibility: 'Monitoring of R&D activities at CSE Dept. level' },
-    { sno: 6, name: 'Mrs L. Keerthi', designation: 'Assistant Professor', role: 'member', responsibility: 'Monitoring of R&D activities at ECE Dept. level' }
-  ];
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
+  transition: { duration: 0.4 },
+};
 
-  // Department Coordinators data - Exact data from website
-  const departmentCoordinators = [
-    { sno: 1, name: 'Dr P.V.V Satyanarayana', position: 'R&D Department Coordinator', department: 'Mechanical', photo: '/FACULTY/rd-coordinator-1.jpg' },
-    { sno: 2, name: 'Dr.M Uday Bhaskar', position: 'R&D Department Coordinator', department: 'BS&H', photo: '/FACULTY/rd-coordinator-2.jpg' },
-    { sno: 3, name: 'Ms M Sowjanya', position: 'R&D Department Coordinator', department: 'Computer Science and Engineering', photo: '/FACULTY/rd-coordinator-3.jpg' },
-    { sno: 4, name: 'Mrs L. Keerthi', position: 'R&D Department Coordinator', department: 'ECE', photo: '/FACULTY/rd-coordinator-4.jpg' },
-    { sno: 5, name: 'Mrs S Jyothi Rani', position: 'R&D Department Coordinator', department: 'EEE', photo: '/FACULTY/rd-coordinator-5.jpg' },
-    { sno: 6, name: 'MS.T Rohini', position: 'R&D Department Coordinator', department: 'Civil', photo: '/FACULTY/rd-coordinator-6.jpg' },
-    { sno: 7, name: 'Dr. S Kesava Nagu', position: 'R&D Department Coordinator', department: 'MBA', photo: '/FACULTY/rd-coordinator-7.jpg' }
-  ];
+function SectionHeading({
+  label,
+  title,
+  description,
+}: {
+  label: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="mb-10">
+      <p className="text-xs md:text-sm font-semibold tracking-[0.25em] text-slate-500 uppercase mb-2">
+        {label}
+      </p>
+      <h2 className="text-2xl md:text-3xl lg:text-[2rem] font-semibold text-slate-900 tracking-tight leading-tight">
+        {title}
+      </h2>
+      {description && (
+        <p className="mt-3 text-slate-600 text-base md:text-lg leading-relaxed max-w-4xl">
+          {description}
+        </p>
+      )}
+      <div className="h-px w-16 bg-primary mt-6" aria-hidden />
+    </div>
+  );
+}
 
-  // Ph.D Holders data - Exact data from website (19 entries)
-  const phdHolders = [
-    { sno: 1, name: 'Dr G.V.Pradeep Varma', designation: 'Professor & Principal', experience: 29, department: 'Mechanical' },
-    { sno: 2, name: 'Dr D.Santha Rao', designation: 'Professor, HoD & Dean Academics', experience: 24, department: 'Mechanical' },
-    { sno: 3, name: 'Dr C.Govinda Rajulu', designation: 'Professor & CE', experience: 25, department: 'Mechanical' },
-    { sno: 4, name: 'Dr. Gondi Siva Karuna', designation: 'Associate Professor', experience: 20, department: 'Mechanical' },
-    { sno: 5, name: 'Dr. Satyanarayana Tirlangi', designation: 'Associate Professor & R&D Dean', experience: 14, department: 'Mechanical' },
-    { sno: 6, name: 'Dr.P.V.V.Satyanarayana', designation: 'Associate Professor', experience: 7, department: 'Mechanical' },
-    { sno: 7, name: 'Dr. A S C Tejaswini Kone', designation: 'Associate Professor & HoD', experience: 7, department: 'CSE' },
-    { sno: 8, name: 'Dr P.Lalitha Kumari', designation: 'Associate Professor', experience: 10, department: 'CSE' },
-    { sno: 9, name: 'DR. Kausar Jahan', designation: 'Associate Professor', experience: 5, department: 'ECE' },
-    { sno: 10, name: 'DR. B. Jeevanarao', designation: 'Associate Professor & HoD', experience: 15, department: 'ECE' },
-    { sno: 11, name: 'Dr G Madhusudhana Rao', designation: 'Professor', experience: 24, department: 'EEE' },
-    { sno: 12, name: 'Dr P Vamsi Krishna', designation: 'Assistant Professor', experience: 2, department: 'EEE' },
-    { sno: 13, name: 'Dr. Kannam Naidu Cheepurupalli', designation: 'Professor & HoD', experience: 23, department: 'Civil' },
-    { sno: 14, name: 'Dr. K. Dayana', designation: 'Professor', experience: 17, department: 'Civil' },
-    { sno: 15, name: 'Dr.Maradana Uday Bhaskar', designation: 'Associate Professor & HoD', experience: 16, department: 'BS&H' },
-    { sno: 16, name: 'Dr. Shaik Raziya', designation: 'Associate Professor', experience: 3, department: 'BS&H' },
-    { sno: 17, name: 'Dr. Kadimpalli Rajubabu', designation: 'Associate Professor', experience: 3, department: 'MBA' },
-    { sno: 18, name: 'Dr. N Nooka Raju', designation: 'Associate Professor', experience: 4, department: 'MBA' },
-    { sno: 19, name: 'Dr. S Kesava Nagu', designation: 'Associate Professor', experience: 4, department: 'MBA' }
-  ];
+function roleBadgeClass(role: string) {
+  const r = role.toLowerCase();
+  if (r.includes('chair')) return 'bg-primary/10 text-primary border-primary/20';
+  if (r.includes('dean')) return 'bg-slate-800 text-white border-slate-700';
+  if (r.includes('advisor')) return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+  return 'bg-slate-100 text-slate-700 border-slate-200';
+}
 
-  // Ph.D Pursuing data - Exact data from website (26 entries)
-  const phdPursuing = [
-    { sno: 1, name: 'Mr.Miriyala Ram Babu', designation: 'Assistant Professor', experience: 17, department: 'Mechanical' },
-    { sno: 2, name: 'Mr.Raja Ratna Kumar V', designation: 'Assistant Professor', experience: 15, department: 'Mechanical' },
-    { sno: 3, name: 'Mr.A Murali Krishna', designation: 'Assistant Professor', experience: 11, department: 'Mechanical' },
-    { sno: 4, name: 'Mrs.Korla Chandana', designation: 'Assistant Professor', experience: 8, department: 'Mechanical' },
-    { sno: 5, name: 'Mr.Chittiboyina Kiran Kumar', designation: 'Assistant Professor', experience: 7, department: 'Mechanical' },
-    { sno: 6, name: 'Mr.Ch Veeru Naidu', designation: 'Assistant Professor', experience: 10, department: 'Mechanical' },
-    { sno: 7, name: 'Mr.Kare Jagadeswara Rao', designation: 'Assistant Professor', experience: 6, department: 'Mechanical' },
-    { sno: 8, name: 'Mr Peeri Prasad', designation: 'Assistant Professor', experience: 10, department: 'CSE' },
-    { sno: 9, name: 'Mrs M.Usha', designation: 'Assistant Professor', experience: 10, department: 'CSE' },
-    { sno: 10, name: 'Mrs Shalini Bharide', designation: 'Assistant Professor', experience: 8, department: 'CSE' },
-    { sno: 11, name: 'Mr Kalla Vijay', designation: 'Assistant Professor', experience: 8, department: 'CSE' },
-    { sno: 12, name: 'Mrs K Prasanna Latha', designation: 'Assistant Professor', experience: 2, department: 'CSE' },
-    { sno: 13, name: 'Mrs A Navya', designation: 'Assistant Professor', experience: 8, department: 'CSE' },
-    { sno: 14, name: 'Mrs K. Kanthi Kinnera', designation: 'Assistant Professor', experience: 13, department: 'ECE' },
-    { sno: 15, name: 'Mr M. Bhaskara Naidu', designation: 'Assistant Professor', experience: 4, department: 'ECE' },
-    { sno: 16, name: 'Mrs V. Nookaratnam', designation: 'Assistant Professor', experience: 7, department: 'BS&H' },
-    { sno: 17, name: 'Mrs L. Keerthi', designation: 'Assistant Professor', experience: 4, department: 'ECE' },
-    { sno: 18, name: 'Mrs T. Malasri', designation: 'Assistant Professor', experience: 7, department: 'ECE' },
-    { sno: 19, name: 'Mr M. Hemanth Kumar', designation: 'Assistant Professor', experience: 7, department: 'ECE' },
-    { sno: 20, name: 'Mr. Varaprasad .K. S. B', designation: 'Associate Professor & HoD', experience: 14, department: 'EEE' },
-    { sno: 21, name: 'Mr D J Tataji', designation: 'Assistant Professor', experience: 12, department: 'EEE' },
-    { sno: 22, name: 'Mr T Sreenu', designation: 'Assistant Professor', experience: 14, department: 'EEE' },
-    { sno: 23, name: 'Mr Ch B R Srikanth', designation: 'Assistant Professor', experience: 4, department: 'EEE' },
-    { sno: 24, name: 'Mr.Chinthapalli Sai Kiran', designation: 'Assistant Professor', experience: 4, department: 'CIVIL' },
-    { sno: 25, name: 'Mr. Kusumanchi Jagan', designation: 'Assistant Professor', experience: 6, department: 'CIVIL' },
-    { sno: 26, name: 'Mr. K. Bhargav', designation: 'Assistant Professor', experience: 4, department: 'BS&H' }
-  ];
+function DataTable({
+  columns,
+  rows,
+}: {
+  columns: { key: string; label: string; className?: string }[];
+  rows: Record<string, ReactNode>[];
+}) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+      <table className="w-full min-w-[640px]">
+        <thead>
+          <tr className="bg-slate-900 text-white">
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={cn(
+                  'px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider',
+                  col.className
+                )}
+              >
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200 bg-white">
+          {rows.map((row, i) => (
+            <motion.tr
+              key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: Math.min(i * 0.03, 0.4) }}
+              className="hover:bg-slate-50/80 transition-colors"
+            >
+              {columns.map((col) => (
+                <td key={col.key} className={cn('px-5 py-4 text-sm text-slate-700', col.className)}>
+                  {row[col.key]}
+                </td>
+              ))}
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PlaceholderCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: ElementType;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 md:p-10 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-5">
+        <Icon className="w-7 h-7 text-slate-400" aria-hidden />
+      </div>
+      <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
+      <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+const RDynamicContent: FC<RDynamicContentProps> = ({ activeSection, content }) => {
+  const [selectedDepartment, setSelectedDepartment] = useState('All');
+
+  const departments = useMemo(() => {
+    const unique = Array.from(
+      new Set(content.coordinators.map((c) => c.department).filter(Boolean))
+    );
+    return ['All', ...unique];
+  }, [content.coordinators]);
+
+  const coordinatorsFiltered = useMemo(() => {
+    if (selectedDepartment === 'All') return content.coordinators;
+    return content.coordinators.filter((c) => c.department === selectedDepartment);
+  }, [content.coordinators, selectedDepartment]);
 
   return (
-    <Card className="shadow-lg">
-      <CardContent className="p-8">
-        {/* About R & D Section */}
-        {activeSection === 'about' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">About Research & Development</h2>
-            <div className="prose prose-lg max-w-none">
-              <p className="text-gray-700 mb-6">
-                At <strong>VIET,</strong> Research & Development (R&D) is the <strong>catalyst for technological breakthroughs and academic brilliance.</strong> It transforms ideas into innovations, simplifies complex concepts, and drives progress toward a smarter future.
+    <motion.div key={activeSection} {...fadeUp}>
+      {/* ── ABOUT ── */}
+      {activeSection === 'about' && (
+        <div>
+          <SectionHeading
+            label="Overview"
+            title="About Research & Development"
+            description="At VIET, Research & Development is the catalyst for technological breakthroughs and academic brilliance."
+          />
+
+          <div className="grid lg:grid-cols-2 gap-6 mb-10">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-primary" aria-hidden />
+                </div>
+                  <h3 className="text-lg font-semibold text-slate-900">{content.about.introTitle}</h3>
+              </div>
+              <div className="space-y-4 text-slate-600 leading-relaxed">
+                <p>{content.about.introParagraph1}</p>
+                <p>{content.about.introParagraph2}</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-6 md:p-8 text-white shadow-lg"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary" aria-hidden />
+                </div>
+                  <h3 className="text-lg font-semibold">{content.about.cellTitle}</h3>
+              </div>
+              <p className="text-white/75 leading-relaxed text-sm md:text-base">
+                {content.about.cellDescription}
               </p>
-              <p className="text-gray-700 mb-6">
-                R&D <strong>ignites curiosity, fosters critical thinking, and sharpens problem-solving skills,</strong> empowering students and faculty to push boundaries and redefine possibilities. Every discovery fuels enthusiasm, paving the way for excellence in engineering, technology, and beyond.
+              <p className="text-primary font-semibold mt-6 text-sm md:text-base">
+                {content.about.tagline}
               </p>
-              <p className="text-gray-700 mb-8 font-semibold text-blue-900 text-lg">
-                <strong>Innovation starts here—where passion meets research, and ideas shape the future!</strong>
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <h3 className="text-lg font-semibold text-slate-900 mb-5">{content.about.objectivesTitle}</h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {content.about.objectives.map((obj, i) => (
+                <motion.div
+                  key={obj.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: Math.min(i * 0.04, 0.3) }}
+                  className="flex gap-3 p-4 rounded-xl border border-slate-200 bg-white hover:border-primary/30 hover:shadow-md transition-all group"
+                >
+                  <span className="text-xs font-bold text-slate-400 group-hover:text-primary tabular-nums pt-0.5 shrink-0">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 mb-1">{obj.title}</p>
+                    <p className="text-xs md:text-sm text-slate-600 leading-relaxed">{obj.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8"
+          >
+            <p className="text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase mb-4">
+              {content.about.partnersTitle}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {content.about.partners.map((partner) => (
+                <span
+                  key={partner}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200 hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-colors"
+                >
+                  {partner}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── DIRECTOR ── */}
+      {activeSection === 'director' && (
+        <div>
+          <SectionHeading
+            label="Leadership"
+            title="About Director"
+            description="The R&D Dean leads research initiatives, coordinates committee activities, and drives institutional research excellence."
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-lg"
+          >
+            <div className="h-2 bg-gradient-to-r from-primary via-orange-400 to-primary" aria-hidden />
+            <div className="p-8 md:p-10 flex flex-col sm:flex-row gap-6 items-start">
+              <div className="w-24 h-24 rounded-2xl bg-slate-900 flex items-center justify-center shrink-0">
+                <User className="w-10 h-10 text-primary" aria-hidden />
+              </div>
+              <div>
+                <Badge className="mb-3 bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
+                  {content.director.roleLabel}
+                </Badge>
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-1">{content.director.name}</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  {content.director.designation} · {content.director.department}
+                </p>
+                <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                  {content.director.description}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── VISION & MISSION ── */}
+      {activeSection === 'vision-mission' && (
+        <div>
+          <SectionHeading label="Purpose" title="Vision and Mission" />
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center mb-5">
+                <Target className="w-6 h-6 text-primary" aria-hidden />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Vision</h3>
+              <p className="text-slate-600 leading-relaxed italic">
+                {content.visionMission.vision}
               </p>
-
-              <div className="bg-blue-50 p-6 rounded-lg mb-6">
-                <h3 className="text-2xl font-semibold text-blue-900 mb-4">Research & Development Cell</h3>
-                <p className="text-gray-700 mb-4">
-                  The <strong>Research and Development Cell</strong> is dedicated to fostering a vibrant research culture within the college. It actively promotes research in emerging and interdisciplinary fields across Engineering, Technology, Science, and Humanities. By encouraging students and faculty to explore frontier areas, the cell enhances their research capabilities and nurtures future innovators. Through participation in conferences, seminars, workshops, and project competitions, budding technocrats gain valuable experience, paving the way for technological and intellectual advancements.
-                </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-lg"
+            >
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5">
+                <Sparkles className="w-6 h-6 text-primary" aria-hidden />
               </div>
+              <h3 className="text-xl font-bold mb-4">Mission</h3>
+              <ul className="space-y-3 text-white/80 text-sm md:text-base leading-relaxed">
+                {content.visionMission.missionPoints.map((point, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="text-primary shrink-0">•</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+        </div>
+      )}
 
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h3 className="text-2xl font-semibold text-green-900 mb-4">Objectives of R&D</h3>
-                <p className="text-gray-700 mb-4">
-                  The <strong>Research & Development (R&D) Cell</strong> at VIET is committed to fostering a dynamic research culture and innovation-driven learning environment. Our key objectives include:
-                </p>
-                <ol className="space-y-3 text-gray-700 list-decimal list-inside ml-4">
-                  <li><strong>Promoting Research Culture:</strong> Creating awareness and opportunities for R&D among students and faculty across all departments</li>
-                  <li><strong>Encouraging Academic Growth:</strong> Motivating faculty to pursue research projects, enhance their expertise, and register for Ph.D. programs.</li>
-                  <li><strong>Facilitating Publications:</strong> Inspiring students and staff to publish research papers in reputed national and international journals/conferences.</li>
-                  <li><strong>Interdisciplinary Research Support:</strong> Encouraging faculty across Engineering, Science, and Humanities to engage in R&D for professional growth.</li>
-                  <li><strong>Collaboration with Leading Agencies:</strong> Undertaking projects with <strong>ISRO, DRDO, CSIR, DST, AICTE, UGC, DBT</strong> and more..</li>
-                  <li><strong>Student Research Funding:</strong> Assisting students in securing research grants from <strong>TNSCST, IEI (I), DRDO, TCS, Infosys,</strong> etc.</li>
-                  <li><strong>Organizing Knowledge Forums:</strong> Securing funds for <strong>seminars, workshops, and faculty development programs (FDPs)</strong> from funding agencies.</li>
-                  <li><strong>Enhancing Research Impact:</strong> Developing strategies to increase faculty success in obtaining external research grants.</li>
-                  <li><strong>Building Research Networks:</strong> Strengthening collaborations across faculties, institutes, industries, and government organizations.</li>
-                  <li><strong>Industry & Community Engagement:</strong> Partnering with industries, government bodies, and professional organizations to promote impactful research.</li>
-                  <li><strong>Attracting Research Talent:</strong> Encouraging and supporting research-driven higher-degree students.</li>
-                </ol>
-                <p className="text-gray-700 mt-6">
-                  At <strong>VIET,</strong> we believe research fuels <strong>innovation, progress, and excellence.</strong> Through our R&D initiatives, we are shaping the future of technology and knowledge. <strong>Let's innovate, collaborate, and lead!</strong>
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── ROLES ── */}
+      {activeSection === 'roles-responsibilities' && (
+        <div>
+          <SectionHeading
+            label="Governance"
+            title="Roles & Responsibilities"
+            description="The R&D cell operates through a structured framework of leadership, coordination, and departmental oversight."
+          />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {content.roles.map((item, i) => (
+              <motion.div
+                key={item.role}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className="rounded-xl border border-slate-200 bg-white p-5 hover:border-primary/30 hover:shadow-md transition-all"
+              >
+                <h4 className="text-sm font-bold text-slate-900 mb-2">{item.role}</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
-        {/* About Director Section */}
-        {activeSection === 'director' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">About Director</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <p className="text-gray-700 mb-6">
-                  Information about the R&D Director will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── COMMITTEE ── */}
+      {activeSection === 'committee' && (
+        <div>
+          <SectionHeading
+            label="Governance"
+            title="R&D Committee"
+            description="Constituted to oversee and guide all research and development activities across the institution."
+          />
+          <DataTable
+            columns={[
+              { key: 'sno', label: 'S.No', className: 'w-14 tabular-nums font-medium text-slate-500' },
+              { key: 'name', label: 'Name', className: 'font-semibold text-slate-900' },
+              { key: 'designation', label: 'Designation' },
+              { key: 'role', label: 'Role' },
+              { key: 'responsibility', label: 'Responsibility' },
+            ]}
+            rows={content.committee.map((m) => ({
+              sno: m.sno,
+              name: m.name,
+              designation: m.designation,
+              role: (
+                <Badge variant="secondary" className={cn('text-xs font-medium border', roleBadgeClass(m.role))}>
+                  {m.role}
+                </Badge>
+              ),
+              responsibility: m.responsibility,
+            }))}
+          />
+        </div>
+      )}
 
-        {/* Vision and Mission Section */}
-        {activeSection === 'vision-mission' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Vision and Mission</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-blue-900 mb-4">Vision</h3>
-                <p className="text-gray-700 italic">
-                  Information about the vision of the R&D cell will be updated here.
-                </p>
-              </div>
-              
-              <div className="bg-green-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold text-green-900 mb-4">Mission</h3>
-                <p className="text-gray-700 italic">
-                  Information about the mission of the R&D cell will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── COORDINATORS ── */}
+      {activeSection === 'department-coordinators' && (
+        <div>
+          <SectionHeading
+            label="Department Network"
+            title="Research & Development Department Coordinators"
+            description="Faculty coordinators who monitor and facilitate R&D activities within their respective departments."
+          />
 
-        {/* Roles & Responsibilities Section */}
-        {activeSection === 'roles-responsibilities' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Roles & Responsibilities</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <p className="text-gray-700 mb-6">
-                  Information about roles and responsibilities will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+          <div className="mb-6 flex flex-wrap gap-2">
+            {departments.map((dept) => {
+              const isActive = selectedDepartment === dept;
+              return (
+                <motion.button
+                  key={dept}
+                  type="button"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => setSelectedDepartment(dept)}
+                  className={[
+                    'px-3 py-2 rounded-full border text-xs font-semibold transition-colors whitespace-nowrap',
+                    isActive
+                      ? 'bg-primary/10 border-primary/30 text-slate-900'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900',
+                  ].join(' ')}
+                >
+                  {dept}
+                </motion.button>
+              );
+            })}
+          </div>
 
-        {/* R&D Committee Section */}
-        {activeSection === 'committee' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">R&D Committee</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 shadow-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">S.No</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name of the Staff</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Designation</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Role</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Responsibility</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {rdCommittee.map((member) => (
-                    <tr key={member.sno} className="hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 px-4 py-3">{member.sno}</td>
-                      <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">{member.name}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{member.designation}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{member.role}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{member.responsibility}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+          {/* Masonry-ish animated grid via CSS columns */}
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
+            {coordinatorsFiltered.map((coord, i) => (
+              <motion.article
+                key={coord.sno}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.45 }}
+                className="break-inside-avoid mb-5 group relative rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
+              >
+                <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden">
+                  <img
+                    src={coord.photo}
+                    alt={coord.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/20 to-transparent opacity-80" />
 
-        {/* Department Coordinators Section */}
-        {activeSection === 'department-coordinators' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Research & Development Department Coordinators</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 shadow-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold w-16">S.No</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold w-28">Photo</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name of the Staff</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Department</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {departmentCoordinators.map((coordinator) => (
-                    <tr key={coordinator.sno} className="hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 px-4 py-3 text-center">{coordinator.sno}</td>
-                      <td className="border border-gray-300 px-4 py-3">
-                        <div className="w-24 h-32 bg-gray-200 border-2 border-gray-300 flex items-center justify-center relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
-                          <img 
-                            src={coordinator.photo} 
-                            alt={coordinator.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
-                          <div className="w-full h-full flex items-center justify-center absolute inset-0 bg-gray-200" style={{ display: 'none' }}>
-                            <User className="w-10 h-10 text-gray-400" />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">{coordinator.name}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{coordinator.department}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-primary/95 text-white border-0 text-[10px]">{coord.department}</Badge>
+                  </div>
 
-        {/* Ph.D Holders Section */}
-        {activeSection === 'phd-holders' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">List of Ph.D Holders</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 shadow-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">S.No</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name of the Faculty</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Designation</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Experience</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Department</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {phdHolders.map((holder) => (
-                    <tr key={holder.sno} className="hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 px-4 py-3">{holder.sno}</td>
-                      <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">{holder.name}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{holder.designation}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{holder.experience}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{holder.department}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-sm font-bold text-white leading-snug mb-1">{coord.name}</h3>
+                    <p className="text-xs text-white/80">{coord.position}</p>
+                  </div>
 
-        {/* Ph.D Pursuing Section */}
-        {activeSection === 'phd-pursuing' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">List of Pursuing (PhD)</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 shadow-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">S.No</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name of the Faculty</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Designation</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Experience</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Department</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {phdPursuing.map((pursuing) => (
-                    <tr key={pursuing.sno} className="hover:bg-gray-50 transition-colors">
-                      <td className="border border-gray-300 px-4 py-3">{pursuing.sno}</td>
-                      <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">{pursuing.name}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{pursuing.designation}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{pursuing.experience}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-gray-700">{pursuing.department}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                  {/* Hover highlight */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none bg-gradient-to-r from-primary/15 via-transparent to-primary/15"
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      )}
 
-        {/* R&D Policy Section */}
-        {activeSection === 'policy' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">R & D Policy</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-4 font-medium">
-                  Click here to check the demo:
-                </p>
-                <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
-                  <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Click Here
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── PHD HOLDERS ── */}
+      {activeSection === 'phd-holders' && (
+        <div>
+          <SectionHeading
+            label="Faculty Excellence"
+            title="List of Ph.D Holders"
+            description={`${content.phdHolders.length} faculty members with doctoral qualifications across multiple departments.`}
+          />
+          <DataTable
+            columns={[
+              { key: 'sno', label: 'S.No', className: 'w-14 tabular-nums font-medium text-slate-500' },
+              { key: 'name', label: 'Faculty Name', className: 'font-semibold text-slate-900' },
+              { key: 'designation', label: 'Designation' },
+              { key: 'experience', label: 'Experience (Yrs)', className: 'tabular-nums' },
+              { key: 'department', label: 'Department' },
+            ]}
+            rows={content.phdHolders.map((h) => ({
+              sno: h.sno,
+              name: h.name,
+              designation: h.designation,
+              experience: h.experience,
+              department: (
+                <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
+                  {h.department}
+                </Badge>
+              ),
+            }))}
+          />
+        </div>
+      )}
 
-        {/* Journals Section */}
-        {activeSection === 'journals' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Journals</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about journals will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── PHD PURSUING ── */}
+      {activeSection === 'phd-pursuing' && (
+        <div>
+          <SectionHeading
+            label="Growing Scholars"
+            title="List of Pursuing (PhD)"
+            description={`${content.phdPursuing.length} faculty members currently pursuing doctoral research.`}
+          />
+          <DataTable
+            columns={[
+              { key: 'sno', label: 'S.No', className: 'w-14 tabular-nums font-medium text-slate-500' },
+              { key: 'name', label: 'Faculty Name', className: 'font-semibold text-slate-900' },
+              { key: 'designation', label: 'Designation' },
+              { key: 'experience', label: 'Experience (Yrs)', className: 'tabular-nums' },
+              { key: 'department', label: 'Department' },
+            ]}
+            rows={content.phdPursuing.map((p) => ({
+              sno: p.sno,
+              name: p.name,
+              designation: p.designation,
+              experience: p.experience,
+              department: (
+                <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700 border-slate-200">
+                  {p.department}
+                </Badge>
+              ),
+            }))}
+          />
+        </div>
+      )}
 
-        {/* Patents Section */}
-        {activeSection === 'patents' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Patents</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about patents will be updated here.
-                </p>
-              </div>
+      {/* ── POLICY ── */}
+      {activeSection === 'policy' && (
+        <div>
+          <SectionHeading label="Documentation" title="R & D Policy" />
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-slate-200 bg-white p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center gap-6"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+              <FileText className="w-7 h-7 text-primary" aria-hidden />
             </div>
-          </>
-        )}
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">{content.policy.title}</h3>
+              <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-4">
+                {content.policy.description}
+              </p>
+              <Button asChild className="bg-primary hover:bg-primary/90">
+                <a href={content.policy.buttonUrl || '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  {content.policy.buttonText}
+                </a>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
-        {/* Text Books Section */}
-        {activeSection === 'textbooks' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Text Books</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about text books will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── JOURNALS ── */}
+      {activeSection === 'journals' && (
+        <div>
+          <SectionHeading label="Publications" title="Journals" description="Faculty and student publications in reputed national and international journals." />
+          <PlaceholderCard icon={BookOpen} title={content.journals.title} description={content.journals.description} />
+        </div>
+      )}
 
-        {/* Consultancy Services Section */}
-        {activeSection === 'consultancy' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Consultancy Services</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about consultancy services will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── PATENTS ── */}
+      {activeSection === 'patents' && (
+        <div>
+          <SectionHeading label="Intellectual Property" title="Patents" description="Patents filed and granted by VIET faculty and researchers." />
+          <PlaceholderCard icon={Award} title={content.patents.title} description={content.patents.description} />
+        </div>
+      )}
 
-        {/* R&D Facilities Section */}
-        {activeSection === 'facilities' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">R&D Facilities</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about R&D facilities will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* ── TEXTBOOKS ── */}
+      {activeSection === 'textbooks' && (
+        <div>
+          <SectionHeading label="Publications" title="Text Books" description="Textbooks authored by VIET faculty members." />
+          <PlaceholderCard icon={BookOpen} title={content.textbooks.title} description={content.textbooks.description} />
+        </div>
+      )}
 
-        {/* Research Areas Section */}
-        {activeSection === 'research-areas' && (
-          <>
-            <h2 className="text-3xl font-bold text-blue-900 mb-6">Research Areas</h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <p className="text-gray-700 mb-6">
-                  Information about research areas will be updated here.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      {/* ── CONSULTANCY ── */}
+      {activeSection === 'consultancy' && (
+        <div>
+          <SectionHeading label="Industry Connect" title="Consultancy Services" description="Expert consultancy services offered by VIET faculty to industry and government organizations." />
+          <PlaceholderCard icon={Briefcase} title={content.consultancy.title} description={content.consultancy.description} />
+        </div>
+      )}
+
+      {/* ── FACILITIES ── */}
+      {activeSection === 'facilities' && (
+        <div>
+          <SectionHeading label="Infrastructure" title="R&D Facilities" description="State-of-the-art laboratories and research infrastructure supporting innovation." />
+          <PlaceholderCard icon={FlaskConical} title={content.facilities.title} description={content.facilities.description} />
+        </div>
+      )}
+
+      {/* ── RESEARCH AREAS ── */}
+      {activeSection === 'research-areas' && (
+        <div>
+          <SectionHeading label="Focus Areas" title="Research Areas" description="Key interdisciplinary research domains pursued at VIET." />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {content.researchAreas.map((area, i) => (
+              <motion.div
+                key={area}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 bg-white hover:border-primary/30 hover:shadow-md transition-all group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
+                  <Search className="w-4 h-4 text-white" aria-hidden />
+                </div>
+                <p className="text-sm font-medium text-slate-800 leading-snug">{area}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 };
 
