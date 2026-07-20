@@ -263,7 +263,7 @@ const Footer = () => {
                         className="group inline-flex items-start gap-2 justify-center lg:justify-start text-[0.9375rem] text-slate-200 hover:text-white transition-colors duration-200"
                       >
                         <Phone className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" aria-hidden />
-                        <span>+91 9959617476 / 9959617477</span>
+                        <span>+91 9959617476 / 9959617477 / 9550957054</span>
                       </a>
                     </li>
                     <li>
