@@ -28,6 +28,8 @@ const ResearchDevelopmentAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [galleryBatchDepartment, setGalleryBatchDepartment] = useState<string>('General');
+  const [galleryBatchTitlePrefix, setGalleryBatchTitlePrefix] = useState<string>('');
 
   const load = async () => {
     setLoading(true);
@@ -91,6 +93,45 @@ const ResearchDevelopmentAdmin = () => {
     }
   };
 
+  const uploadGalleryImages = async (files: File[]) => {
+    if (files.length === 0) return;
+    if (uploadingKey) return;
+    const key = 'gallery-batch';
+    setUploadingKey(key);
+    try {
+      const newItems = [];
+      for (const file of files) {
+        const url = await uploadToSupabase(file, 'research-development', 'images');
+        const stem = (file.name || '').replace(/\.[^/.]+$/, '');
+        const title =
+          `${galleryBatchTitlePrefix ? galleryBatchTitlePrefix.trim() + ' ' : ''}${stem}`.trim();
+        newItems.push({
+          image: url,
+          title,
+          department: galleryBatchDepartment.trim() || 'General',
+        });
+      }
+      setContent((p) => ({ ...p, gallery: [...p.gallery, ...newItems] }));
+      toast.success(`Uploaded ${newItems.length} gallery image(s) — remember to Save changes.`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingKey(null);
+    }
+  };
+
+  const updateGalleryItem = (idx: number, patch: Partial<{ title: string; department: string; image: string }>) =>
+    setContent((p) => ({
+      ...p,
+      gallery: p.gallery.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
+    }));
+
+  const removeGalleryItem = (idx: number) =>
+    setContent((p) => ({
+      ...p,
+      gallery: p.gallery.filter((_, i) => i !== idx),
+    }));
+
   const updatePhdList = (
     key: 'phdHolders' | 'phdPursuing',
     idx: number,
@@ -115,6 +156,7 @@ const ResearchDevelopmentAdmin = () => {
           <TabsTrigger value="about">About</TabsTrigger>
           <TabsTrigger value="vision">Vision / Roles</TabsTrigger>
           <TabsTrigger value="data">Committee / Tables</TabsTrigger>
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>
           <TabsTrigger value="other">Policy / Others</TabsTrigger>
         </TabsList>
 
@@ -379,6 +421,97 @@ const ResearchDevelopmentAdmin = () => {
                   <Input type="number" value={item.sno} onChange={(e) => updatePhdList('phdPursuing', idx, { sno: Number(e.target.value || 0) })} />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="gallery" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Upload R&amp;D gallery images</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label>Department (applies to all uploaded images)</Label>
+                  <Input value={galleryBatchDepartment} onChange={(e) => setGalleryBatchDepartment(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Title prefix (optional)</Label>
+                  <Input
+                    value={galleryBatchTitlePrefix}
+                    onChange={(e) => setGalleryBatchTitlePrefix(e.target.value)}
+                    placeholder="e.g. Workshop"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select images</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    uploadGalleryImages(files);
+                    e.target.value = '';
+                  }}
+                  disabled={uploadingKey === 'gallery-batch'}
+                />
+                {uploadingKey === 'gallery-batch' && <p className="text-xs text-muted-foreground">Uploading...</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Current gallery</CardTitle></CardHeader>
+            <CardContent>
+              {content.gallery.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">
+                  No gallery images yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {content.gallery.map((item, idx) => (
+                    <div key={`${item.image}-${idx}`} className="border rounded-xl overflow-hidden bg-white shadow-sm">
+                      <div className="relative">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.title || 'R&D work'}
+                            className="w-full aspect-[4/3] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full aspect-[4/3] bg-slate-100 flex items-center justify-center text-xs text-muted-foreground">
+                            No image
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={() => removeGalleryItem(idx)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="p-3 space-y-3">
+                        <div className="space-y-1">
+                          <Label>Title</Label>
+                          <Input value={item.title} onChange={(e) => updateGalleryItem(idx, { title: e.target.value })} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Department</Label>
+                          <Input
+                            value={item.department}
+                            onChange={(e) => updateGalleryItem(idx, { department: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

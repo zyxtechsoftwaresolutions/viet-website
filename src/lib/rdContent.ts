@@ -7,6 +7,7 @@ import {
   FileText,
   FlaskConical,
   GraduationCap,
+  Image,
   Search,
   Settings,
   Target,
@@ -35,6 +36,7 @@ export const RD_SECTIONS: RdSection[] = [
   { id: 'textbooks', title: 'Text Books', shortTitle: 'Textbooks', icon: BookOpen },
   { id: 'consultancy', title: 'Consultancy Services', shortTitle: 'Consultancy', icon: Briefcase },
   { id: 'facilities', title: 'R&D Facilities', shortTitle: 'Facilities', icon: FlaskConical },
+  { id: 'gallery', title: 'R&D Works Gallery', shortTitle: 'Gallery', icon: Image },
   { id: 'research-areas', title: 'Research Areas', shortTitle: 'Research', icon: Search },
 ];
 
@@ -177,6 +179,12 @@ export type RdSectionCopy = {
   description: string;
 };
 
+export type RdGalleryItem = {
+  image: string;
+  title: string;
+  department: string;
+};
+
 export type RdPersonWithMeta = {
   sno: number;
   name: string;
@@ -229,6 +237,7 @@ export type RdContent = {
   consultancy: RdSectionCopy;
   facilities: RdSectionCopy;
   researchAreas: string[];
+  gallery: RdGalleryItem[];
 };
 
 export const DEFAULT_RD_CONTENT: RdContent = {
@@ -318,6 +327,7 @@ export const DEFAULT_RD_CONTENT: RdContent = {
     'Environmental & Water Resources',
     'Management & Entrepreneurship',
   ],
+  gallery: [],
 };
 
 const toStringList = (value: unknown, fallback: string[]): string[] =>
@@ -341,6 +351,7 @@ export const normalizeRdContent = (value: unknown): RdContent => {
   const textbooks = (src.textbooks || {}) as Partial<RdSectionCopy>;
   const consultancy = (src.consultancy || {}) as Partial<RdSectionCopy>;
   const facilities = (src.facilities || {}) as Partial<RdSectionCopy>;
+  const gallery = Array.isArray(src.gallery) ? src.gallery : [];
 
   return {
     ...DEFAULT_RD_CONTENT,
@@ -426,5 +437,10 @@ export const normalizeRdContent = (value: unknown): RdContent => {
     consultancy: { ...DEFAULT_RD_CONTENT.consultancy, ...consultancy },
     facilities: { ...DEFAULT_RD_CONTENT.facilities, ...facilities },
     researchAreas: toStringList(src.researchAreas, DEFAULT_RD_CONTENT.researchAreas),
+    gallery: gallery.map((item: any) => ({
+      image: String(item?.image ?? '').trim(),
+      title: String(item?.title ?? '').trim(),
+      department: String(item?.department ?? '').trim(),
+    })),
   };
 };

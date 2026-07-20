@@ -145,15 +145,15 @@ const ResearchDevelopment = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12">
           {/* Desktop: sticky vertical nav */}
-          <aside className="hidden lg:block lg:w-72 xl:w-80 shrink-0">
-            <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <aside className="hidden lg:block lg:w-fit xl:w-fit shrink-0">
+            <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/80">
                 <p className="text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase">
                   Sections
                 </p>
               </div>
               <nav
-                className="p-2 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin"
+                className="p-2 overflow-visible"
                 aria-label="Research & Development sections"
               >
                 {RD_SECTIONS.map(({ id, title, icon: Icon }) => {

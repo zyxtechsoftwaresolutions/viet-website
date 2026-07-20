@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, Mail, Award, Users, BookOpen, GraduationCap, Building2, Globe, Heart, Target, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Phone, Mail, Award, Users, BookOpen, GraduationCap, Building2, Globe, Heart, Target, Eye, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import LeaderPageNavbar from '@/components/LeaderPageNavbar';
 import Footer from '@/components/Footer';
 import AnimatedStat, { type AnimatedStatConfig } from '@/components/AnimatedStat';
 import { pagesAPI } from '@/lib/api';
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml';
+import { MAP_DIRECTIONS_URL, MAP_EMBED_URL } from '@/lib/contactContent';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const statIcons = [BookOpen, Users, GraduationCap, Award];
@@ -559,10 +560,26 @@ const AboutUs = () => {
                 </div>
               </div>
               
-              {/* Map Placeholder */}
-              <div className="bg-gray-200 rounded-lg h-64 md:h-80 flex items-center justify-center">
-                <MapPin className="w-16 h-16 text-gray-400" />
+              {/* Campus map */}
+              <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm aspect-[4/3] min-h-[320px]">
+                <iframe
+                  title="VIET campus location on Google Maps"
+                  src={MAP_EMBED_URL}
+                  className="w-full h-full min-h-[320px] border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
               </div>
+              <a
+                href={MAP_DIRECTIONS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+              >
+                Get directions on Google Maps
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
           </motion.div>
         </div>
